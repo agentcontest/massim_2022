@@ -1,5 +1,5 @@
-MASSim 2020: Agents Assemble II
-===============================
+MASSim 2022: Agents Assemble III
+================================
 
 [![Continuous Integration](https://github.com/agentcontest/massim_2020/workflows/Continuous%20Integration/badge.svg)](https://github.com/agentcontest/massim_2020/actions?query=workflow%3A%22Continuous+Integration%22)
 
@@ -20,9 +20,9 @@ executed by _MASSim_.
 Download
 --------
 
-We upload **binary releases** to GitHub: https://github.com/agentcontest/massim_2020/releases
+We upload **binary releases** to GitHub: https://github.com/agentcontest/massim_2022/releases
 
-There also are (potentially unstable) [development snapshots](https://github.com/agentcontest/massim_2020/actions?query=workflow%3A%22Continuous+Integration%22) attached as artifacts to each commit.
+There also are (potentially unstable) [development snapshots](https://github.com/agentcontest/massim_2022/actions?query=workflow%3A%22Continuous+Integration%22) attached as artifacts to each commit.
 
 Building MASSim
 ---------------
