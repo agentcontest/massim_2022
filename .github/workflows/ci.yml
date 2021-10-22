@@ -9,11 +9,11 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-java@v1
       with:
-        java-version: 13
+        java-version: 17
     - run: mvn test
     - run: mvn package
     - run: tar -xvzf target/massim-*.tar.gz
     - uses: actions/upload-artifact@v2-preview
       with:
-        name: massim-2020-dev.zip
+        name: massim-2022-dev.zip
         path: massim-*
