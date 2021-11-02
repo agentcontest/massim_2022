@@ -146,7 +146,7 @@ class GameState {
         // create grid environment
         grid = new Grid(config.getJSONObject("grid"), attachLimit, distanceToTaskboards);
 
-        parseRoles(config);
+        var defaultRole = parseRoles(config);
 
         // create entities
         var entities = config.getJSONObject("entities");
@@ -161,7 +161,7 @@ class GameState {
                 for (Position p : cluster) {
                     int index = agentsRange.remove(RNG.nextInt(agentsRange.size()));
                     for (TeamConfig team: matchTeams) {
-                        createEntity(p, team.getAgentNames().get(index), team.getName());
+                        createEntity(p, team.getAgentNames().get(index), team.getName(), defaultRole);
                     }
                     agentCounter++;
                     if (agentCounter == numberOfAgents) break;
@@ -198,7 +198,8 @@ class GameState {
         }
     }
 
-    private void parseRoles(JSONObject config) {
+    private Role parseRoles(JSONObject config) {
+        Role defaultRole = null;
         JSONArray rolesData = config.getJSONArray("roles");
         for (int i = 0; i < rolesData.length(); i++) {
             var roleData = rolesData.getJSONObject(i);
@@ -210,7 +211,11 @@ class GameState {
                     );
             this.roles.put(role.name(), role);
             Log.log(Log.Level.NORMAL, "Role " + role.name() + " added.");
+            if (i == 0) {
+                defaultRole = role;
+            }
         }
+        return defaultRole;
     }
 
     Map<String, Team> getTeams() {
@@ -661,8 +666,8 @@ class GameState {
         gameObjects.remove(go.getID());
     }
 
-    private Entity createEntity(Position xy, String name, String teamName) {
-        Entity e = grid.createEntity(xy, name, teamName);
+    private Entity createEntity(Position xy, String name, String teamName, Role role) {
+        Entity e = grid.createEntity(xy, name, teamName, role);
         registerGameObject(e);
         agentToEntity.put(name, e);
         entityToAgent.put(e, name);

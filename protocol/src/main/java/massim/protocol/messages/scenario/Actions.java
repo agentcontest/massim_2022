@@ -34,4 +34,5 @@ public abstract class Actions {
     public static final String RESULT_F_STATUS = "failed_status";
     public static final String RESULT_F_RESOURCES = "failed_resources";
     public static final String RESULT_F_LOCATION = "failed_location";
+    public static final String RESULT_F_ROLE = "failed_role";
 }

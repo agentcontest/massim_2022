@@ -1,6 +1,7 @@
 package massim.game.environment;
 
 import massim.game.Entity;
+import massim.game.Role;
 import massim.protocol.data.Position;
 import massim.util.Log;
 import massim.util.RNG;
@@ -8,7 +9,6 @@ import org.json.JSONObject;
 
 
 import javax.imageio.ImageIO;
-import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -199,8 +199,8 @@ public class Grid {
         return dimY;
     }
 
-    public Entity createEntity(Position xy, String agentName, String teamName) {
-        var e = new Entity(xy, agentName, teamName);
+    public Entity createEntity(Position xy, String agentName, String teamName, Role role) {
+        var e = new Entity(xy, agentName, teamName, role);
         insertThing(e);
         return e;
     }

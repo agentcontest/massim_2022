@@ -112,8 +112,14 @@ public class Simulation {
         for (Entity entity : entities) {
             if (!entity.getLastActionResult().equals(RESULT_UNPROCESSED)) continue;
             var params = entity.getLastActionParams();
-            switch(entity.getLastAction()) {
+            var action = entity.getLastAction();
 
+            if (!entity.isActionAvailable(action)) {
+                entity.setLastActionResult(RESULT_F_ROLE);
+                continue;
+            }
+
+            switch(action) {
                 case NO_ACTION:
                 case SKIP:
                     entity.setLastActionResult(RESULT_SUCCESS);

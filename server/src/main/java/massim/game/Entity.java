@@ -20,13 +20,14 @@ public class Entity extends Attachable {
     static int clearEnergyCost = 0;
     static int disableDuration = 0;
 
-    private String agentName;
-    private String teamName;
+    private final String agentName;
+    private final String teamName;
+    private Role role;
+
     private String lastAction = "";
     private List<String> lastActionParams = Collections.emptyList();
     private String lastActionResult = "";
 
-    private int vision = 5;
     private int energy;
 
     private int previousClearStep = -1;
@@ -37,11 +38,12 @@ public class Entity extends Attachable {
 
     private Task acceptedTask;
 
-    public Entity(Position xy, String agentName, String teamName) {
+    public Entity(Position xy, String agentName, String teamName, Role role) {
         super(xy);
         this.agentName = agentName;
         this.teamName = teamName;
         this.energy = maxEnergy;
+        this.role = role;
     }
 
     @Override
@@ -89,7 +91,7 @@ public class Entity extends Attachable {
     }
 
     int getVision() {
-        return vision;
+        return this.role.vision();
     }
 
     void recordClearAction(int step, Position position) {
@@ -137,5 +139,13 @@ public class Entity extends Attachable {
     String getTask() {
         if (acceptedTask == null) return "";
         return acceptedTask.getName();
+    }
+
+    void changeRole(Role role) {
+        this.role = role;
+    }
+
+    boolean isActionAvailable(String action) {
+        return this.role.actions().contains(action);
     }
 }
