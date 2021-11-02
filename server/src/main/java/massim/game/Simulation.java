@@ -235,6 +235,9 @@ public class Simulation {
         }
     }
 
+    /**
+     * @return the integer parameter at the given index or null if there is no such parameter
+     */
     private Integer getIntParam(List<String> params, int index) {
         if (index >= params.size()) return null;
         return Util.tryParseInt(params.get(index));

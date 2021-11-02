@@ -28,41 +28,38 @@ import java.util.stream.IntStream;
  */
 class GameState {
 
-    private Map<String, Team> teams = new HashMap<>();
-    private Map<String, Entity> agentToEntity = new HashMap<>();
-    private Map<Entity, String> entityToAgent = new HashMap<>();
+    private final Map<String, Team> teams = new HashMap<>();
+    private final Map<String, Entity> agentToEntity = new HashMap<>();
+    private final Map<Entity, String> entityToAgent = new HashMap<>();
 
     private int step = -1;
-    private int teamSize;
-    private Grid grid;
-    private Map<Integer, GameObject> gameObjects = new HashMap<>();
-    private Map<Position, Dispenser> dispensers = new HashMap<>();
-    private Map<Position, TaskBoard> taskboards = new HashMap<>();
-    private Map<String, Task> tasks = new HashMap<>();
-    private Set<String> blockTypes = new TreeSet<>();
-    private Set<ClearEvent> clearEvents = new HashSet<>();
-    private Set<Position> agentCausedClearMarkers = new HashSet<>();
+    private final int teamSize;
+    private final Grid grid;
+    private final Map<Integer, GameObject> gameObjects = new HashMap<>();
+    private final Map<Position, Dispenser> dispensers = new HashMap<>();
+    private final Map<Position, TaskBoard> taskboards = new HashMap<>();
+    private final Map<String, Task> tasks = new HashMap<>();
+    private final Set<String> blockTypes = new TreeSet<>();
+    private final Set<ClearEvent> clearEvents = new HashSet<>();
+    private final Set<Position> agentCausedClearMarkers = new HashSet<>();
 
     // config parameters
-    private int randomFail;
-    private double pNewTask;
-    private int taskDurationMin;
-    private int taskDurationMax;
-    private int taskSizeMin;
-    private int taskSizeMax;
-    private int taskRewardDecayMin;
-    private int taskRewardDecayMax;
+    private final int randomFail;
+    private final double pNewTask;
+    private final int taskDurationMin;
+    private final int taskDurationMax;
+    private final int taskSizeMin;
+    private final int taskSizeMax;
+    private final int taskRewardDecayMin;
+    private final int taskRewardDecayMax;
     int clearSteps;
-    private int eventChance;
-    private int eventRadiusMin;
-    private int eventRadiusMax;
-    private int eventWarning;
-    private int eventCreateMin;
-    private int eventCreateMax;
-    private int eventCreatePerimeter;
-    private int numberOfTaskboards;
-    /** Minimum percentage of a reward to not decay beyond - range: [0,100] */
-    private int lowerRewardLimit;
+    private final int eventChance;
+    private final int eventRadiusMin;
+    private final int eventRadiusMax;
+    private final int eventWarning;
+    private final int eventCreateMin;
+    private final int eventCreateMax;
+    private final int eventCreatePerimeter;
 
     private JSONArray logEvents = new JSONArray();
 
@@ -110,11 +107,12 @@ class GameState {
         taskRewardDecayMin = taskRewardDecayBounds.getInt(0);
         taskRewardDecayMax = taskRewardDecayBounds.getInt(1);
         Log.log(Log.Level.NORMAL, "config.tasks.probability: " + pNewTask);
-        numberOfTaskboards = taskConfig.getInt("taskboards");
+        int numberOfTaskboards = taskConfig.getInt("taskboards");
         Log.log(Log.Level.NORMAL, "config.taskboards: " + numberOfTaskboards);
         int distanceToTaskboards = taskConfig.getInt("distanceToTaskboards");
         Log.log(Log.Level.NORMAL, "config.distanceToTaskboards: " + distanceToTaskboards);
-        lowerRewardLimit = taskConfig.getInt("lowerRewardLimit");
+        /* Minimum percentage of a reward to not decay beyond - range: [0,100] */
+        int lowerRewardLimit = taskConfig.getInt("lowerRewardLimit");
         Log.log(Log.Level.NORMAL, "config.tasks.lowerRewardLimit: " + lowerRewardLimit);
 
         var eventConfig = config.getJSONObject("events");
@@ -179,7 +177,7 @@ class GameState {
         var setupFilePath = config.optString("setup");
         if (!setupFilePath.equals("")){
             Log.log(Log.Level.NORMAL, "Running setup actions");
-            try (var b = new BufferedReader(new FileReader(setupFilePath));){
+            try (var b = new BufferedReader(new FileReader(setupFilePath))){
                 var line = "";
                 while ((line = b.readLine()) != null) {
                     if (line.startsWith("#") || line.isEmpty()) continue;
@@ -794,7 +792,7 @@ class GameState {
             event.put("radius", e.getRadius());
             clear.put(event);
         }
-        tasks.values().stream().filter(t -> !t.isCompleted() && step <= t.getDeadline()).sorted(Comparator.comparing(t -> t.getDeadline())).forEach(t -> {
+        tasks.values().stream().filter(t -> !t.isCompleted() && step <= t.getDeadline()).sorted(Comparator.comparing(Task::getDeadline)).forEach(t -> {
             JSONObject task  = new JSONObject();
             task.put("name", t.getName());
             task.put("deadline", t.getDeadline());
