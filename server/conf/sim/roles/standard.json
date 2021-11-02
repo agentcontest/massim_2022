@@ -1,5 +1,17 @@
 [
   {
+    "name": "worker",
+    "vision": 5,
+    "actions": ["skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit"],
+    "speed": [1, 1, 0]
+  },
+  {
+  "name": "constructor",
+  "vision": 5,
+  "actions": ["skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit"],
+  "speed": [1]
+  },
+  {
     "name": "explorer",
     "vision": 7,
     "actions": ["skip", "move", "rotate", "adopt", "attach", "detach", "survey"],
@@ -10,17 +22,5 @@
     "vision": 5,
     "actions": ["skip", "move", "rotate", "adopt", "detach", "clear"],
     "speed": [1, 0]
-  },
-  {
-    "name": "worker",
-    "vision": 5,
-    "actions": ["skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit"],
-    "speed": [1, 1, 0]
-  },
-  {
-    "name": "constructor",
-    "vision": 5,
-    "actions": ["skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit"],
-    "speed": [1]
   }
 ]
