@@ -127,16 +127,14 @@ public class Simulation {
                     continue;
 
                 case MOVE:
-                    var direction = getStringParam(params, 0);
-                    if (!Grid.DIRECTIONS.contains(direction)) {
+                    if (params.isEmpty())
                         entity.setLastActionResult(FAILED_PARAMETER);
-                    } else {
-                        entity.setLastActionResult(state.handleMoveAction(entity, direction));
-                    }
+                    else
+                        entity.setLastActionResult(state.handleMoveAction(entity, params));
                     continue;
 
                 case ATTACH:
-                    direction = getStringParam(params, 0);
+                    var direction = getStringParam(params, 0);
                     if (!Grid.DIRECTIONS.contains(direction)) {
                         entity.setLastActionResult(FAILED_PARAMETER);
                     } else {
@@ -245,7 +243,7 @@ public class Simulation {
     /**
      * @return the integer parameter at the given index or null if there is no such parameter
      */
-    private Integer getIntParam(List<String> params, int index) {
+    static Integer getIntParam(List<String> params, int index) {
         if (index >= params.size()) return null;
         return Util.tryParseInt(params.get(index));
     }
@@ -253,7 +251,7 @@ public class Simulation {
     /**
      * @return the string parameter at the given index or null if there is no such parameter
      */
-    private String getStringParam(List<String> params, int index) {
+    static String getStringParam(List<String> params, int index) {
         if (index >= params.size()) return null;
         try {
             return params.get(index);

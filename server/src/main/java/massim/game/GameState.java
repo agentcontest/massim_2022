@@ -25,6 +25,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static massim.protocol.messages.scenario.ActionResults.*;
+
 
 /**
  * State of the game.
@@ -446,11 +448,26 @@ class GameState {
         return result;
     }
 
-    String handleMoveAction(Entity entity, String direction) {
-        if (grid.moveWithAttached(entity, direction, 1)) {
-            return ActionResults.SUCCESS;
+    String handleMoveAction(Entity entity, List<String> params) {
+        var directions = new ArrayList<String>();
+        for (int i = 0; i < params.size(); i++) {
+            var direction = Simulation.getStringParam(params, i);
+            if (!Grid.DIRECTIONS.contains(direction))
+                return FAILED_PARAMETER;
+            directions.add(direction);
         }
-        return ActionResults.FAILED_PATH;
+
+        var movesTaken = 0;
+        for (var direction : directions) {
+            if (grid.moveWithAttached(entity, direction, 1))
+                movesTaken++;
+            else
+                break;
+        }
+
+        if (movesTaken == 0) return ActionResults.FAILED_PATH;
+        else if (movesTaken < directions.size()) return PARTIAL_SUCCESS;
+        else return SUCCESS;
     }
 
     String handleRotateAction(Entity entity, boolean clockwise) {

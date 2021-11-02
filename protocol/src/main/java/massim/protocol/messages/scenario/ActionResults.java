@@ -4,6 +4,7 @@ public class ActionResults {
 
     public final static String UNPROCESSED = "unprocessed";
     public final static String SUCCESS = "success";
+    public final static String PARTIAL_SUCCESS = "partial_success";
     public final static String FAILED = "failed";
     public final static String FAILED_RANDOM = "failed_random";
     public final static String FAILED_PARAMETER = "failed_parameter";
