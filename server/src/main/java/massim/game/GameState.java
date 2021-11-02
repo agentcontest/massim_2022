@@ -7,6 +7,7 @@ import massim.protocol.data.Thing;
 import massim.protocol.messages.RequestActionMessage;
 import massim.protocol.messages.SimEndMessage;
 import massim.protocol.messages.SimStartMessage;
+import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.Actions;
 import massim.protocol.messages.scenario.InitialPercept;
 import massim.protocol.messages.scenario.StepPercept;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 
 /**
  * State of the game.
@@ -446,91 +448,91 @@ class GameState {
 
     String handleMoveAction(Entity entity, String direction) {
         if (grid.moveWithAttached(entity, direction, 1)) {
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F_PATH;
+        return ActionResults.FAILED_PATH;
     }
 
     String handleRotateAction(Entity entity, boolean clockwise) {
         if (grid.rotateWithAttached(entity, clockwise)) {
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleAttachAction(Entity entity, String direction) {
         Position target = entity.getPosition().moved(direction, 1);
         Attachable a = getUniqueAttachable(target);
-        if (a == null) return Actions.RESULT_F_TARGET;
+        if (a == null) return ActionResults.FAILED_TARGET;
         if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a)) {
-            return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
         }
         if(!attachedToOpponent(a, entity) && grid.attach(entity, a)) {
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleDetachAction(Entity entity, String direction) {
         Position target = entity.getPosition().moved(direction, 1);
         Attachable a = getUniqueAttachable(target);
-        if (a == null) return Actions.RESULT_F_TARGET;
+        if (a == null) return ActionResults.FAILED_TARGET;
         if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a)) {
-            return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
         }
         if (grid.detachNeighbors(entity, a)){
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleDisconnectAction(Entity entity, Position attPos1, Position attPos2) {
         var attachable1 = getUniqueAttachable(attPos1.translate(entity.getPosition()));
         var attachable2 = getUniqueAttachable(attPos2.translate(entity.getPosition()));
-        if (attachable1 == null || attachable2 == null) return Actions.RESULT_F_TARGET;
+        if (attachable1 == null || attachable2 == null) return ActionResults.FAILED_TARGET;
         var allAttachments = entity.collectAllAttachments();
         if (!allAttachments.contains(attachable1) || !allAttachments.contains(attachable2))
-            return Actions.RESULT_F_TARGET;
-        if (grid.detachNeighbors(attachable1, attachable2)) return Actions.RESULT_SUCCESS;
-        return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
+        if (grid.detachNeighbors(attachable1, attachable2)) return ActionResults.SUCCESS;
+        return ActionResults.FAILED_TARGET;
     }
 
     String handleConnectAction(Entity entity, Position blockPos, Entity partnerEntity, Position partnerBlockPos) {
         Attachable block1 = getUniqueAttachable(blockPos.translate(entity.getPosition()));
         Attachable block2 = getUniqueAttachable(partnerBlockPos.translate(partnerEntity.getPosition()));
 
-        if(!(block1 instanceof Block) || !(block2 instanceof Block)) return Actions.RESULT_F_TARGET;
+        if(!(block1 instanceof Block) || !(block2 instanceof Block)) return ActionResults.FAILED_TARGET;
 
         Set<Attachable> attachables = entity.collectAllAttachments();
-        if (attachables.contains(partnerEntity)) return Actions.RESULT_F;
-        if (!attachables.contains(block1)) return Actions.RESULT_F_TARGET;
-        if (attachables.contains(block2)) return Actions.RESULT_F_TARGET;
+        if (attachables.contains(partnerEntity)) return ActionResults.FAILED;
+        if (!attachables.contains(block1)) return ActionResults.FAILED_TARGET;
+        if (attachables.contains(block2)) return ActionResults.FAILED_TARGET;
 
         Set<Attachable> partnerAttachables = partnerEntity.collectAllAttachments();
-        if (!partnerAttachables.contains(block2)) return Actions.RESULT_F_TARGET;
-        if (partnerAttachables.contains(block1)) return Actions.RESULT_F_TARGET;
+        if (!partnerAttachables.contains(block2)) return ActionResults.FAILED_TARGET;
+        if (partnerAttachables.contains(block1)) return ActionResults.FAILED_TARGET;
 
         if(grid.attach(block1, block2)){
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleRequestAction(Entity entity, String direction) {
         var requestPosition = entity.getPosition().moved(direction, 1);
         var dispenser = dispensers.get(requestPosition);
-        if (dispenser == null) return Actions.RESULT_F_TARGET;
-        if (!grid.isUnblocked(requestPosition)) return Actions.RESULT_F_BLOCKED;
+        if (dispenser == null) return ActionResults.FAILED_TARGET;
+        if (!grid.isUnblocked(requestPosition)) return ActionResults.FAILED_BLOCKED;
         createBlock(requestPosition, dispenser.getBlockType());
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     String handleSubmitAction(Entity e, String taskName) {
         Task task = tasks.get(taskName);
         if (task == null || task.isCompleted() || step > task.getDeadline() || !e.getTask().equals(taskName))
-            return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
-        if (grid.getTerrain(ePos) != Terrain.GOAL) return Actions.RESULT_F;
+        if (grid.getTerrain(ePos) != Terrain.GOAL) return ActionResults.FAILED;
         Set<Attachable> attachedBlocks = e.collectAllAttachments();
         for (Map.Entry<Position, String> entry : task.getRequirements().entrySet()) {
             var pos = entry.getKey();
@@ -542,7 +544,7 @@ class GameState {
                 && attachedBlocks.contains(actualBlock)) {
                 continue;
             }
-            return Actions.RESULT_F;
+            return ActionResults.FAILED;
         }
         task.getRequirements().keySet().forEach(pos -> {
             Attachable a = getUniqueAttachable(pos.translate(e.getPosition()));
@@ -557,7 +559,7 @@ class GameState {
         result.put("team", e.getTeamName());
         if (logEvents != null) logEvents.put(result);
 
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     /**
@@ -567,8 +569,8 @@ class GameState {
      */
     String handleClearAction(Entity entity, Position xy) {
         var target = xy.translate(entity.getPosition());
-        if (target.distanceTo(entity.getPosition()) > entity.getVision()) return Actions.RESULT_F_TARGET;
-        if (entity.getEnergy() < Entity.clearEnergyCost) return Actions.RESULT_F_RESOURCES;
+        if (target.distanceTo(entity.getPosition()) > entity.getVision()) return ActionResults.FAILED_TARGET;
+        if (entity.getEnergy() < Entity.clearEnergyCost) return ActionResults.FAILED_RESOURCES;
 
         var previousPos = entity.getPreviousClearPosition();
         if(entity.getPreviousClearStep() != step - 1 || previousPos.x != target.x || previousPos.y != target.y) {
@@ -584,13 +586,13 @@ class GameState {
             agentCausedClearMarkers.addAll(target.spanArea(1));
         }
         entity.recordClearAction(step, target);
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     public String handleAcceptAction(Entity entity, String taskName) {
-        if (taskName == null || taskName.equals("")) return Actions.RESULT_F_TARGET;
+        if (taskName == null || taskName.equals("")) return ActionResults.FAILED_TARGET;
         var task = tasks.get(taskName);
-        if (task == null) return Actions.RESULT_F_TARGET;
+        if (task == null) return ActionResults.FAILED_TARGET;
 
         var nearTaskboard = false;
         var pos = entity.getPosition();
@@ -600,10 +602,10 @@ class GameState {
                 break;
             }
         }
-        if (!nearTaskboard) return Actions.RESULT_F_LOCATION;
+        if (!nearTaskboard) return ActionResults.FAILED_LOCATION;
 
         entity.acceptTask(task);
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     int clearArea(Position center, int radius) {
