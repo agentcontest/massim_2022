@@ -458,9 +458,12 @@ class GameState {
         }
 
         var movesTaken = 0;
+        var possibleMoves = entity.getCurrentSpeed();
         for (var direction : directions) {
-            if (grid.moveWithAttached(entity, direction, 1))
+            if (grid.moveWithAttached(entity, direction, 1)){
                 movesTaken++;
+                if (movesTaken >= possibleMoves) break;
+            }
             else
                 break;
         }

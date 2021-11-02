@@ -94,6 +94,13 @@ public class Entity extends Attachable {
         return this.role.vision();
     }
 
+    /**
+     * @return the entity's speed considering current attachments
+     */
+    int getCurrentSpeed() {
+        return this.role.maxSpeed(collectAllAttachments().size() - 1);
+    }
+
     void recordClearAction(int step, Position position) {
         previousClearPosition = position;
         previousClearStep = step;
