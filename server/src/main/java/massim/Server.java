@@ -116,6 +116,7 @@ public class Server {
                 try {
                     server.config = parseServerConfig(IOUtil.readJSONObjectWithImport(confFiles[confNum].getPath()));
                 } catch (IOException e) {
+                    e.printStackTrace();
                     Log.log(Log.Level.ERROR, "Could not read massim.config file, exiting MASSim");
                     System.exit(0);
                 }

@@ -10,6 +10,7 @@ import massim.protocol.messages.SimStartMessage;
 import massim.protocol.messages.scenario.Actions;
 import massim.protocol.messages.scenario.InitialPercept;
 import massim.protocol.messages.scenario.StepPercept;
+import massim.util.JSONUtil;
 import massim.util.Log;
 import massim.util.RNG;
 import massim.util.Util;
@@ -34,12 +35,17 @@ class GameState {
 
     private int step = -1;
     private final int teamSize;
+
+    // static env. things
     private final Grid grid;
     private final Map<Integer, GameObject> gameObjects = new HashMap<>();
     private final Map<Position, Dispenser> dispensers = new HashMap<>();
     private final Map<Position, TaskBoard> taskboards = new HashMap<>();
-    private final Map<String, Task> tasks = new HashMap<>();
     private final Set<String> blockTypes = new TreeSet<>();
+    private final Map<String, Role> roles = new HashMap<>();
+
+    // dynamic env. things
+    private final Map<String, Task> tasks = new HashMap<>();
     private final Set<ClearEvent> clearEvents = new HashSet<>();
     private final Set<Position> agentCausedClearMarkers = new HashSet<>();
 
@@ -140,6 +146,8 @@ class GameState {
         // create grid environment
         grid = new Grid(config.getJSONObject("grid"), attachLimit, distanceToTaskboards);
 
+        parseRoles(config);
+
         // create entities
         var entities = config.getJSONObject("entities");
         var it = entities.keys();
@@ -187,6 +195,21 @@ class GameState {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void parseRoles(JSONObject config) {
+        JSONArray rolesData = config.getJSONArray("roles");
+        for (int i = 0; i < rolesData.length(); i++) {
+            var roleData = rolesData.getJSONObject(i);
+            var role = new Role(
+                    roleData.getString("name"),
+                    roleData.getInt("vision"),
+                    JSONUtil.arrayToStringSet(roleData.getJSONArray("actions")),
+                    JSONUtil.arrayToIntArray(roleData.getJSONArray("speed"))
+                    );
+            this.roles.put(role.name(), role);
+            Log.log(Log.Level.NORMAL, "Role " + role.name() + " added.");
         }
     }
 
