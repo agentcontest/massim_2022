@@ -7,6 +7,8 @@
     "entities" : {"standard" : 50},
     "clusterBounds" : [3,10],
 
+    "roles" : "$(roles/standard.json)",
+
     "clearSteps" : 3,
     "clearEnergyCost" : 30,
     "disableDuration" : 4,

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "explorer",
+    "vision": 7,
+    "actions": ["skip", "move", "rotate", "adopt", "attach", "detach", "survey"],
+    "speed": [2, 0, 0, 0, 0]
+  },
+  {
+    "name": "digger",
+    "vision": 5,
+    "actions": ["skip", "move", "rotate", "adopt", ""],
+    "speed": [1, 0, 0, 0, 0]
+  },
+  {
+    "name": "worker",
+    "vision": 5,
+    "actions": ["skip", "move", "rotate", "adopt", "request"],
+    "speed": [1, 1, 0, 0, 0]
+  },
+  {
+    "name": "constructor",
+    "vision": 5,
+    "actions": ["skip", "move", "rotate", "adopt", ""],
+    "speed": [1, 1, 1, 1, 1]
+  }
+]
