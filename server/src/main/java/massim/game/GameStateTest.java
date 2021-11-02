@@ -86,7 +86,7 @@ public class GameStateTest {
         // too far away -> fail
         assert state.handleRequestAction(a1, "n").equals(ActionResults.FAILED_TARGET);
         //move closer
-        assert state.handleMoveAction(a1, "n").equals(ActionResults.SUCCESS);
+        assert state.handleMoveAction(a1, List.of("n")).equals(ActionResults.SUCCESS);
         // wrong param -> fail
         assert state.handleRequestAction(a1, "w").equals(ActionResults.FAILED_TARGET);
         // everything correct -> success
@@ -275,9 +275,9 @@ public class GameStateTest {
         // test moving
         var a1 = state.getEntityByName("A1");
         state.teleport("A1", Position.of(0, 0));
-        state.handleMoveAction(a1, "w");
+        state.handleMoveAction(a1, List.of("w"));
         assert(a1.getPosition().equals(Position.of(grid.getDimX() - 1, 0)));
-        state.handleMoveAction(a1, "n");
+        state.handleMoveAction(a1, List.of("n"));
         assert(a1.getPosition().equals(Position.of(grid.getDimX() - 1, grid.getDimY() - 1)));
 
         // test clear across boundaries
@@ -289,7 +289,7 @@ public class GameStateTest {
         }
         assert state.getTerrain(Position.of(0, 0)) == Terrain.EMPTY;
 
-        state.handleMoveAction(a1, "s");
+        state.handleMoveAction(a1, List.of("s"));
         assert a1.getPosition().equals(Position.of(grid.getDimX() - 1, 0));
 
         // rotate some blocks across the map boundaries
