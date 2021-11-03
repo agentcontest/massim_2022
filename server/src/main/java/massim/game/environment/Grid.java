@@ -13,7 +13,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Grid {
 
@@ -92,6 +91,10 @@ public class Grid {
 
         // goal terrain
         var goalConf = gridConf.getJSONObject("goals");
+        addGoalsFromConfig(goalConf);
+    }
+
+    private void addGoalsFromConfig(JSONObject goalConf) {
         var goalNumber = goalConf.getInt("number");
         var goalSize = goalConf.getJSONArray("size");
         var goalSizeMin = goalSize.getInt(0);
@@ -101,7 +104,7 @@ public class Grid {
             var size = RNG.betweenClosed(goalSizeMin, goalSizeMax);
             addGoal(centerPos, size);
 
-            for (var pos : centerPos.spanArea(size + distanceToTaskboards))
+            for (var pos : centerPos.spanArea(size ))
                 blockedForTaskBoards.put(pos.toString(), true);
         }
     }
