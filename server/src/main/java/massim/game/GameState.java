@@ -908,7 +908,9 @@ class GameState {
                 // TODO add to percepts
                 break;
             case "goal":
-                // TODO
+                var goalDistance = grid.getDistanceToNextGoalZone(entity.getPosition());
+                if (goalDistance == null) return FAILED_TARGET;
+                // TODO add to percepts
                 break;
             default:
                 return FAILED_PARAMETER;

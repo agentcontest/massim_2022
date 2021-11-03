@@ -127,6 +127,15 @@ public class Grid {
         }
     }
 
+    /**
+     * @return distance to the nearest goal zone's center or null if there is no such goal zone
+     */
+    public Integer getDistanceToNextGoalZone(Position pos) {
+        var nextGoal =  goalZones.values().stream().min(Comparator.comparing(goal -> goal.position.distanceTo(pos)));
+        if (nextGoal.isEmpty()) return null;
+        return nextGoal.get().position.distanceTo(pos);
+    }
+
     public Position findNewTaskboardPosition() {
         var start = findRandomFreePosition();
         var pos = start;
