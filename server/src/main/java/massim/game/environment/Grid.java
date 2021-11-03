@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Grid {
 
@@ -28,6 +29,9 @@ public class Grid {
     private Terrain[][] terrainMap;
     private final List<Marker> markers = new ArrayList<>();
     private final Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
+
+    private final Map<Position, GoalZone> goalZones = new HashMap<>();
+    private final Map<Position, Integer> goalPresence = new HashMap<>();
 
     public Grid(JSONObject gridConf, int attachLimit, int distanceToTaskboards) {
         this.attachLimit = attachLimit;
@@ -99,6 +103,23 @@ public class Grid {
 
             for (var pos : centerPos.spanArea(size + distanceToTaskboards))
                 blockedForTaskBoards.put(pos.toString(), true);
+        }
+    }
+
+    private void addGoal(Position xy, int radius) {
+        goalZones.put(xy, new GoalZone(xy, radius));
+        for (Position pos : xy.spanArea(radius)) {
+            goalPresence.merge(pos, 1, Integer::sum);
+            setTerrain(pos, Terrain.GOAL);
+        }
+    }
+
+    private void removeGoal(GoalZone goal) {
+        goalZones.remove(goal.position);
+        for (Position pos : goal.position.spanArea(goal.radius)) {
+            var presence = goalPresence.merge(pos, -1, Integer::sum);
+            if (presence == 0)
+                setTerrain(pos, Terrain.EMPTY);
         }
     }
 
@@ -360,7 +381,7 @@ public class Grid {
     }
     
     public ArrayList<Position> findRandomFreeClusterPosition(int clusterSize) {
-        ArrayList<Position> cluster = new ArrayList<Position>();
+        ArrayList<Position> cluster = new ArrayList<>();
         int x = RNG.nextInt(dimX);
         int y = RNG.nextInt(dimY);
         final int radius = (int) (Math.log(clusterSize)/Math.log(2)); 
@@ -443,4 +464,6 @@ public class Grid {
     public Position getRandomPosition() {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
     }
+
+    public record GoalZone(Position position, int radius) {}
 }
