@@ -99,22 +99,23 @@ public class Grid {
         for (var i = 0; i < goalNumber; i++) {
             var centerPos = findRandomFreePosition();
             var size = RNG.betweenClosed(goalSizeMin, goalSizeMax);
-            for (var pos : centerPos.spanArea(size)) setTerrain(pos, Terrain.GOAL);
+            addGoal(centerPos, size);
 
             for (var pos : centerPos.spanArea(size + distanceToTaskboards))
                 blockedForTaskBoards.put(pos.toString(), true);
         }
     }
 
-    private void addGoal(Position xy, int radius) {
+    public void addGoal(Position xy, int radius) {
         goalZones.put(xy, new GoalZone(xy, radius));
         for (Position pos : xy.spanArea(radius)) {
-            goalPresence.merge(pos, 1, Integer::sum);
-            setTerrain(pos, Terrain.GOAL);
+            var presence = goalPresence.merge(pos, 1, Integer::sum);
+            if (presence > 0)
+                setTerrain(pos, Terrain.GOAL);
         }
     }
 
-    private void removeGoal(GoalZone goal) {
+    public void removeGoal(GoalZone goal) {
         goalZones.remove(goal.position);
         for (Position pos : goal.position.spanArea(goal.radius)) {
             var presence = goalPresence.merge(pos, -1, Integer::sum);
