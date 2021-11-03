@@ -152,6 +152,10 @@ public class Entity extends Attachable {
         this.role = role;
     }
 
+    public Role getRole() {
+        return this.role;
+    }
+
     boolean isActionAvailable(String action) {
         return this.role.actions().contains(action);
     }

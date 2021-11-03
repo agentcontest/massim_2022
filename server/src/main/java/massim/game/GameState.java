@@ -71,6 +71,8 @@ class GameState {
     private final int eventCreateMax;
     private final int eventCreatePerimeter;
 
+    private final Map<String, List<String>> surveyResults = new HashMap<>();
+
     private JSONArray logEvents = new JSONArray();
 
     GameState(JSONObject config, Set<TeamConfig> matchTeams) {
@@ -339,6 +341,8 @@ class GameState {
     Map<String, RequestActionMessage> prepareStep(int step) {
         this.step = step;
 
+        this.surveyResults.clear();
+
         logEvents = new JSONArray();
 
         //cleanup & transfer markers
@@ -423,13 +427,17 @@ class GameState {
                             t -> new HashSet<>()).add(currentPos.relativeTo(pos));
                 }
             }
-            var percept = new StepPercept(step, teams.get(entity.getTeamName()).getScore(),
-                    visibleThings, visibleTerrain, allTasks, entity.getLastAction(), entity.getLastActionParams(),
-                    entity.getLastActionResult(), attachedThings, entity.getTask());
+            var percept = new StepPercept(step,
+                    teams.get(entity.getTeamName()).getScore(),
+                    visibleThings, visibleTerrain, allTasks,
+                    entity.getLastAction(), entity.getLastActionParams(),
+                    entity.getLastActionResult(), attachedThings, entity.getTask(),
+                    surveyResults.get(entity.getAgentName()));
             percept.energy = entity.getEnergy();
             percept.disabled = entity.isDisabled();
             result.put(entity.getAgentName(), percept);
         }
+
         return result;
     }
 
@@ -905,12 +913,12 @@ class GameState {
                         Comparator.comparing(d -> d.getPosition().distanceTo(entity.getPosition())));
                 if (optDispenser.isEmpty()) return FAILED_TARGET;
                 var distance = optDispenser.get().getPosition().distanceTo(entity.getPosition());
-                // TODO add to percepts
+                surveyResults.put(entity.getAgentName(), List.of("dispenser", String.valueOf(distance)));
                 break;
             case "goal":
                 var goalDistance = grid.getDistanceToNextGoalZone(entity.getPosition());
                 if (goalDistance == null) return FAILED_TARGET;
-                // TODO add to percepts
+                surveyResults.put(entity.getAgentName(), List.of("goal", String.valueOf(goalDistance)));
                 break;
             default:
                 return FAILED_PARAMETER;
@@ -919,7 +927,10 @@ class GameState {
     }
 
     public String handleSurveyTargetAction(Entity entity, Entity targetEntity) {
-        // TODO
+        var distance = entity.getPosition().distanceTo(targetEntity.getPosition());
+        if (distance > entity.getVision()) return FAILED_LOCATION;
+        surveyResults.put(entity.getAgentName(),
+                List.of("agent", targetEntity.getAgentName(), targetEntity.getRole().name()));
         return SUCCESS;
     }
 }
