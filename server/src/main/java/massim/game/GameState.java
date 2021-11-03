@@ -897,4 +897,27 @@ class GameState {
     Terrain getTerrain(Position pos) {
         return grid.getTerrain(pos);
     }
+
+    public String handleSurveySearchAction(Entity entity, String searchTarget) {
+        switch (searchTarget) {
+            case "dispenser":
+                var optDispenser = dispensers.values().stream().min(
+                        Comparator.comparing(d -> d.getPosition().distanceTo(entity.getPosition())));
+                if (optDispenser.isEmpty()) return FAILED_TARGET;
+                var distance = optDispenser.get().getPosition().distanceTo(entity.getPosition());
+                // TODO add to percepts
+                break;
+            case "goal":
+                // TODO
+                break;
+            default:
+                return FAILED_PARAMETER;
+        }
+        return SUCCESS;
+    }
+
+    public String handleSurveyTargetAction(Entity entity, Entity targetEntity) {
+        // TODO
+        return SUCCESS;
+    }
 }

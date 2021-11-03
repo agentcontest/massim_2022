@@ -1,6 +1,7 @@
 package massim.game;
 
 import massim.config.TeamConfig;
+import massim.game.environment.Positionable;
 import massim.protocol.data.Position;
 import massim.protocol.messages.ActionMessage;
 import massim.protocol.messages.RequestActionMessage;
@@ -110,6 +111,10 @@ public class Simulation {
                 entity.setLastActionResult(FAILED_RANDOM);
             }
         }
+
+        var previousPositions = entities.stream().collect(
+                Collectors.toMap(Positionable::getPosition, e -> e));
+
         for (Entity entity : entities) {
             if (!entity.getLastActionResult().equals(UNPROCESSED)) continue;
             var params = entity.getLastActionParams();
@@ -232,6 +237,33 @@ public class Simulation {
                 case ACCEPT:
                     var task = getStringParam(params, 0);
                     entity.setLastActionResult(state.handleAcceptAction(entity, task));
+                    continue;
+
+                case SURVEY:
+                    if (params.size() == 1) {
+                        var searchTarget = getStringParam(params, 0);
+                        if (searchTarget == null)
+                            entity.setLastActionResult(FAILED_PARAMETER);
+                        else
+                            entity.setLastActionResult(state.handleSurveySearchAction(entity, searchTarget));
+                    }
+                    else if (params.size() == 2) {
+                        x = getIntParam(params, 0);
+                        y = getIntParam(params, 1);
+                        if (x == null || y == null)
+                            entity.setLastActionResult(FAILED_PARAMETER);
+                        else {
+                            var targetEntity = previousPositions.get(Position.of(x, y));
+                            if (targetEntity == null) {
+                                entity.setLastActionResult(FAILED_TARGET);
+                            }
+                            else {
+                                entity.setLastActionResult(state.handleSurveyTargetAction(entity, targetEntity));
+                            }
+                        }
+                    }
+                    else
+                        entity.setLastActionResult(FAILED_PARAMETER);
                     continue;
 
                 default:
