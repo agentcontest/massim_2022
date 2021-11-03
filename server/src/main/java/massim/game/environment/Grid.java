@@ -18,16 +18,16 @@ public class Grid {
 
     public static final Set<String> DIRECTIONS = Set.of("n", "s", "e", "w");
     public static final Set<String> ROTATION_DIRECTIONS = Set.of("cw", "ccw");
-    private static Map<Integer, Terrain> terrainColors =
+    private static final Map<Integer, Terrain> terrainColors =
             Map.of(-16777216, Terrain.OBSTACLE, -1, Terrain.EMPTY, -65536, Terrain.GOAL);
 
-    private int dimX;
-    private int dimY;
-    private int attachLimit;
-    private Map<Position, Set<Positionable>> thingsMap;
+    private final int dimX;
+    private final int dimY;
+    private final int attachLimit;
+    private final Map<Position, Set<Positionable>> thingsMap;
     private Terrain[][] terrainMap;
-    private List<Marker> markers = new ArrayList<>();
-    private Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
+    private final List<Marker> markers = new ArrayList<>();
+    private final Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
 
     public Grid(JSONObject gridConf, int attachLimit, int distanceToTaskboards) {
         this.attachLimit = attachLimit;
@@ -288,7 +288,7 @@ public class Grid {
             }
             sb.append("\n");
         }
-        System.out.println(sb.toString());
+        System.out.println(sb);
     }
 
     /**
