@@ -8,60 +8,12 @@ import massim.protocol.data.Thing;
 import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.StepPercept;
 import massim.util.RNG;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
 
 public class GameStateTest {
-
-    private static final JSONObject CONFIG = new JSONObject("{\n" +
-            "      \"NOsetup\" : \"conf/setup/test.txt\",\n" +
-            "\n" +
-            "      \"steps\" : 500,\n" +
-            "      \"NOrandomSeed\" : 17,\n" +
-            "      \"randomFail\" : 1,\n" +
-            "      \"entities\" : {\"standard\" : 10},\n" +
-            "      \"clusterSize\" : 10,\n" +
-            "\n" +
-            "      \"clearSteps\" : 3,\n" +
-            "      \"clearEnergyCost\" : 30,\n" +
-            "      \"disableDuration\" : 4,\n" +
-            "      \"maxEnergy\" : 300,\n" +
-            "      \"attachLimit\" : 10,\n" +
-            "\n" +
-            "      \"grid\" : {\n" +
-            "        \"height\" : 100,\n" +
-            "        \"width\" : 100,\n" +
-            "        \"NOfile\" : \"conf/maps/test40x40.bmp\",\n" +
-            "        \"instructions\": [\n" +
-            "        ],\n" +
-            "        \"goals\": {\n" +
-            "          \"number\" : 0,\n" +
-            "          \"size\" : [1,2]\n" +
-            "        }\n" +
-            "      },\n" +
-            "\n" +
-            "      \"blockTypes\" : [3, 3],\n" +
-            "      \"dispensers\" : [5, 10],\n" +
-            "\n" +
-            "      \"tasks\" : {\n" +
-            "        \"size\" : [2, 4],\n" +
-            "        \"duration\" : [100, 200],\n" +
-            "        \"probability\" : 0.05,\n" +
-            "        \"taskboards\" : 5,\n" +
-            "        \"rewardDecay\" : [1,5],\n" +
-            "        \"lowerRewardLimit\" : 10,\n" +
-            "        \"distanceToTaskboards\" : 10\n" +
-            "      },\n" +
-            "\n" +
-            "      \"events\" : {\n" +
-            "        \"chance\" : 15,\n" +
-            "        \"radius\" : [3, 5],\n" +
-            "        \"warning\" : 5,\n" +
-            "        \"create\" : [-3, 1],\n" +
-            "        \"perimeter\" : 2\n" +
-            "      }\n" +
-            "    }");
 
     private GameState state;
 
@@ -69,9 +21,74 @@ public class GameStateTest {
     public void setUp() {
         RNG.initialize(17);
 
+        JSONObject config = new JSONObject()
+                .put("steps", 500)
+                .put("randomFail", 1)
+                .put("entities", new JSONObject().put("standard", 10))
+                .put("clusterBounds", new JSONArray().put(1).put(3))
+                .put("clearSteps", 3)
+                .put("clearEnergyCost", 30)
+                .put("disableDuration", 4)
+                .put("maxEnergy", 300)
+                .put("attachLimit", 10)
+                .put("grid", new JSONObject()
+                        .put("height", 100)
+                        .put("width", 100)
+                        .put("instructions", new JSONArray())
+                        .put("goals", new JSONObject()
+                                .put("number", 0)
+                                .put("size", new JSONArray().put(1).put(2))
+                        )
+                )
+                .put("blockTypes", new JSONArray().put(3).put(3))
+                .put("dispensers", new JSONArray().put(5).put(10))
+                .put("tasks", new JSONObject()
+                        .put("size", new JSONArray().put(2).put(4))
+                        .put("duration", new JSONArray().put(100).put(200))
+                        .put("probability", 0.05)
+                        .put("taskboards", 5)
+                        .put("rewardDecay", new JSONArray().put(1).put(5))
+                        .put("lowerRewardLimit", 10)
+                        .put("distanceToTaskboards", 10)
+                )
+                .put("events", new JSONObject()
+                        .put("chance", 15)
+                        .put("radius", new JSONArray().put(3).put(5))
+                        .put("warning", 5)
+                        .put("create", new JSONArray().put(-3).put(1))
+                        .put("perimeter", 2)
+                )
+                .put("roles", new JSONArray()
+                        .put(new JSONObject()
+                                .put("name", "worker")
+                                .put("vision", 5)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit")))
+                                .put("speed", new JSONArray(List.of(1, 1, 0)))
+                        )
+                        .put(new JSONObject()
+                                .put("name", "constructor")
+                                .put("vision", 5)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit")))
+                                .put("speed", new JSONArray(List.of(1)))
+                        )
+                        .put(new JSONObject()
+                                .put("name", "explorer")
+                                .put("vision", 7)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "attach", "detach", "survey")))
+                                .put("speed", new JSONArray(List.of(2, 0)))
+                        )
+                        .put(new JSONObject()
+                                .put("name", "digger")
+                                .put("vision", 5)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "detach", "clear")))
+                                .put("speed", new JSONArray(List.of(1, 0)))
+                        )
+                )
+                ;
+
         var team = new TeamConfig("A");
         for (var i = 1; i <= 10; i++) team.addAgent("A" + i, "1");
-        state = new GameState(CONFIG, Set.of(team));
+        state = new GameState(config, Set.of(team));
     }
 
     @org.junit.Test
