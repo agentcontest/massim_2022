@@ -2,9 +2,7 @@ package massim.game.environment;
 
 import massim.protocol.data.Position;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ZoneList {
 
@@ -32,6 +30,10 @@ public class ZoneList {
 
     public boolean isInZone(Position pos) {
         return this.cellPresence.getOrDefault(pos, 0) > 0;
+    }
+
+    public List<Zone> getZones() {
+        return new ArrayList<>(zones.values());
     }
 
     public record Zone(Position position, int radius) {}

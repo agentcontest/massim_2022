@@ -2,7 +2,6 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.Block;
-import massim.game.environment.Terrain;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.scenario.ActionResults;
@@ -11,7 +10,9 @@ import massim.util.RNG;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class GameStateTest {
 
@@ -118,7 +119,7 @@ public class GameStateTest {
     @org.junit.Test
     public void taskSubmissionWorks() {
         var a1 = state.getEntityByName("A1");
-        state.setTerrain(Position.of(15,15), Terrain.GOAL);
+        state.getGrid().addGoalZone(Position.of(15, 15), 1);
         assert state.teleport("A1", Position.of(15,15));
         String blockType = state.getBlockTypes().iterator().next();
         assert state.createBlock(Position.of(15,16), blockType) != null;
@@ -154,14 +155,14 @@ public class GameStateTest {
         state.teleport("A1", Position.of(10, 10));
         var block1 = state.createBlock(Position.of(10,11), "b1");
         var block2 = state.createBlock(Position.of(10,12), "b1");
-        state.setTerrain(Position.of(11,10), Terrain.OBSTACLE);
+        state.getGrid().addObstacle(Position.of(11, 10));
 
         var result = state.clearArea(Position.of(10,10), 1);
 
         assert(a1.isDisabled());
         assert(state.getThingsAt(block1.getPosition()).size() == 0);
         assert(state.getThingsAt(block2.getPosition()).size() == 1);
-        assert(state.getTerrain(Position.of(11, 10)) == Terrain.EMPTY);
+        assert state.getGrid().isUnblocked(Position.of(11, 10));
         assert(result == 2);
     }
 
@@ -267,13 +268,13 @@ public class GameStateTest {
         assert(a1.getPosition().equals(Position.of(grid.getDimX() - 1, grid.getDimY() - 1)));
 
         // test clear across boundaries
-        state.setTerrain(Position.of(0, 0), Terrain.OBSTACLE);
-        assert state.getTerrain(Position.of(0, 0)) == Terrain.OBSTACLE;
+        state.getGrid().addObstacle(Position.of(0, 0));
+        assert state.getGrid().isBlocked(Position.of(0, 0));
         for (var i = 0; i < state.clearSteps; i++) {
             state.prepareStep(i);
             assert state.handleClearAction(a1, Position.of(1, 1)).equals(ActionResults.SUCCESS);
         }
-        assert state.getTerrain(Position.of(0, 0)) == Terrain.EMPTY;
+        assert state.getGrid().isUnblocked(Position.of(0, 0));
 
         state.handleMoveAction(a1, List.of("s"));
         assert a1.getPosition().equals(Position.of(grid.getDimX() - 1, 0));

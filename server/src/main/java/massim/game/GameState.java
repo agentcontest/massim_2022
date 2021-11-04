@@ -42,12 +42,12 @@ class GameState {
 
     // static env. things
     private final Grid grid;
-    private final Map<Integer, GameObject> gameObjects = new HashMap<>();
     private final Map<Position, Dispenser> dispensers = new HashMap<>();
     private final Set<String> blockTypes = new TreeSet<>();
     private final Map<String, Role> roles = new HashMap<>();
 
     // dynamic env. things
+    private final Map<Integer, GameObject> gameObjects = new HashMap<>();
     private final Map<String, Task> tasks = new HashMap<>();
     private final Set<ClearEvent> clearEvents = new HashSet<>();
     private final Set<Position> agentCausedClearMarkers = new HashSet<>();
@@ -297,9 +297,8 @@ class GameState {
                 y = Util.tryParseInt(command[2]);
                 var type = command[3];
                 if (x == null || y == null || type.isEmpty()) break;
-                if (type.equalsIgnoreCase("obstacle")) setTerrain(Position.of(x, y), Terrain.OBSTACLE);
-                else if (type.equalsIgnoreCase("goal")) setTerrain(Position.of(x, y), Terrain.GOAL);
-                else if (type.equalsIgnoreCase("empty")) setTerrain(Position.of(x, y), Terrain.EMPTY);
+                if (type.equalsIgnoreCase("obstacle")) grid.addObstacle(Position.of(x, y));
+                else if (type.equalsIgnoreCase("goal")) grid.addGoalZone(Position.of(x, y), 1);
                 break;
 
             default:
@@ -381,9 +380,8 @@ class GameState {
 
         for (var i = 0; i < distributeNew; i++) {
             var pos = grid.findRandomFreePosition(event.getPosition(),eventCreatePerimeter + event.getRadius());
-            if(pos != null && grid.getTerrain(pos) == Terrain.EMPTY
-                    && dispensers.get(pos) == null && !grid.outOfBounds(pos)) {
-                grid.setTerrain(pos, Terrain.OBSTACLE);
+            if(pos != null && dispensers.get(pos) == null) {
+                grid.addObstacle(pos);
             }
         }
     }
@@ -408,11 +406,6 @@ class GameState {
                 });
                 var d = dispensers.get(currentPos);
                 if (d != null) visibleThings.add(d.toPercept(pos));
-                var terrain = grid.getTerrain(currentPos);
-                if (terrain != Terrain.EMPTY) {
-                    visibleTerrain.computeIfAbsent(terrain.name,
-                            t -> new HashSet<>()).add(currentPos.relativeTo(pos));
-                }
             }
             var percept = new StepPercept(step,
                     teams.get(entity.getTeamName()).getScore(),
@@ -547,7 +540,7 @@ class GameState {
         if (task == null || task.isCompleted() || step > task.getDeadline())
             return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
-        if (grid.getTerrain(ePos) != Terrain.GOAL) return ActionResults.FAILED;
+        if (grid.isInGoalZone(ePos)) return ActionResults.FAILED;
         Set<Attachable> attachedBlocks = e.collectAllAttachments();
         for (Map.Entry<Position, String> entry : task.getRequirements().entrySet()) {
             var pos = entry.getKey();
@@ -616,10 +609,11 @@ class GameState {
                     grid.destroyThing(go);
                     gameObjects.remove(go.getID());
                 }
-            }
-            if (grid.getTerrain(position) == Terrain.OBSTACLE) {
-                removed++;
-                grid.setTerrain(position, Terrain.EMPTY);
+                else if (go instanceof Obstacle) {
+                    removed++;
+                    grid.destroyThing(go);
+                    gameObjects.remove(go.getID());
+                }
             }
         }
         return removed;
@@ -737,8 +731,7 @@ class GameState {
     }
 
     JSONObject takeSnapshot() {
-        JSONObject snapshot = new JSONObject();
-        snapshot.put("step", step);
+        JSONObject snapshot = new JSONObject().put("step", step);
         JSONArray entities = new JSONArray();
         snapshot.put("entities", entities);
         JSONArray blocks = new JSONArray();
@@ -753,13 +746,16 @@ class GameState {
         snapshot.put("clear", clear);
         JSONObject scores = new JSONObject();
         snapshot.put("scores", scores);
-        for (int y = 0; y < grid.getDimY(); y++) {
-            JSONArray row = new JSONArray();
-            for (int x = 0; x < grid.getDimX(); x++) {
-                row.put(grid.getTerrain(Position.of(x, y)).id);
-            }
-            cells.put(row);
-        }
+        grid.getObstacles(); // TODO
+        grid.getGoalZones(); // TODO (zones may overlap)
+        grid.getRoleZones(); // TODO (zones may overlap)
+//        for (int y = 0; y < grid.getDimY(); y++) {
+//            JSONArray row = new JSONArray();
+//            for (int x = 0; x < grid.getDimX(); x++) {
+//                row.put(grid.getTerrain(Position.of(x, y)).id);
+//            }
+//            cells.put(row);
+//        }
         for (GameObject o : gameObjects.values()) {
             JSONObject obj = new JSONObject();
             if (o instanceof Positionable) {
@@ -776,16 +772,17 @@ class GameState {
                 });
                 if (!arr.isEmpty()) obj.put("attached", arr);
             }
-            if (o instanceof Entity) {
+            if (o instanceof Entity e) {
                 obj.put("id", o.getID());
-                obj.put("name", ((Entity) o).getAgentName());
-                obj.put("team", ((Entity) o).getTeamName());
-                obj.put("energy", ((Entity) o).getEnergy());
-                obj.put("vision", ((Entity) o).getVision());
-                obj.put("action", ((Entity) o).getLastAction());
-                obj.put("actionParams", ((Entity) o).getLastActionParams());
-                obj.put("actionResult", ((Entity) o).getLastActionResult());
-                if (((Entity) o).isDisabled()) obj.put("disabled", true);
+                obj.put("name", e.getAgentName());
+                obj.put("team", e.getTeamName());
+                obj.put("role", e.getRole().name());
+                obj.put("energy", e.getEnergy());
+                obj.put("vision", e.getVision());
+                obj.put("action", e.getLastAction());
+                obj.put("actionParams", e.getLastActionParams());
+                obj.put("actionResult", e.getLastActionResult());
+                if (e.isDisabled()) obj.put("disabled", true);
                 entities.put(obj);
             } else if (o instanceof Block) {
                 obj.put("type", ((Block) o).getBlockType());
@@ -844,19 +841,11 @@ class GameState {
         return false;
     }
 
-    void setTerrain(Position p, Terrain terrain) {
-        grid.setTerrain(p, terrain);
-    }
-
     boolean attach(Position p1, Position p2) {
         Attachable a1 = getUniqueAttachable(p1);
         Attachable a2 = getUniqueAttachable(p2);
         if (a1 == null || a2 == null) return false;
         return grid.attach(a1, a2);
-    }
-
-    Terrain getTerrain(Position pos) {
-        return grid.getTerrain(pos);
     }
 
     public String handleSurveySearchAction(Entity entity, String searchTarget) {

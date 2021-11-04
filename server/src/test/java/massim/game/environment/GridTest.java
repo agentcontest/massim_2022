@@ -39,7 +39,7 @@ public class GridTest {
         assertNotNull(cluster);
         assert(cluster.size()==1);
 
-        assert(grid.getTerrain(cluster.get(0)) == Terrain.EMPTY);
+        assert grid.isUnblocked(cluster.get(0));
 //        assert(cluster.get(0).toString().equals("(2,2)"));
 
         System.out.println("Testing cluster size 3");
@@ -49,19 +49,16 @@ public class GridTest {
         assertNotNull(cluster3);
         assert(cluster3.size()==3);
 
-        assert(grid.getTerrain(cluster3.get(0)) == Terrain.EMPTY);
-//        assert(cluster3.get(0).toString().equals("(3,0)"));
-        assert(grid.getTerrain(cluster3.get(1)) == Terrain.EMPTY);
-//        assert(cluster3.get(1).toString().equals("(3,1)"));
-        assert(grid.getTerrain(cluster3.get(2)) == Terrain.EMPTY);
-//        assert(cluster3.get(2).toString().equals("(4,0)"));
+        assert grid.isUnblocked(cluster3.get(0));
+        assert grid.isUnblocked(cluster3.get(1));
+        assert grid.isUnblocked(cluster3.get(2));
     }
 
     private void printGridTerrain(Grid grid){
         for (int x=0; x < grid.getDimX(); x++){
             System.out.println(" ");
             for (int y=0; y < grid.getDimY(); y++)
-                System.out.print(" "+String.format("%1$5s",grid.getTerrain(new Position(x, y)).toString()));
+                System.out.print(" "+String.format("%1$5s",grid.isUnblocked(new Position(x, y))? "O" : "X"));
         }
         System.out.println(" ");
     }
