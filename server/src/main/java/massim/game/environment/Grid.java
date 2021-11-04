@@ -147,6 +147,14 @@ public class Grid {
         return this.roleZones.getClosest(pos).position().distanceTo(pos);
     }
 
+    public Integer getDistanceToNextZone(String type, Position pos) {
+        return switch(type) {
+            case "goal" -> this.goalZones.getClosest(pos).position().distanceTo(pos);
+            case "role" -> this.roleZones.getClosest(pos).position().distanceTo(pos);
+            default -> null;
+        };
+    }
+
     public Position findNewTaskboardPosition() {
         var start = findRandomFreePosition();
         var pos = start;

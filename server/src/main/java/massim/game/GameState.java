@@ -912,13 +912,14 @@ class GameState {
                 var optDispenser = dispensers.values().stream().min(
                         Comparator.comparing(d -> d.getPosition().distanceTo(entity.getPosition())));
                 if (optDispenser.isEmpty()) return FAILED_TARGET;
-                var distance = optDispenser.get().getPosition().distanceTo(entity.getPosition());
+                Integer distance = optDispenser.get().getPosition().distanceTo(entity.getPosition());
                 surveyResults.put(entity.getAgentName(), List.of("dispenser", String.valueOf(distance)));
                 break;
             case "goal":
-                var goalDistance = grid.getDistanceToNextGoalZone(entity.getPosition());
-                if (goalDistance == null) return FAILED_TARGET;
-                surveyResults.put(entity.getAgentName(), List.of("goal", String.valueOf(goalDistance)));
+            case "role":
+                distance = grid.getDistanceToNextZone(searchTarget, entity.getPosition());
+                if (distance == null) return FAILED_TARGET;
+                surveyResults.put(entity.getAgentName(), List.of(searchTarget, String.valueOf(distance)));
                 break;
             default:
                 return FAILED_PARAMETER;
