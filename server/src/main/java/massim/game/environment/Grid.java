@@ -27,12 +27,11 @@ public class Grid {
     private final Map<Position, Set<Positionable>> thingsMap;
     private Terrain[][] terrainMap;
     private final List<Marker> markers = new ArrayList<>();
-    private final Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
 
     private final ZoneList goalZones = new ZoneList();
     private final ZoneList roleZones = new ZoneList();
 
-    public Grid(JSONObject gridConf, int attachLimit, int distanceToTaskboards) {
+    public Grid(JSONObject gridConf, int attachLimit) {
         this.attachLimit = attachLimit;
         this.dimX = gridConf.getInt("width");
         this.dimY = gridConf.getInt("height");
@@ -103,9 +102,6 @@ public class Grid {
             var centerPos = findRandomFreePosition();
             var size = RNG.betweenClosed(goalSizeMin, goalSizeMax);
             this.addGoalZone(centerPos, size);
-
-            for (var pos : centerPos.spanArea(size ))
-                blockedForTaskBoards.put(pos.toString(), true);
         }
     }
 
@@ -153,28 +149,6 @@ public class Grid {
             case "role" -> this.roleZones.getClosest(pos).position().distanceTo(pos);
             default -> null;
         };
-    }
-
-    public Position findNewTaskboardPosition() {
-        var start = findRandomFreePosition();
-        var pos = start;
-        while (blockedForTaskBoards.getOrDefault(pos.toString(), false)) {
-            var x = pos.x + 1;
-            var y = pos.y;
-            if (x >= dimX) {
-                x = 0;
-                y += 1;
-                if (y >= dimY) {
-                    y = 0;
-                }
-            }
-            pos = Position.of(x,y);
-            if (pos.equals(start)) {
-                Log.log(Log.Level.ERROR, "Grid too small to place all things.");
-                return null;
-            }
-        }
-        return pos;
     }
 
     private void doCaveIteration(int createLimit, int destroyLimit) {

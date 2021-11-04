@@ -118,10 +118,6 @@ class GameState {
         taskRewardDecayMin = taskRewardDecayBounds.getInt(0);
         taskRewardDecayMax = taskRewardDecayBounds.getInt(1);
         Log.log(Log.Level.NORMAL, "config.tasks.probability: " + pNewTask);
-        int numberOfTaskboards = taskConfig.getInt("taskboards");
-        Log.log(Log.Level.NORMAL, "config.taskboards: " + numberOfTaskboards);
-        int distanceToTaskboards = taskConfig.getInt("distanceToTaskboards");
-        Log.log(Log.Level.NORMAL, "config.distanceToTaskboards: " + distanceToTaskboards);
         /* Minimum percentage of a reward to not decay beyond - range: [0,100] */
         int lowerRewardLimit = taskConfig.getInt("lowerRewardLimit");
         Log.log(Log.Level.NORMAL, "config.tasks.lowerRewardLimit: " + lowerRewardLimit);
@@ -149,7 +145,7 @@ class GameState {
         matchTeams.forEach(team -> teams.put(team.getName(), new Team(team.getName())));
 
         // create grid environment
-        grid = new Grid(config.getJSONObject("grid"), attachLimit, distanceToTaskboards);
+        grid = new Grid(config.getJSONObject("grid"), attachLimit);
 
         var defaultRole = parseRoles(config);
 
@@ -749,8 +745,6 @@ class GameState {
         snapshot.put("blocks", blocks);
         JSONArray dispensers = new JSONArray();
         snapshot.put("dispensers", dispensers);
-        JSONArray taskboardsArr = new JSONArray();
-        snapshot.put("taskboards", taskboardsArr);
         JSONArray taskArr = new JSONArray();
         snapshot.put("tasks", taskArr);
         JSONArray cells = new JSONArray();
