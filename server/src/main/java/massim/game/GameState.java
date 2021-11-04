@@ -44,7 +44,6 @@ class GameState {
     private final Grid grid;
     private final Map<Integer, GameObject> gameObjects = new HashMap<>();
     private final Map<Position, Dispenser> dispensers = new HashMap<>();
-    private final Map<Position, TaskBoard> taskboards = new HashMap<>();
     private final Set<String> blockTypes = new TreeSet<>();
     private final Map<String, Role> roles = new HashMap<>();
 
@@ -183,9 +182,6 @@ class GameState {
                 createDispenser(grid.findRandomFreePosition(), block);
             }
         }
-        for (var i = 0; i < numberOfTaskboards; i++) {
-            createTaskboard(grid.findNewTaskboardPosition());
-        }
 
         // check for setup file
         var setupFilePath = config.optString("setup");
@@ -260,9 +256,6 @@ class GameState {
                     case "dispenser":
                         blockType = command[4];
                         createDispenser(Position.of(x, y), blockType);
-                        break;
-                    case "taskboard":
-                        createTaskboard(Position.of(x, y));
                         break;
                     default:
                         Log.log(Log.Level.ERROR, "Cannot add " + command[3]);
@@ -419,8 +412,6 @@ class GameState {
                 });
                 var d = dispensers.get(currentPos);
                 if (d != null) visibleThings.add(d.toPercept(pos));
-                var tb = taskboards.get(currentPos);
-                if (tb != null) visibleThings.add(tb.toPercept(pos));
                 var terrain = grid.getTerrain(currentPos);
                 if (terrain != Terrain.EMPTY) {
                     visibleTerrain.computeIfAbsent(terrain.name,
@@ -431,7 +422,7 @@ class GameState {
                     teams.get(entity.getTeamName()).getScore(),
                     visibleThings, visibleTerrain, allTasks,
                     entity.getLastAction(), entity.getLastActionParams(),
-                    entity.getLastActionResult(), attachedThings, entity.getTask(),
+                    entity.getLastActionResult(), attachedThings,
                     surveyResults.get(entity.getAgentName()));
             percept.energy = entity.getEnergy();
             percept.disabled = entity.isDisabled();
@@ -557,7 +548,7 @@ class GameState {
 
     String handleSubmitAction(Entity e, String taskName) {
         Task task = tasks.get(taskName);
-        if (task == null || task.isCompleted() || step > task.getDeadline() || !e.getTask().equals(taskName))
+        if (task == null || task.isCompleted() || step > task.getDeadline())
             return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
         if (grid.getTerrain(ePos) != Terrain.GOAL) return ActionResults.FAILED;
@@ -614,25 +605,6 @@ class GameState {
             agentCausedClearMarkers.addAll(target.spanArea(1));
         }
         entity.recordClearAction(step, target);
-        return ActionResults.SUCCESS;
-    }
-
-    public String handleAcceptAction(Entity entity, String taskName) {
-        if (taskName == null || taskName.equals("")) return ActionResults.FAILED_TARGET;
-        var task = tasks.get(taskName);
-        if (task == null) return ActionResults.FAILED_TARGET;
-
-        var nearTaskboard = false;
-        var pos = entity.getPosition();
-        for (var tb: taskboards.values()) {
-            if (tb.getPosition().distanceTo(pos) <= 2) {
-                nearTaskboard = true;
-                break;
-            }
-        }
-        if (!nearTaskboard) return ActionResults.FAILED_LOCATION;
-
-        entity.acceptTask(task);
         return ActionResults.SUCCESS;
     }
 
@@ -719,16 +691,6 @@ class GameState {
         registerGameObject(d);
         dispensers.put(xy, d);
         Log.log(Log.Level.NORMAL, "Created " + d);
-        return true;
-    }
-
-    boolean createTaskboard(Position xy) {
-        if (!grid.isUnblocked(xy)) return false;
-        if (taskboards.get(xy) != null) return false;
-        TaskBoard tb = new TaskBoard(xy);
-        registerGameObject(tb);
-        taskboards.put(xy, tb);
-        Log.log(Log.Level.NORMAL, "Created " + tb);
         return true;
     }
 
@@ -829,7 +791,6 @@ class GameState {
                 obj.put("action", ((Entity) o).getLastAction());
                 obj.put("actionParams", ((Entity) o).getLastActionParams());
                 obj.put("actionResult", ((Entity) o).getLastActionResult());
-                obj.put("acceptedTask", ((Entity) o).getTask());
                 if (((Entity) o).isDisabled()) obj.put("disabled", true);
                 entities.put(obj);
             } else if (o instanceof Block) {
@@ -839,8 +800,6 @@ class GameState {
                 obj.put("id", o.getID());
                 obj.put("type", ((Dispenser) o).getBlockType());
                 dispensers.put(obj);
-            } else if (o instanceof TaskBoard) {
-                taskboardsArr.put(obj);
             }
         }
         for (ClearEvent e : clearEvents) {

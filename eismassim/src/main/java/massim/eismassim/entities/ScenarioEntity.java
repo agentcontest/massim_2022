@@ -67,7 +67,6 @@ public class ScenarioEntity extends ConnectedEntity {
             }
             ret.add(new Percept("task", new Identifier(task.name), new Numeral(task.deadline), new Numeral(task.reward), reqs));
         });
-        if (!percept.task.equals("")) ret.add(new Percept("accepted", new Identifier(percept.task)));
 
         percept.terrain.forEach((terrain, positions) -> positions.forEach(position ->
                         ret.add(new Percept(terrain, new Numeral(position.x), new Numeral(position.y)))));

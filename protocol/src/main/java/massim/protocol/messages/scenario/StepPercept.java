@@ -21,7 +21,6 @@ public class StepPercept extends RequestActionMessage {
     public Set<Position> attachedThings = new HashSet<>();
     public int energy;
     public boolean disabled;
-    public String task;
     public List<String> surveyResult;
 
     public StepPercept(JSONObject content) {
@@ -31,7 +30,7 @@ public class StepPercept extends RequestActionMessage {
 
     public StepPercept(int step, long score, Set<Thing> things, Map<String, Set<Position>> terrain,
                        Set<TaskInfo> taskInfo, String action, List<String> lastActionParams, String result,
-                       Set<Position> attachedThings, String task, List<String> surveyResult) {
+                       Set<Position> attachedThings, List<String> surveyResult) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -41,7 +40,6 @@ public class StepPercept extends RequestActionMessage {
         this.terrain = terrain;
         this.lastActionParams.addAll(lastActionParams);
         this.attachedThings = attachedThings;
-        this.task = task;
         this.surveyResult = surveyResult;
     }
 
@@ -57,7 +55,6 @@ public class StepPercept extends RequestActionMessage {
         percept.put("terrain", jsonTerrain);
         percept.put("energy", energy);
         percept.put("disabled", disabled);
-        percept.put("task", task);
         things.forEach(t -> jsonThings.put(t.toJSON()));
         taskInfo.forEach(t -> jsonTasks.put(t.toJSON()));
         terrain.forEach((t, positions) -> {
@@ -128,7 +125,6 @@ public class StepPercept extends RequestActionMessage {
 
         energy = percept.getInt("energy");
         disabled = percept.getBoolean("disabled");
-        task = percept.getString("task");
 
         var surveyed = percept.optJSONObject("surveyed");
         if (surveyed != null) {

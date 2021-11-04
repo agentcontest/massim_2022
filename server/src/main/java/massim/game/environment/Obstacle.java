@@ -11,6 +11,6 @@ public class Obstacle extends Attachable{
 
     @Override
     public Thing toPercept(Position relativeTo) {
-        return null;
+        return null; // TODO
     }
 }

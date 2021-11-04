@@ -127,38 +127,7 @@ public class GameStateTest {
                 Map.of(Position.of(0, 1), blockType, Position.of(-1, 1), blockType)) != null;
         assert state.attach(Position.of(15,15), Position.of(15,16));
         assert state.attach(Position.of(15,16), Position.of(14,16));
-        assert state.handleSubmitAction(a1, "testTask1").equals(ActionResults.FAILED_TARGET);
-        state.createTaskboard(Position.of(15,18));
-        assert state.handleAcceptAction(a1, "testTask1").equals(ActionResults.FAILED_LOCATION);
-        state.createTaskboard(Position.of(15,17));
-        assert state.handleAcceptAction(a1, "testTask1").equals(ActionResults.SUCCESS);
         assert state.handleSubmitAction(a1, "testTask1").equals(ActionResults.SUCCESS);
-    }
-
-    @org.junit.Test
-    public void handleAccept() {
-        var a1 = state.getEntityByName("A1");
-        state.teleport("A1", Position.of(10, 10));
-        String blockType = state.getBlockTypes().iterator().next();
-        var task = state.createTask("testTask1", 10,
-                Map.of(Position.of(0, 1), blockType, Position.of(-1, 1), blockType));
-
-        assert a1.getPosition().equals(Position.of(10, 10));
-        assert task != null;
-
-        assert state.handleAcceptAction(a1, "wrongtaskname").equals(ActionResults.FAILED_TARGET);
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.FAILED_LOCATION);
-
-        assert state.createTaskboard(Position.of(10,11));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-
-        state.teleport("A1", Position.of(10, 11));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-        state.teleport("A1", Position.of(10, 9));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-        state.teleport("A1", Position.of(10, 8));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.FAILED_LOCATION);
     }
 
     @org.junit.Test
