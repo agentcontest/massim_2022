@@ -29,16 +29,16 @@ public class Grid {
     private final List<Marker> markers = new ArrayList<>();
     private final Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
 
-    private final Map<Position, Zone> goalZones = new HashMap<>();
-    private final Map<Position, Integer> goalPresence = new HashMap<>();
+    private final ZoneList goalZones = new ZoneList();
+    private final ZoneList roleZones = new ZoneList();
 
     public Grid(JSONObject gridConf, int attachLimit, int distanceToTaskboards) {
         this.attachLimit = attachLimit;
-        dimX = gridConf.getInt("width");
-        dimY = gridConf.getInt("height");
+        this.dimX = gridConf.getInt("width");
+        this.dimY = gridConf.getInt("height");
         Position.setGridDimensions(dimX, dimY);
-        thingsMap = new HashMap<>();
-        terrainMap = new Terrain[dimX][dimY];
+        this.thingsMap = new HashMap<>();
+        this.terrainMap = new Terrain[dimX][dimY];
         for (Terrain[] col : terrainMap) Arrays.fill(col, Terrain.EMPTY);
 
         // terrain from bitmap
@@ -91,7 +91,7 @@ public class Grid {
 
         // goal terrain
         var goalConf = gridConf.getJSONObject("goals");
-        addGoalsFromConfig(goalConf);
+        this.addGoalsFromConfig(goalConf);
     }
 
     private void addGoalsFromConfig(JSONObject goalConf) {
@@ -102,38 +102,49 @@ public class Grid {
         for (var i = 0; i < goalNumber; i++) {
             var centerPos = findRandomFreePosition();
             var size = RNG.betweenClosed(goalSizeMin, goalSizeMax);
-            addGoal(centerPos, size);
+            this.addGoalZone(centerPos, size);
 
             for (var pos : centerPos.spanArea(size ))
                 blockedForTaskBoards.put(pos.toString(), true);
         }
     }
 
-    public void addGoal(Position xy, int radius) {
-        goalZones.put(xy, new Zone(xy, radius));
-        for (Position pos : xy.spanArea(radius)) {
-            var presence = goalPresence.merge(pos, 1, Integer::sum);
-            if (presence > 0)
-                setTerrain(pos, Terrain.GOAL);
-        }
+    public void addGoalZone(Position xy, int radius) {
+        this.goalZones.add(xy, radius);
     }
 
-    public void removeGoal(Zone goal) {
-        goalZones.remove(goal.position);
-        for (Position pos : goal.position.spanArea(goal.radius)) {
-            var presence = goalPresence.merge(pos, -1, Integer::sum);
-            if (presence == 0)
-                setTerrain(pos, Terrain.EMPTY);
-        }
+    public void removeGoalZone(Position pos) {
+        this.goalZones.remove(pos);
+    }
+
+    public boolean isInGoalZone(Position pos) {
+        return this.goalZones.isInZone(pos);
+    }
+
+    public void addRoleZone(Position xy, int radius) {
+        this.roleZones.add(xy, radius);
+    }
+
+    public void removeRoleZone(Position pos) {
+        this.roleZones.remove(pos);
+    }
+
+    public boolean isInRoleZone(Position pos) {
+        return this.roleZones.isInZone(pos);
     }
 
     /**
      * @return distance to the nearest goal zone's center or null if there is no such goal zone
      */
     public Integer getDistanceToNextGoalZone(Position pos) {
-        var nextGoal =  goalZones.values().stream().min(Comparator.comparing(goal -> goal.position.distanceTo(pos)));
-        if (nextGoal.isEmpty()) return null;
-        return nextGoal.get().position.distanceTo(pos);
+        return this.goalZones.getClosest(pos).position().distanceTo(pos);
+    }
+
+    /**
+     * @return distance to the nearest role zone's center or null if there is no such role zone
+     */
+    public Integer getDistanceToNextRoleZone(Position pos) {
+        return this.roleZones.getClosest(pos).position().distanceTo(pos);
     }
 
     public Position findNewTaskboardPosition() {
@@ -478,5 +489,5 @@ public class Grid {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
     }
 
-    public record Zone(Position position, int radius) {}
+
 }

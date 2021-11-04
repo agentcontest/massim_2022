@@ -933,4 +933,13 @@ class GameState {
                 List.of("agent", targetEntity.getAgentName(), targetEntity.getRole().name()));
         return SUCCESS;
     }
+
+    public String handleAdoptAction(Entity entity, String roleName) {
+        if (roleName == null) return FAILED_PARAMETER;
+        var role = this.roles.get(roleName);
+        if (role == null) return FAILED_PARAMETER;
+        if (!grid.isInRoleZone(entity.getPosition())) return FAILED_LOCATION;
+        entity.setRole(role);
+        return SUCCESS;
+    }
 }

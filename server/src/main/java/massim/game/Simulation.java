@@ -266,6 +266,11 @@ public class Simulation {
                         entity.setLastActionResult(FAILED_PARAMETER);
                     continue;
 
+                case ADOPT:
+                    var roleName = getStringParam(params, 0);
+                    entity.setLastActionResult(state.handleAdoptAction(entity, roleName));
+                    continue;
+
                 default:
                     entity.setLastActionResult(UNKNOWN_ACTION);
             }
