@@ -29,7 +29,7 @@ public class Grid {
     private final List<Marker> markers = new ArrayList<>();
     private final Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
 
-    private final Map<Position, GoalZone> goalZones = new HashMap<>();
+    private final Map<Position, Zone> goalZones = new HashMap<>();
     private final Map<Position, Integer> goalPresence = new HashMap<>();
 
     public Grid(JSONObject gridConf, int attachLimit, int distanceToTaskboards) {
@@ -110,7 +110,7 @@ public class Grid {
     }
 
     public void addGoal(Position xy, int radius) {
-        goalZones.put(xy, new GoalZone(xy, radius));
+        goalZones.put(xy, new Zone(xy, radius));
         for (Position pos : xy.spanArea(radius)) {
             var presence = goalPresence.merge(pos, 1, Integer::sum);
             if (presence > 0)
@@ -118,7 +118,7 @@ public class Grid {
         }
     }
 
-    public void removeGoal(GoalZone goal) {
+    public void removeGoal(Zone goal) {
         goalZones.remove(goal.position);
         for (Position pos : goal.position.spanArea(goal.radius)) {
             var presence = goalPresence.merge(pos, -1, Integer::sum);
@@ -478,5 +478,5 @@ public class Grid {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
     }
 
-    public record GoalZone(Position position, int radius) {}
+    public record Zone(Position position, int radius) {}
 }
