@@ -7,9 +7,11 @@ import massim.protocol.data.Thing;
 import massim.protocol.messages.RequestActionMessage;
 import massim.protocol.messages.SimEndMessage;
 import massim.protocol.messages.SimStartMessage;
+import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.Actions;
 import massim.protocol.messages.scenario.InitialPercept;
 import massim.protocol.messages.scenario.StepPercept;
+import massim.util.JSONUtil;
 import massim.util.Log;
 import massim.util.RNG;
 import massim.util.Util;
@@ -23,46 +25,53 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static massim.protocol.messages.scenario.ActionResults.*;
+
+
 /**
  * State of the game.
  */
 class GameState {
 
-    private Map<String, Team> teams = new HashMap<>();
-    private Map<String, Entity> agentToEntity = new HashMap<>();
-    private Map<Entity, String> entityToAgent = new HashMap<>();
+    private final Map<String, Team> teams = new HashMap<>();
+    private final Map<String, Entity> agentToEntity = new HashMap<>();
+    private final Map<Entity, String> entityToAgent = new HashMap<>();
 
     private int step = -1;
-    private int teamSize;
-    private Grid grid;
-    private Map<Integer, GameObject> gameObjects = new HashMap<>();
-    private Map<Position, Dispenser> dispensers = new HashMap<>();
-    private Map<Position, TaskBoard> taskboards = new HashMap<>();
-    private Map<String, Task> tasks = new HashMap<>();
-    private Set<String> blockTypes = new TreeSet<>();
-    private Set<ClearEvent> clearEvents = new HashSet<>();
-    private Set<Position> agentCausedClearMarkers = new HashSet<>();
+    private final int teamSize;
+
+    // static env. things
+    private final Grid grid;
+    private final Map<Integer, GameObject> gameObjects = new HashMap<>();
+    private final Map<Position, Dispenser> dispensers = new HashMap<>();
+    private final Map<Position, TaskBoard> taskboards = new HashMap<>();
+    private final Set<String> blockTypes = new TreeSet<>();
+    private final Map<String, Role> roles = new HashMap<>();
+
+    // dynamic env. things
+    private final Map<String, Task> tasks = new HashMap<>();
+    private final Set<ClearEvent> clearEvents = new HashSet<>();
+    private final Set<Position> agentCausedClearMarkers = new HashSet<>();
 
     // config parameters
-    private int randomFail;
-    private double pNewTask;
-    private int taskDurationMin;
-    private int taskDurationMax;
-    private int taskSizeMin;
-    private int taskSizeMax;
-    private int taskRewardDecayMin;
-    private int taskRewardDecayMax;
+    private final int randomFail;
+    private final double pNewTask;
+    private final int taskDurationMin;
+    private final int taskDurationMax;
+    private final int taskSizeMin;
+    private final int taskSizeMax;
+    private final int taskRewardDecayMin;
+    private final int taskRewardDecayMax;
     int clearSteps;
-    private int eventChance;
-    private int eventRadiusMin;
-    private int eventRadiusMax;
-    private int eventWarning;
-    private int eventCreateMin;
-    private int eventCreateMax;
-    private int eventCreatePerimeter;
-    private int numberOfTaskboards;
-    /** Minimum percentage of a reward to not decay beyond - range: [0,100] */
-    private int lowerRewardLimit;
+    private final int eventChance;
+    private final int eventRadiusMin;
+    private final int eventRadiusMax;
+    private final int eventWarning;
+    private final int eventCreateMin;
+    private final int eventCreateMax;
+    private final int eventCreatePerimeter;
+
+    private final Map<String, List<String>> surveyResults = new HashMap<>();
 
     private JSONArray logEvents = new JSONArray();
 
@@ -110,11 +119,12 @@ class GameState {
         taskRewardDecayMin = taskRewardDecayBounds.getInt(0);
         taskRewardDecayMax = taskRewardDecayBounds.getInt(1);
         Log.log(Log.Level.NORMAL, "config.tasks.probability: " + pNewTask);
-        numberOfTaskboards = taskConfig.getInt("taskboards");
+        int numberOfTaskboards = taskConfig.getInt("taskboards");
         Log.log(Log.Level.NORMAL, "config.taskboards: " + numberOfTaskboards);
         int distanceToTaskboards = taskConfig.getInt("distanceToTaskboards");
         Log.log(Log.Level.NORMAL, "config.distanceToTaskboards: " + distanceToTaskboards);
-        lowerRewardLimit = taskConfig.getInt("lowerRewardLimit");
+        /* Minimum percentage of a reward to not decay beyond - range: [0,100] */
+        int lowerRewardLimit = taskConfig.getInt("lowerRewardLimit");
         Log.log(Log.Level.NORMAL, "config.tasks.lowerRewardLimit: " + lowerRewardLimit);
 
         var eventConfig = config.getJSONObject("events");
@@ -142,6 +152,8 @@ class GameState {
         // create grid environment
         grid = new Grid(config.getJSONObject("grid"), attachLimit, distanceToTaskboards);
 
+        var defaultRole = parseRoles(config);
+
         // create entities
         var entities = config.getJSONObject("entities");
         var it = entities.keys();
@@ -155,7 +167,7 @@ class GameState {
                 for (Position p : cluster) {
                     int index = agentsRange.remove(RNG.nextInt(agentsRange.size()));
                     for (TeamConfig team: matchTeams) {
-                        createEntity(p, team.getAgentNames().get(index), team.getName());
+                        createEntity(p, team.getAgentNames().get(index), team.getName(), defaultRole);
                     }
                     agentCounter++;
                     if (agentCounter == numberOfAgents) break;
@@ -179,7 +191,7 @@ class GameState {
         var setupFilePath = config.optString("setup");
         if (!setupFilePath.equals("")){
             Log.log(Log.Level.NORMAL, "Running setup actions");
-            try (var b = new BufferedReader(new FileReader(setupFilePath));){
+            try (var b = new BufferedReader(new FileReader(setupFilePath))){
                 var line = "";
                 while ((line = b.readLine()) != null) {
                     if (line.startsWith("#") || line.isEmpty()) continue;
@@ -190,6 +202,26 @@ class GameState {
                 e.printStackTrace();
             }
         }
+    }
+
+    private Role parseRoles(JSONObject config) {
+        Role defaultRole = null;
+        JSONArray rolesData = config.getJSONArray("roles");
+        for (int i = 0; i < rolesData.length(); i++) {
+            var roleData = rolesData.getJSONObject(i);
+            var role = new Role(
+                    roleData.getString("name"),
+                    roleData.getInt("vision"),
+                    JSONUtil.arrayToStringSet(roleData.getJSONArray("actions")),
+                    JSONUtil.arrayToIntArray(roleData.getJSONArray("speed"))
+                    );
+            this.roles.put(role.name(), role);
+            Log.log(Log.Level.NORMAL, "Role " + role.name() + " added.");
+            if (i == 0) {
+                defaultRole = role;
+            }
+        }
+        return defaultRole;
     }
 
     Map<String, Team> getTeams() {
@@ -309,6 +341,8 @@ class GameState {
     Map<String, RequestActionMessage> prepareStep(int step) {
         this.step = step;
 
+        this.surveyResults.clear();
+
         logEvents = new JSONArray();
 
         //cleanup & transfer markers
@@ -393,13 +427,17 @@ class GameState {
                             t -> new HashSet<>()).add(currentPos.relativeTo(pos));
                 }
             }
-            var percept = new StepPercept(step, teams.get(entity.getTeamName()).getScore(),
-                    visibleThings, visibleTerrain, allTasks, entity.getLastAction(), entity.getLastActionParams(),
-                    entity.getLastActionResult(), attachedThings, entity.getTask());
+            var percept = new StepPercept(step,
+                    teams.get(entity.getTeamName()).getScore(),
+                    visibleThings, visibleTerrain, allTasks,
+                    entity.getLastAction(), entity.getLastActionParams(),
+                    entity.getLastActionResult(), attachedThings, entity.getTask(),
+                    surveyResults.get(entity.getAgentName()));
             percept.energy = entity.getEnergy();
             percept.disabled = entity.isDisabled();
             result.put(entity.getAgentName(), percept);
         }
+
         return result;
     }
 
@@ -418,93 +456,111 @@ class GameState {
         return result;
     }
 
-    String handleMoveAction(Entity entity, String direction) {
-        if (grid.moveWithAttached(entity, direction, 1)) {
-            return Actions.RESULT_SUCCESS;
+    String handleMoveAction(Entity entity, List<String> params) {
+        var directions = new ArrayList<String>();
+        for (int i = 0; i < params.size(); i++) {
+            var direction = Simulation.getStringParam(params, i);
+            if (!Grid.DIRECTIONS.contains(direction))
+                return FAILED_PARAMETER;
+            directions.add(direction);
         }
-        return Actions.RESULT_F_PATH;
+
+        var movesTaken = 0;
+        var possibleMoves = entity.getCurrentSpeed();
+        for (var direction : directions) {
+            if (grid.moveWithAttached(entity, direction, 1)){
+                movesTaken++;
+                if (movesTaken >= possibleMoves) break;
+            }
+            else
+                break;
+        }
+
+        if (movesTaken == 0) return ActionResults.FAILED_PATH;
+        else if (movesTaken < directions.size()) return PARTIAL_SUCCESS;
+        else return SUCCESS;
     }
 
     String handleRotateAction(Entity entity, boolean clockwise) {
         if (grid.rotateWithAttached(entity, clockwise)) {
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleAttachAction(Entity entity, String direction) {
         Position target = entity.getPosition().moved(direction, 1);
         Attachable a = getUniqueAttachable(target);
-        if (a == null) return Actions.RESULT_F_TARGET;
+        if (a == null) return ActionResults.FAILED_TARGET;
         if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a)) {
-            return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
         }
         if(!attachedToOpponent(a, entity) && grid.attach(entity, a)) {
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleDetachAction(Entity entity, String direction) {
         Position target = entity.getPosition().moved(direction, 1);
         Attachable a = getUniqueAttachable(target);
-        if (a == null) return Actions.RESULT_F_TARGET;
+        if (a == null) return ActionResults.FAILED_TARGET;
         if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a)) {
-            return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
         }
         if (grid.detachNeighbors(entity, a)){
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleDisconnectAction(Entity entity, Position attPos1, Position attPos2) {
         var attachable1 = getUniqueAttachable(attPos1.translate(entity.getPosition()));
         var attachable2 = getUniqueAttachable(attPos2.translate(entity.getPosition()));
-        if (attachable1 == null || attachable2 == null) return Actions.RESULT_F_TARGET;
+        if (attachable1 == null || attachable2 == null) return ActionResults.FAILED_TARGET;
         var allAttachments = entity.collectAllAttachments();
         if (!allAttachments.contains(attachable1) || !allAttachments.contains(attachable2))
-            return Actions.RESULT_F_TARGET;
-        if (grid.detachNeighbors(attachable1, attachable2)) return Actions.RESULT_SUCCESS;
-        return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
+        if (grid.detachNeighbors(attachable1, attachable2)) return ActionResults.SUCCESS;
+        return ActionResults.FAILED_TARGET;
     }
 
     String handleConnectAction(Entity entity, Position blockPos, Entity partnerEntity, Position partnerBlockPos) {
         Attachable block1 = getUniqueAttachable(blockPos.translate(entity.getPosition()));
         Attachable block2 = getUniqueAttachable(partnerBlockPos.translate(partnerEntity.getPosition()));
 
-        if(!(block1 instanceof Block) || !(block2 instanceof Block)) return Actions.RESULT_F_TARGET;
+        if(!(block1 instanceof Block) || !(block2 instanceof Block)) return ActionResults.FAILED_TARGET;
 
         Set<Attachable> attachables = entity.collectAllAttachments();
-        if (attachables.contains(partnerEntity)) return Actions.RESULT_F;
-        if (!attachables.contains(block1)) return Actions.RESULT_F_TARGET;
-        if (attachables.contains(block2)) return Actions.RESULT_F_TARGET;
+        if (attachables.contains(partnerEntity)) return ActionResults.FAILED;
+        if (!attachables.contains(block1)) return ActionResults.FAILED_TARGET;
+        if (attachables.contains(block2)) return ActionResults.FAILED_TARGET;
 
         Set<Attachable> partnerAttachables = partnerEntity.collectAllAttachments();
-        if (!partnerAttachables.contains(block2)) return Actions.RESULT_F_TARGET;
-        if (partnerAttachables.contains(block1)) return Actions.RESULT_F_TARGET;
+        if (!partnerAttachables.contains(block2)) return ActionResults.FAILED_TARGET;
+        if (partnerAttachables.contains(block1)) return ActionResults.FAILED_TARGET;
 
         if(grid.attach(block1, block2)){
-            return Actions.RESULT_SUCCESS;
+            return ActionResults.SUCCESS;
         }
-        return Actions.RESULT_F;
+        return ActionResults.FAILED;
     }
 
     String handleRequestAction(Entity entity, String direction) {
         var requestPosition = entity.getPosition().moved(direction, 1);
         var dispenser = dispensers.get(requestPosition);
-        if (dispenser == null) return Actions.RESULT_F_TARGET;
-        if (!grid.isUnblocked(requestPosition)) return Actions.RESULT_F_BLOCKED;
+        if (dispenser == null) return ActionResults.FAILED_TARGET;
+        if (!grid.isUnblocked(requestPosition)) return ActionResults.FAILED_BLOCKED;
         createBlock(requestPosition, dispenser.getBlockType());
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     String handleSubmitAction(Entity e, String taskName) {
         Task task = tasks.get(taskName);
         if (task == null || task.isCompleted() || step > task.getDeadline() || !e.getTask().equals(taskName))
-            return Actions.RESULT_F_TARGET;
+            return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
-        if (grid.getTerrain(ePos) != Terrain.GOAL) return Actions.RESULT_F;
+        if (grid.getTerrain(ePos) != Terrain.GOAL) return ActionResults.FAILED;
         Set<Attachable> attachedBlocks = e.collectAllAttachments();
         for (Map.Entry<Position, String> entry : task.getRequirements().entrySet()) {
             var pos = entry.getKey();
@@ -516,7 +572,7 @@ class GameState {
                 && attachedBlocks.contains(actualBlock)) {
                 continue;
             }
-            return Actions.RESULT_F;
+            return ActionResults.FAILED;
         }
         task.getRequirements().keySet().forEach(pos -> {
             Attachable a = getUniqueAttachable(pos.translate(e.getPosition()));
@@ -531,7 +587,7 @@ class GameState {
         result.put("team", e.getTeamName());
         if (logEvents != null) logEvents.put(result);
 
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     /**
@@ -541,8 +597,8 @@ class GameState {
      */
     String handleClearAction(Entity entity, Position xy) {
         var target = xy.translate(entity.getPosition());
-        if (target.distanceTo(entity.getPosition()) > entity.getVision()) return Actions.RESULT_F_TARGET;
-        if (entity.getEnergy() < Entity.clearEnergyCost) return Actions.RESULT_F_RESOURCES;
+        if (target.distanceTo(entity.getPosition()) > entity.getVision()) return ActionResults.FAILED_TARGET;
+        if (entity.getEnergy() < Entity.clearEnergyCost) return ActionResults.FAILED_RESOURCES;
 
         var previousPos = entity.getPreviousClearPosition();
         if(entity.getPreviousClearStep() != step - 1 || previousPos.x != target.x || previousPos.y != target.y) {
@@ -558,13 +614,13 @@ class GameState {
             agentCausedClearMarkers.addAll(target.spanArea(1));
         }
         entity.recordClearAction(step, target);
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     public String handleAcceptAction(Entity entity, String taskName) {
-        if (taskName == null || taskName.equals("")) return Actions.RESULT_F_TARGET;
+        if (taskName == null || taskName.equals("")) return ActionResults.FAILED_TARGET;
         var task = tasks.get(taskName);
-        if (task == null) return Actions.RESULT_F_TARGET;
+        if (task == null) return ActionResults.FAILED_TARGET;
 
         var nearTaskboard = false;
         var pos = entity.getPosition();
@@ -574,10 +630,10 @@ class GameState {
                 break;
             }
         }
-        if (!nearTaskboard) return Actions.RESULT_F_LOCATION;
+        if (!nearTaskboard) return ActionResults.FAILED_LOCATION;
 
         entity.acceptTask(task);
-        return Actions.RESULT_SUCCESS;
+        return ActionResults.SUCCESS;
     }
 
     int clearArea(Position center, int radius) {
@@ -640,8 +696,8 @@ class GameState {
         gameObjects.remove(go.getID());
     }
 
-    private Entity createEntity(Position xy, String name, String teamName) {
-        Entity e = grid.createEntity(xy, name, teamName);
+    private Entity createEntity(Position xy, String name, String teamName, Role role) {
+        Entity e = grid.createEntity(xy, name, teamName, role);
         registerGameObject(e);
         agentToEntity.put(name, e);
         entityToAgent.put(e, name);
@@ -794,7 +850,7 @@ class GameState {
             event.put("radius", e.getRadius());
             clear.put(event);
         }
-        tasks.values().stream().filter(t -> !t.isCompleted() && step <= t.getDeadline()).sorted(Comparator.comparing(t -> t.getDeadline())).forEach(t -> {
+        tasks.values().stream().filter(t -> !t.isCompleted() && step <= t.getDeadline()).sorted(Comparator.comparing(Task::getDeadline)).forEach(t -> {
             JSONObject task  = new JSONObject();
             task.put("name", t.getName());
             task.put("deadline", t.getDeadline());
@@ -848,5 +904,33 @@ class GameState {
 
     Terrain getTerrain(Position pos) {
         return grid.getTerrain(pos);
+    }
+
+    public String handleSurveySearchAction(Entity entity, String searchTarget) {
+        switch (searchTarget) {
+            case "dispenser":
+                var optDispenser = dispensers.values().stream().min(
+                        Comparator.comparing(d -> d.getPosition().distanceTo(entity.getPosition())));
+                if (optDispenser.isEmpty()) return FAILED_TARGET;
+                var distance = optDispenser.get().getPosition().distanceTo(entity.getPosition());
+                surveyResults.put(entity.getAgentName(), List.of("dispenser", String.valueOf(distance)));
+                break;
+            case "goal":
+                var goalDistance = grid.getDistanceToNextGoalZone(entity.getPosition());
+                if (goalDistance == null) return FAILED_TARGET;
+                surveyResults.put(entity.getAgentName(), List.of("goal", String.valueOf(goalDistance)));
+                break;
+            default:
+                return FAILED_PARAMETER;
+        }
+        return SUCCESS;
+    }
+
+    public String handleSurveyTargetAction(Entity entity, Entity targetEntity) {
+        var distance = entity.getPosition().distanceTo(targetEntity.getPosition());
+        if (distance > entity.getVision()) return FAILED_LOCATION;
+        surveyResults.put(entity.getAgentName(),
+                List.of("agent", targetEntity.getAgentName(), targetEntity.getRole().name()));
+        return SUCCESS;
     }
 }

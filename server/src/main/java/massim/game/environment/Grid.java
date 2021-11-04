@@ -1,6 +1,7 @@
 package massim.game.environment;
 
 import massim.game.Entity;
+import massim.game.Role;
 import massim.protocol.data.Position;
 import massim.util.Log;
 import massim.util.RNG;
@@ -8,7 +9,6 @@ import org.json.JSONObject;
 
 
 import javax.imageio.ImageIO;
-import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -18,16 +18,19 @@ public class Grid {
 
     public static final Set<String> DIRECTIONS = Set.of("n", "s", "e", "w");
     public static final Set<String> ROTATION_DIRECTIONS = Set.of("cw", "ccw");
-    private static Map<Integer, Terrain> terrainColors =
+    private static final Map<Integer, Terrain> terrainColors =
             Map.of(-16777216, Terrain.OBSTACLE, -1, Terrain.EMPTY, -65536, Terrain.GOAL);
 
-    private int dimX;
-    private int dimY;
-    private int attachLimit;
-    private Map<Position, Set<Positionable>> thingsMap;
+    private final int dimX;
+    private final int dimY;
+    private final int attachLimit;
+    private final Map<Position, Set<Positionable>> thingsMap;
     private Terrain[][] terrainMap;
-    private List<Marker> markers = new ArrayList<>();
-    private Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
+    private final List<Marker> markers = new ArrayList<>();
+    private final Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
+
+    private final Map<Position, GoalZone> goalZones = new HashMap<>();
+    private final Map<Position, Integer> goalPresence = new HashMap<>();
 
     public Grid(JSONObject gridConf, int attachLimit, int distanceToTaskboards) {
         this.attachLimit = attachLimit;
@@ -88,6 +91,10 @@ public class Grid {
 
         // goal terrain
         var goalConf = gridConf.getJSONObject("goals");
+        addGoalsFromConfig(goalConf);
+    }
+
+    private void addGoalsFromConfig(JSONObject goalConf) {
         var goalNumber = goalConf.getInt("number");
         var goalSize = goalConf.getJSONArray("size");
         var goalSizeMin = goalSize.getInt(0);
@@ -95,11 +102,38 @@ public class Grid {
         for (var i = 0; i < goalNumber; i++) {
             var centerPos = findRandomFreePosition();
             var size = RNG.betweenClosed(goalSizeMin, goalSizeMax);
-            for (var pos : centerPos.spanArea(size)) setTerrain(pos, Terrain.GOAL);
+            addGoal(centerPos, size);
 
-            for (var pos : centerPos.spanArea(size + distanceToTaskboards))
+            for (var pos : centerPos.spanArea(size ))
                 blockedForTaskBoards.put(pos.toString(), true);
         }
+    }
+
+    public void addGoal(Position xy, int radius) {
+        goalZones.put(xy, new GoalZone(xy, radius));
+        for (Position pos : xy.spanArea(radius)) {
+            var presence = goalPresence.merge(pos, 1, Integer::sum);
+            if (presence > 0)
+                setTerrain(pos, Terrain.GOAL);
+        }
+    }
+
+    public void removeGoal(GoalZone goal) {
+        goalZones.remove(goal.position);
+        for (Position pos : goal.position.spanArea(goal.radius)) {
+            var presence = goalPresence.merge(pos, -1, Integer::sum);
+            if (presence == 0)
+                setTerrain(pos, Terrain.EMPTY);
+        }
+    }
+
+    /**
+     * @return distance to the nearest goal zone's center or null if there is no such goal zone
+     */
+    public Integer getDistanceToNextGoalZone(Position pos) {
+        var nextGoal =  goalZones.values().stream().min(Comparator.comparing(goal -> goal.position.distanceTo(pos)));
+        if (nextGoal.isEmpty()) return null;
+        return nextGoal.get().position.distanceTo(pos);
     }
 
     public Position findNewTaskboardPosition() {
@@ -199,8 +233,8 @@ public class Grid {
         return dimY;
     }
 
-    public Entity createEntity(Position xy, String agentName, String teamName) {
-        var e = new Entity(xy, agentName, teamName);
+    public Entity createEntity(Position xy, String agentName, String teamName, Role role) {
+        var e = new Entity(xy, agentName, teamName, role);
         insertThing(e);
         return e;
     }
@@ -288,7 +322,7 @@ public class Grid {
             }
             sb.append("\n");
         }
-        System.out.println(sb.toString());
+        System.out.println(sb);
     }
 
     /**
@@ -360,7 +394,7 @@ public class Grid {
     }
     
     public ArrayList<Position> findRandomFreeClusterPosition(int clusterSize) {
-        ArrayList<Position> cluster = new ArrayList<Position>();
+        ArrayList<Position> cluster = new ArrayList<>();
         int x = RNG.nextInt(dimX);
         int y = RNG.nextInt(dimY);
         final int radius = (int) (Math.log(clusterSize)/Math.log(2)); 
@@ -443,4 +477,6 @@ public class Grid {
     public Position getRandomPosition() {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
     }
+
+    public record GoalZone(Position position, int radius) {}
 }

@@ -5,7 +5,7 @@ import massim.game.environment.Task;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.ActionMessage;
-import massim.protocol.messages.scenario.Actions;
+import massim.protocol.messages.scenario.ActionResults;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,13 +20,14 @@ public class Entity extends Attachable {
     static int clearEnergyCost = 0;
     static int disableDuration = 0;
 
-    private String agentName;
-    private String teamName;
+    private final String agentName;
+    private final String teamName;
+    private Role role;
+
     private String lastAction = "";
     private List<String> lastActionParams = Collections.emptyList();
     private String lastActionResult = "";
 
-    private int vision = 5;
     private int energy;
 
     private int previousClearStep = -1;
@@ -37,11 +38,12 @@ public class Entity extends Attachable {
 
     private Task acceptedTask;
 
-    public Entity(Position xy, String agentName, String teamName) {
+    public Entity(Position xy, String agentName, String teamName, Role role) {
         super(xy);
         this.agentName = agentName;
         this.teamName = teamName;
         this.energy = maxEnergy;
+        this.role = role;
     }
 
     @Override
@@ -72,7 +74,7 @@ public class Entity extends Attachable {
 
     void setNewAction(ActionMessage action) {
         this.lastAction = action.getActionType();
-        this.lastActionResult = Actions.RESULT_UNPROCESSED;
+        this.lastActionResult = ActionResults.UNPROCESSED;
         this.lastActionParams = action.getParams();
     }
 
@@ -89,7 +91,14 @@ public class Entity extends Attachable {
     }
 
     int getVision() {
-        return vision;
+        return this.role.vision();
+    }
+
+    /**
+     * @return the entity's speed considering current attachments
+     */
+    int getCurrentSpeed() {
+        return this.role.maxSpeed(collectAllAttachments().size() - 1);
     }
 
     void recordClearAction(int step, Position position) {
@@ -137,5 +146,17 @@ public class Entity extends Attachable {
     String getTask() {
         if (acceptedTask == null) return "";
         return acceptedTask.getName();
+    }
+
+    void changeRole(Role role) {
+        this.role = role;
+    }
+
+    public Role getRole() {
+        return this.role;
+    }
+
+    boolean isActionAvailable(String action) {
+        return this.role.actions().contains(action);
     }
 }
