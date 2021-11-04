@@ -431,7 +431,10 @@ public class Grid {
             }
         }
 
-        Position.of(x, y).spanArea(radius).forEach((p) -> {if(cluster.size() == clusterSize) return;  if(getTerrain(p) == Terrain.EMPTY) cluster.add(p);});
+        Position.of(x, y).spanArea(radius).forEach((p) -> {
+            if(cluster.size() == clusterSize) return;
+            if(getTerrain(p) == Terrain.EMPTY) cluster.add(p);
+        });
 
         return cluster;
     }
