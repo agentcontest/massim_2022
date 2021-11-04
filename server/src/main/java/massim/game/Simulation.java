@@ -234,11 +234,6 @@ public class Simulation {
                             state.handleDisconnectAction(entity, Position.of(x1, y1), Position.of(x2, y2)));
                     continue;
 
-                case ACCEPT:
-                    var task = getStringParam(params, 0);
-                    entity.setLastActionResult(state.handleAcceptAction(entity, task));
-                    continue;
-
                 case SURVEY:
                     if (params.size() == 1) {
                         var searchTarget = getStringParam(params, 0);
@@ -264,6 +259,11 @@ public class Simulation {
                     }
                     else
                         entity.setLastActionResult(FAILED_PARAMETER);
+                    continue;
+
+                case ADOPT:
+                    var roleName = getStringParam(params, 0);
+                    entity.setLastActionResult(state.handleAdoptAction(entity, roleName));
                     continue;
 
                 default:

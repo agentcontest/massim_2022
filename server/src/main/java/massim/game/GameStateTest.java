@@ -2,66 +2,19 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.Block;
-import massim.game.environment.Terrain;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.StepPercept;
 import massim.util.RNG;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class GameStateTest {
-
-    private static final JSONObject CONFIG = new JSONObject("{\n" +
-            "      \"NOsetup\" : \"conf/setup/test.txt\",\n" +
-            "\n" +
-            "      \"steps\" : 500,\n" +
-            "      \"NOrandomSeed\" : 17,\n" +
-            "      \"randomFail\" : 1,\n" +
-            "      \"entities\" : {\"standard\" : 10},\n" +
-            "      \"clusterSize\" : 10,\n" +
-            "\n" +
-            "      \"clearSteps\" : 3,\n" +
-            "      \"clearEnergyCost\" : 30,\n" +
-            "      \"disableDuration\" : 4,\n" +
-            "      \"maxEnergy\" : 300,\n" +
-            "      \"attachLimit\" : 10,\n" +
-            "\n" +
-            "      \"grid\" : {\n" +
-            "        \"height\" : 100,\n" +
-            "        \"width\" : 100,\n" +
-            "        \"NOfile\" : \"conf/maps/test40x40.bmp\",\n" +
-            "        \"instructions\": [\n" +
-            "        ],\n" +
-            "        \"goals\": {\n" +
-            "          \"number\" : 0,\n" +
-            "          \"size\" : [1,2]\n" +
-            "        }\n" +
-            "      },\n" +
-            "\n" +
-            "      \"blockTypes\" : [3, 3],\n" +
-            "      \"dispensers\" : [5, 10],\n" +
-            "\n" +
-            "      \"tasks\" : {\n" +
-            "        \"size\" : [2, 4],\n" +
-            "        \"duration\" : [100, 200],\n" +
-            "        \"probability\" : 0.05,\n" +
-            "        \"taskboards\" : 5,\n" +
-            "        \"rewardDecay\" : [1,5],\n" +
-            "        \"lowerRewardLimit\" : 10,\n" +
-            "        \"distanceToTaskboards\" : 10\n" +
-            "      },\n" +
-            "\n" +
-            "      \"events\" : {\n" +
-            "        \"chance\" : 15,\n" +
-            "        \"radius\" : [3, 5],\n" +
-            "        \"warning\" : 5,\n" +
-            "        \"create\" : [-3, 1],\n" +
-            "        \"perimeter\" : 2\n" +
-            "      }\n" +
-            "    }");
 
     private GameState state;
 
@@ -69,9 +22,74 @@ public class GameStateTest {
     public void setUp() {
         RNG.initialize(17);
 
+        JSONObject config = new JSONObject()
+                .put("steps", 500)
+                .put("randomFail", 1)
+                .put("entities", new JSONObject().put("standard", 10))
+                .put("clusterBounds", new JSONArray().put(1).put(3))
+                .put("clearSteps", 3)
+                .put("clearEnergyCost", 30)
+                .put("disableDuration", 4)
+                .put("maxEnergy", 300)
+                .put("attachLimit", 10)
+                .put("grid", new JSONObject()
+                        .put("height", 100)
+                        .put("width", 100)
+                        .put("instructions", new JSONArray())
+                        .put("goals", new JSONObject()
+                                .put("number", 0)
+                                .put("size", new JSONArray().put(1).put(2))
+                        )
+                )
+                .put("blockTypes", new JSONArray().put(3).put(3))
+                .put("dispensers", new JSONArray().put(5).put(10))
+                .put("tasks", new JSONObject()
+                        .put("size", new JSONArray().put(2).put(4))
+                        .put("duration", new JSONArray().put(100).put(200))
+                        .put("probability", 0.05)
+                        .put("taskboards", 5)
+                        .put("rewardDecay", new JSONArray().put(1).put(5))
+                        .put("lowerRewardLimit", 10)
+                        .put("distanceToTaskboards", 10)
+                )
+                .put("events", new JSONObject()
+                        .put("chance", 15)
+                        .put("radius", new JSONArray().put(3).put(5))
+                        .put("warning", 5)
+                        .put("create", new JSONArray().put(-3).put(1))
+                        .put("perimeter", 2)
+                )
+                .put("roles", new JSONArray()
+                        .put(new JSONObject()
+                                .put("name", "worker")
+                                .put("vision", 5)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit")))
+                                .put("speed", new JSONArray(List.of(1, 1, 0)))
+                        )
+                        .put(new JSONObject()
+                                .put("name", "constructor")
+                                .put("vision", 5)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit")))
+                                .put("speed", new JSONArray(List.of(1)))
+                        )
+                        .put(new JSONObject()
+                                .put("name", "explorer")
+                                .put("vision", 7)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "attach", "detach", "survey")))
+                                .put("speed", new JSONArray(List.of(2, 0)))
+                        )
+                        .put(new JSONObject()
+                                .put("name", "digger")
+                                .put("vision", 5)
+                                .put("actions", new JSONArray(List.of("skip", "move", "rotate", "adopt", "detach", "clear")))
+                                .put("speed", new JSONArray(List.of(1, 0)))
+                        )
+                )
+                ;
+
         var team = new TeamConfig("A");
         for (var i = 1; i <= 10; i++) team.addAgent("A" + i, "1");
-        state = new GameState(CONFIG, Set.of(team));
+        state = new GameState(config, Set.of(team));
     }
 
     @org.junit.Test
@@ -101,7 +119,7 @@ public class GameStateTest {
     @org.junit.Test
     public void taskSubmissionWorks() {
         var a1 = state.getEntityByName("A1");
-        state.setTerrain(Position.of(15,15), Terrain.GOAL);
+        state.getGrid().addGoalZone(Position.of(15, 15), 1);
         assert state.teleport("A1", Position.of(15,15));
         String blockType = state.getBlockTypes().iterator().next();
         assert state.createBlock(Position.of(15,16), blockType) != null;
@@ -110,38 +128,7 @@ public class GameStateTest {
                 Map.of(Position.of(0, 1), blockType, Position.of(-1, 1), blockType)) != null;
         assert state.attach(Position.of(15,15), Position.of(15,16));
         assert state.attach(Position.of(15,16), Position.of(14,16));
-        assert state.handleSubmitAction(a1, "testTask1").equals(ActionResults.FAILED_TARGET);
-        state.createTaskboard(Position.of(15,18));
-        assert state.handleAcceptAction(a1, "testTask1").equals(ActionResults.FAILED_LOCATION);
-        state.createTaskboard(Position.of(15,17));
-        assert state.handleAcceptAction(a1, "testTask1").equals(ActionResults.SUCCESS);
         assert state.handleSubmitAction(a1, "testTask1").equals(ActionResults.SUCCESS);
-    }
-
-    @org.junit.Test
-    public void handleAccept() {
-        var a1 = state.getEntityByName("A1");
-        state.teleport("A1", Position.of(10, 10));
-        String blockType = state.getBlockTypes().iterator().next();
-        var task = state.createTask("testTask1", 10,
-                Map.of(Position.of(0, 1), blockType, Position.of(-1, 1), blockType));
-
-        assert a1.getPosition().equals(Position.of(10, 10));
-        assert task != null;
-
-        assert state.handleAcceptAction(a1, "wrongtaskname").equals(ActionResults.FAILED_TARGET);
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.FAILED_LOCATION);
-
-        assert state.createTaskboard(Position.of(10,11));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-
-        state.teleport("A1", Position.of(10, 11));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-        state.teleport("A1", Position.of(10, 9));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.SUCCESS);
-        state.teleport("A1", Position.of(10, 8));
-        assert state.handleAcceptAction(a1, task.getName()).equals(ActionResults.FAILED_LOCATION);
     }
 
     @org.junit.Test
@@ -168,14 +155,14 @@ public class GameStateTest {
         state.teleport("A1", Position.of(10, 10));
         var block1 = state.createBlock(Position.of(10,11), "b1");
         var block2 = state.createBlock(Position.of(10,12), "b1");
-        state.setTerrain(Position.of(11,10), Terrain.OBSTACLE);
+        state.getGrid().addObstacle(Position.of(11, 10));
 
         var result = state.clearArea(Position.of(10,10), 1);
 
         assert(a1.isDisabled());
         assert(state.getThingsAt(block1.getPosition()).size() == 0);
         assert(state.getThingsAt(block2.getPosition()).size() == 1);
-        assert(state.getTerrain(Position.of(11, 10)) == Terrain.EMPTY);
+        assert state.getGrid().isUnblocked(Position.of(11, 10));
         assert(result == 2);
     }
 
@@ -281,13 +268,13 @@ public class GameStateTest {
         assert(a1.getPosition().equals(Position.of(grid.getDimX() - 1, grid.getDimY() - 1)));
 
         // test clear across boundaries
-        state.setTerrain(Position.of(0, 0), Terrain.OBSTACLE);
-        assert state.getTerrain(Position.of(0, 0)) == Terrain.OBSTACLE;
+        state.getGrid().addObstacle(Position.of(0, 0));
+        assert state.getGrid().isBlocked(Position.of(0, 0));
         for (var i = 0; i < state.clearSteps; i++) {
             state.prepareStep(i);
             assert state.handleClearAction(a1, Position.of(1, 1)).equals(ActionResults.SUCCESS);
         }
-        assert state.getTerrain(Position.of(0, 0)) == Terrain.EMPTY;
+        assert state.getGrid().isUnblocked(Position.of(0, 0));
 
         state.handleMoveAction(a1, List.of("s"));
         assert a1.getPosition().equals(Position.of(grid.getDimX() - 1, 0));

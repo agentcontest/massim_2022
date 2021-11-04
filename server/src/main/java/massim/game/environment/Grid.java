@@ -5,6 +5,7 @@ import massim.game.Role;
 import massim.protocol.data.Position;
 import massim.util.Log;
 import massim.util.RNG;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 
@@ -18,28 +19,25 @@ public class Grid {
 
     public static final Set<String> DIRECTIONS = Set.of("n", "s", "e", "w");
     public static final Set<String> ROTATION_DIRECTIONS = Set.of("cw", "ccw");
-    private static final Map<Integer, Terrain> terrainColors =
-            Map.of(-16777216, Terrain.OBSTACLE, -1, Terrain.EMPTY, -65536, Terrain.GOAL);
+    private static final Map<Integer, String> bitmapColors =
+            Map.of(-16777216, "obstacle", -1, "empty", -65536, "goal");
 
     private final int dimX;
     private final int dimY;
     private final int attachLimit;
     private final Map<Position, Set<Positionable>> thingsMap;
-    private Terrain[][] terrainMap;
     private final List<Marker> markers = new ArrayList<>();
-    private final Map<String,Boolean> blockedForTaskBoards = new HashMap<>();
+    private final Set<Obstacle> obstacles = new HashSet<>();
 
-    private final Map<Position, GoalZone> goalZones = new HashMap<>();
-    private final Map<Position, Integer> goalPresence = new HashMap<>();
+    private final ZoneList goalZones = new ZoneList();
+    private final ZoneList roleZones = new ZoneList();
 
-    public Grid(JSONObject gridConf, int attachLimit, int distanceToTaskboards) {
+    public Grid(JSONObject gridConf, int attachLimit) {
         this.attachLimit = attachLimit;
-        dimX = gridConf.getInt("width");
-        dimY = gridConf.getInt("height");
+        this.dimX = gridConf.getInt("width");
+        this.dimY = gridConf.getInt("height");
         Position.setGridDimensions(dimX, dimY);
-        thingsMap = new HashMap<>();
-        terrainMap = new Terrain[dimX][dimY];
-        for (Terrain[] col : terrainMap) Arrays.fill(col, Terrain.EMPTY);
+        this.thingsMap = new HashMap<>();
 
         // terrain from bitmap
         String mapFilePath = gridConf.optString("file");
@@ -51,7 +49,11 @@ public class Grid {
                     var width = Math.min(dimX, img.getWidth());
                     var height = Math.min(dimY, img.getHeight());
                     for (int x = 0; x < width; x++) { for (int y = 0; y < height; y++) {
-                        setTerrain(Position.of(x, y), terrainColors.getOrDefault(img.getRGB(x, y), Terrain.EMPTY));
+                        switch(bitmapColors.getOrDefault(img.getRGB(x, y), "empty")) {
+                            case "obstacle" -> addObstacle(Position.of(x, y));
+                            case "goal" -> addGoalZone(Position.of(x, y), 1);
+                            default -> Log.log(Log.Level.ERROR, "Unknown bitmap color: " + img.getRGB(x, y));
+                        }
                     }}
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -60,38 +62,56 @@ public class Grid {
             else Log.log(Log.Level.ERROR, "File " + mapFile.getAbsolutePath() + " not found.");
         }
 
-        // terrain from other instructions
-        var instructions = gridConf.getJSONArray("instructions");
+        this.addObstaclesFromConfig(gridConf.getJSONArray("instructions"));
+
+        this.addGoalsFromConfig(gridConf.getJSONObject("goals"));
+    }
+
+    private void addObstaclesFromConfig(JSONArray instructions) {
+        boolean[][] obstacles = new boolean[dimX][dimY];
         for (var i = 0; i < instructions.length(); i++) {
             var instruction = instructions.optJSONArray(i);
             if (instruction == null) continue;
             switch (instruction.getString(0)) {
-                case "line-border":
+                case "line-border" -> {
                     var width = instruction.getInt(1);
-                    for (var j = 0; j < width; j++) createLineBorder(j);
-                    break;
-                case "ragged-border":
-                    width = instruction.getInt(1);
-                    createRaggedBorder(width);
-                    break;
-                case "cave":
+                    for (var j = 0; j < width; j++) createLineBorder(obstacles, j);
+                }
+                case "ragged-border" -> {
+                    var width = instruction.getInt(1);
+                    createRaggedBorder(obstacles, width);
+                }
+                case "cave" -> {
                     var chanceAlive = instruction.getDouble(1);
-                    for (int x = 0; x < dimX; x++) { for (int y = 0; y < dimY; y++) {
-                        if (RNG.nextDouble() < chanceAlive) terrainMap[x][y] = Terrain.OBSTACLE;
-                    }}
+                    for (int x = 0; x < dimX; x++) {
+                        for (int y = 0; y < dimY; y++) {
+                            if (RNG.nextDouble() < chanceAlive) addObstacle(Position.of(x, y));
+                        }
+                    }
                     var iterations = instruction.getInt(2);
                     var createLimit = instruction.getInt(3);
                     var destroyLimit = instruction.getInt(4);
                     for (var it = 0; it < iterations; it++) {
-                        doCaveIteration(createLimit, destroyLimit);
+                        obstacles = doCaveIteration(obstacles, createLimit, destroyLimit);
                     }
-                    break;
+                }
             }
         }
+        for (int y = 0; y < dimY; y++) for (int x = 0; x < dimX; x++)
+            if (obstacles[x][y]) addObstacle(Position.of(x, y));
+    }
 
-        // goal terrain
-        var goalConf = gridConf.getJSONObject("goals");
-        addGoalsFromConfig(goalConf);
+    public void addObstacle(Position pos) {
+        var o = new Obstacle(pos);
+        if (this.insertThing(new Obstacle(pos)))
+            obstacles.add(o);
+    }
+
+    /**
+     * @return a copy of the set of all obstacles
+     */
+    public Set<Obstacle> getObstacles() {
+        return new HashSet<>(obstacles);
     }
 
     private void addGoalsFromConfig(JSONObject goalConf) {
@@ -102,87 +122,86 @@ public class Grid {
         for (var i = 0; i < goalNumber; i++) {
             var centerPos = findRandomFreePosition();
             var size = RNG.betweenClosed(goalSizeMin, goalSizeMax);
-            addGoal(centerPos, size);
-
-            for (var pos : centerPos.spanArea(size ))
-                blockedForTaskBoards.put(pos.toString(), true);
+            this.addGoalZone(centerPos, size);
         }
     }
 
-    public void addGoal(Position xy, int radius) {
-        goalZones.put(xy, new GoalZone(xy, radius));
-        for (Position pos : xy.spanArea(radius)) {
-            var presence = goalPresence.merge(pos, 1, Integer::sum);
-            if (presence > 0)
-                setTerrain(pos, Terrain.GOAL);
-        }
+    public void addGoalZone(Position xy, int radius) {
+        this.goalZones.add(xy, radius);
     }
 
-    public void removeGoal(GoalZone goal) {
-        goalZones.remove(goal.position);
-        for (Position pos : goal.position.spanArea(goal.radius)) {
-            var presence = goalPresence.merge(pos, -1, Integer::sum);
-            if (presence == 0)
-                setTerrain(pos, Terrain.EMPTY);
-        }
+    public void removeGoalZone(Position pos) {
+        this.goalZones.remove(pos);
+    }
+
+    public boolean isInGoalZone(Position pos) {
+        return this.goalZones.isInZone(pos);
+    }
+
+    public List<ZoneList.Zone> getGoalZones() {
+        return goalZones.getZones();
+    }
+
+    public void addRoleZone(Position xy, int radius) {
+        this.roleZones.add(xy, radius);
+    }
+
+    public void removeRoleZone(Position pos) {
+        this.roleZones.remove(pos);
+    }
+
+    public boolean isInRoleZone(Position pos) {
+        return this.roleZones.isInZone(pos);
+    }
+    public List<ZoneList.Zone> getRoleZones() {
+        return roleZones.getZones();
     }
 
     /**
      * @return distance to the nearest goal zone's center or null if there is no such goal zone
      */
     public Integer getDistanceToNextGoalZone(Position pos) {
-        var nextGoal =  goalZones.values().stream().min(Comparator.comparing(goal -> goal.position.distanceTo(pos)));
-        if (nextGoal.isEmpty()) return null;
-        return nextGoal.get().position.distanceTo(pos);
+        return this.goalZones.getClosest(pos).position().distanceTo(pos);
     }
 
-    public Position findNewTaskboardPosition() {
-        var start = findRandomFreePosition();
-        var pos = start;
-        while (blockedForTaskBoards.getOrDefault(pos.toString(), false)) {
-            var x = pos.x + 1;
-            var y = pos.y;
-            if (x >= dimX) {
-                x = 0;
-                y += 1;
-                if (y >= dimY) {
-                    y = 0;
-                }
-            }
-            pos = Position.of(x,y);
-            if (pos.equals(start)) {
-                Log.log(Log.Level.ERROR, "Grid too small to place all things.");
-                return null;
-            }
-        }
-        return pos;
+    /**
+     * @return distance to the nearest role zone's center or null if there is no such role zone
+     */
+    public Integer getDistanceToNextRoleZone(Position pos) {
+        return this.roleZones.getClosest(pos).position().distanceTo(pos);
     }
 
-    private void doCaveIteration(int createLimit, int destroyLimit) {
-        var newTerrain = new Terrain[dimX][dimY];
+    public Integer getDistanceToNextZone(String type, Position pos) {
+        return switch(type) {
+            case "goal" -> this.goalZones.getClosest(pos).position().distanceTo(pos);
+            case "role" -> this.roleZones.getClosest(pos).position().distanceTo(pos);
+            default -> null;
+        };
+    }
+
+    private boolean[][] doCaveIteration(boolean[][] obstacles, int createLimit, int destroyLimit) {
+        var newTerrain = new boolean[dimX][dimY];
         for (var x = 0; x < dimX; x++) { for (var y = 0; y < dimY; y++) {
-            var n = countObstacleNeighbours(x,y);
-            if (terrainMap[x][y] == Terrain.OBSTACLE) {
-                if (n < destroyLimit) newTerrain[x][y] = Terrain.EMPTY;
-                else newTerrain[x][y] = Terrain.OBSTACLE;
+            var n = countObstacleNeighbours(obstacles, x,y);
+            if (obstacles[x][y]) {
+                newTerrain[x][y] = (n >= destroyLimit);
             }
-            else if (terrainMap[x][y] == Terrain.EMPTY) {
-                if (n > createLimit) newTerrain[x][y] = Terrain.OBSTACLE;
-                else newTerrain[x][y] = Terrain.EMPTY;
+            else if (!obstacles[x][y]) {
+                newTerrain[x][y] = (n > createLimit);
             }
             else {
-                newTerrain[x][y] = terrainMap[x][y];
+                newTerrain[x][y] = obstacles[x][y];
             }
         }}
-        terrainMap = newTerrain;
+        return newTerrain;
     }
 
-    private int countObstacleNeighbours(int cx, int cy) {
+    private int countObstacleNeighbours(boolean[][] obstacles, int cx, int cy) {
         var count = 0;
         for (var x = cx - 1; x <= cx + 1; x++) { for (var y = cy - 1; y <= cy + 1; y++) {
             if (x != cx || y != cy) {
                 var pos = Position.wrapped(x, y);
-                if (terrainMap[pos.x][pos.y] == Terrain.OBSTACLE) count++;
+                if (obstacles[pos.x][pos.y]) count++;
             }
         }}
         return count;
@@ -191,37 +210,37 @@ public class Grid {
     /**
      * @param offset distance to the outer map boundaries
      */
-    private void createLineBorder(int offset) {
+    private void createLineBorder(boolean[][] obstacles, int offset) {
         for (int x = offset; x < dimX - offset; x++) {
-            terrainMap[x][offset] = Terrain.OBSTACLE;
-            terrainMap[x][dimY - (offset + 1)] = Terrain.OBSTACLE;
+            obstacles[x][offset] = true;
+            obstacles[x][dimY - (offset + 1)] = true;
         }
         for (int y = offset; y < dimY - offset; y++) {
-            terrainMap[offset][y] = Terrain.OBSTACLE;
-            terrainMap[dimX - (offset + 1)][y] = Terrain.OBSTACLE;
+            obstacles[offset][y] = true;
+            obstacles[dimX - (offset + 1)][y] = true;
         }
     }
 
-    private void createRaggedBorder(int width) {
+    private void createRaggedBorder(boolean[][] obstacles, int width) {
         var currentWidth = width;
         for (var x = 0; x < dimX; x++) {
             currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) terrainMap[x][i] = Terrain.OBSTACLE;
+            for (var i = 0; i < currentWidth; i++) obstacles[x][i] = true;
         }
         currentWidth = width;
         for (var x = 0; x < dimX; x++) {
             currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) terrainMap[x][dimY - (i + 1)] = Terrain.OBSTACLE;
+            for (var i = 0; i < currentWidth; i++) obstacles[x][dimY - (i + 1)] = true;
         }
         currentWidth = width;
         for (var y = 0; y < dimY; y++) {
             currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) terrainMap[i][y] = Terrain.OBSTACLE;
+            for (var i = 0; i < currentWidth; i++) obstacles[i][y] = true;
         }
         currentWidth = width;
         for (var y = 0; y < dimY; y++) {
             currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) terrainMap[dimX - (i + 1)][y] = Terrain.OBSTACLE;
+            for (var i = 0; i < currentWidth; i++) obstacles[dimX - (i + 1)][y] = true;
         }
     }
 
@@ -251,6 +270,7 @@ public class Grid {
         if (a instanceof Attachable) ((Attachable) a).detachAll();
         var things = thingsMap.get(a.getPosition());
         if (things != null) things.remove(a);
+        if (a instanceof Obstacle o) obstacles.remove(o);
     }
 
     /**
@@ -273,7 +293,7 @@ public class Grid {
         return pos == null || pos.x < 0 || pos.y < 0 || pos.x >= dimX || pos.y >= dimY;
     }
 
-    private void move(Set<Positionable> things, Map<Positionable, Position> newPositions) {
+    private void move(Set<Attachable> things, Map<Attachable, Position> newPositions) {
         things.forEach(t -> thingsMap.getOrDefault(t.getPosition(), Collections.emptySet()).remove(t));
         for (Positionable thing : things) {
             var newPos = newPositions.get(thing);
@@ -329,7 +349,7 @@ public class Grid {
      * @return whether the movement succeeded
      */
     public boolean moveWithAttached(Attachable anchor, String direction, int distance) {
-        var things = new HashSet<Positionable>(anchor.collectAllAttachments());
+        var things = new HashSet<Attachable>(anchor.collectAllAttachments());
         var newPositions = canMove(things, direction, distance);
         if (newPositions == null) return false;
         move(things, newPositions);
@@ -351,11 +371,11 @@ public class Grid {
      * Intermediate positions (the "diagonals") are also checked for all attachments.
      * @return a map from the element and all attachments to their new positions after rotation or null if anything is blocked
      */
-    private Map<Positionable, Position> canRotate(Attachable anchor, boolean clockwise) {
-        var attachments = new HashSet<Positionable>(anchor.collectAllAttachments());
+    private Map<Attachable, Position> canRotate(Attachable anchor, boolean clockwise) {
+        var attachments = new HashSet<Attachable>(anchor.collectAllAttachments());
         if(attachments.stream().anyMatch(a -> a != anchor && a instanceof Entity)) return null;
-        var newPositions = new HashMap<Positionable, Position>();
-        for (Positionable a : attachments) {
+        var newPositions = new HashMap<Attachable, Position>();
+        for (Attachable a : attachments) {
             var rotatedPos = a.getPosition().rotated90(anchor.getPosition(), clockwise);
             if(!isUnblocked(rotatedPos, attachments)) return null;
             newPositions.put(a, rotatedPos);
@@ -363,9 +383,9 @@ public class Grid {
         return newPositions;
     }
 
-    private Map<Positionable, Position> canMove(Set<Positionable> things, String direction, int distance) {
-        var newPositions = new HashMap<Positionable, Position>();
-        for (Positionable thing : things) {
+    private Map<Attachable, Position> canMove(Set<Attachable> things, String direction, int distance) {
+        var newPositions = new HashMap<Attachable, Position>();
+        for (Attachable thing : things) {
             for (int i = 1; i <= distance; i++) {
                 var newPos = thing.getPosition().moved(direction, i);
                 if(!isUnblocked(newPos, things)) return null;
@@ -380,7 +400,7 @@ public class Grid {
         int y = RNG.nextInt(dimY);
         final int startX = x;
         final int startY = y;
-        while (!isUnblocked(Position.of(x,y)) || terrainMap[x][y] != Terrain.EMPTY) {
+        while (isBlocked(Position.of(x,y))) {
             if (++x >= dimX) {
                 x = 0;
                 if (++y >= dimY) y = 0;
@@ -401,7 +421,7 @@ public class Grid {
         final int startX = x;
         final int startY = y;
         
-        while (!isUnblocked(Position.of(x,y)) || terrainMap[x][y] != Terrain.EMPTY || !hasEnoughFreeSpots(Position.of(x,y),radius,clusterSize)) {
+        while (isBlocked(Position.of(x,y)) || !hasEnoughFreeSpots(Position.of(x,y), radius, clusterSize)) {
             if (++x >= dimX) {
                 x = 0;
                 if (++y >= dimY) y = 0;
@@ -412,14 +432,25 @@ public class Grid {
             }
         }
 
-        Position.of(x, y).spanArea(radius).forEach((p) -> {if(cluster.size() == clusterSize) return;  if(getTerrain(p) == Terrain.EMPTY) cluster.add(p);});
+        Position.of(x, y).spanArea(radius).forEach((p) -> {
+            if(cluster.size() == clusterSize) return;
+            if(isUnblocked(p)) cluster.add(p);
+        });
 
         return cluster;
     }
+
+    /**
+     * Opposite of isUnblocked()
+     */
+    public boolean isBlocked(Position pos) {
+        return !isUnblocked(pos);
+    }
+
     private boolean hasEnoughFreeSpots(Position origin, int radius, int numberPositionNeeded){
         int freeSpots = 0;
         for (Position p : origin.spanArea(radius)) 
-            if (getTerrain(p) == Terrain.EMPTY)
+            if (isUnblocked(p))
                 freeSpots++;
         return freeSpots >= numberPositionNeeded;
     }
@@ -432,34 +463,22 @@ public class Grid {
             int dy = RNG.nextInt(maxDistance + 1);
             x += RNG.nextDouble() < .5? dx : -dx;
             y += RNG.nextDouble() < .5? dy : -dy;
-            var target = Position.of(x, y);
-            if (isUnblocked(target)) return target;
+            var target = Position.of(x, y).wrapped();
+            if (this.isUnblocked(target)) return target;
         }
         return null;
     }
 
     /**
-     * @return true if the cell is in the grid and there is no other collidable and the terrain is not an obstacle.
+     * @return true if there is no attachable (i.e. an entity, a block, an obstacle, ...) in the cell
      */
     public boolean isUnblocked(Position xy) {
         return isUnblocked(xy, Collections.emptySet());
     }
 
-    private boolean isUnblocked(Position xy, Set<Positionable> excludedObjects) {
+    private boolean isUnblocked(Position xy, Set<Attachable> excludedObjects) {
         if (outOfBounds(xy)) xy = xy.wrapped();
-        if (terrainMap[xy.x][xy.y] == Terrain.OBSTACLE) return false;
-
         return getThings(xy).stream().noneMatch(t -> t instanceof Attachable && !excludedObjects.contains(t));
-    }
-
-    public void setTerrain(Position pos, Terrain terrainType) {
-        if (outOfBounds(pos)) pos = pos.wrapped();
-        terrainMap[pos.x][pos.y] = terrainType;
-    }
-
-    public Terrain getTerrain(Position pos) {
-        if (outOfBounds(pos)) pos = pos.wrapped();
-        return terrainMap[pos.x][pos.y];
     }
 
     public void createMarker(Position position, Marker.Type type) {
@@ -478,5 +497,15 @@ public class Grid {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
     }
 
-    public record GoalZone(Position position, int radius) {}
+
+    public boolean removeObstacle(Position position) {
+        var things = thingsMap.get(position);
+        var obstacle = things.stream().filter(thing -> thing instanceof Obstacle).findAny();
+        if (obstacle.isPresent()) {
+            things.remove(obstacle);
+            obstacles.remove(obstacle);
+            return true;
+        }
+        return false;
+    }
 }

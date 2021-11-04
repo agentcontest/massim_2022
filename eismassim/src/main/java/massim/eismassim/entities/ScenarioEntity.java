@@ -25,8 +25,7 @@ public class ScenarioEntity extends ConnectedEntity {
     protected List<Percept> simStartToIIL(SimStartMessage startPercept) {
 
         List<Percept> ret = new ArrayList<>();
-        if(!(startPercept instanceof InitialPercept)) return ret; // protocol incompatibility
-        InitialPercept simStart = (InitialPercept) startPercept;
+        if(!(startPercept instanceof InitialPercept simStart)) return ret; // protocol incompatibility
 
         ret.add(new Percept("name", new Identifier(simStart.agentName)));
         ret.add(new Percept("team", new Identifier(simStart.teamName)));
@@ -40,8 +39,7 @@ public class ScenarioEntity extends ConnectedEntity {
     @Override
     protected Collection<Percept> requestActionToIIL(RequestActionMessage message) {
         var ret = new HashSet<Percept>();
-        if(!(message instanceof StepPercept)) return ret; // percept incompatible with entity
-        var percept = (StepPercept) message;
+        if(!(message instanceof StepPercept percept)) return ret; // percept incompatible with entity
 
         ret.add(new Percept("actionID", new Numeral(percept.getId())));
         ret.add(new Percept("timestamp", new Numeral(percept.getTime())));
@@ -67,7 +65,6 @@ public class ScenarioEntity extends ConnectedEntity {
             }
             ret.add(new Percept("task", new Identifier(task.name), new Numeral(task.deadline), new Numeral(task.reward), reqs));
         });
-        if (!percept.task.equals("")) ret.add(new Percept("accepted", new Identifier(percept.task)));
 
         percept.terrain.forEach((terrain, positions) -> positions.forEach(position ->
                         ret.add(new Percept(terrain, new Numeral(position.x), new Numeral(position.y)))));
