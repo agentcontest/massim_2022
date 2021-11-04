@@ -540,7 +540,7 @@ class GameState {
         if (task == null || task.isCompleted() || step > task.getDeadline())
             return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
-        if (grid.isInGoalZone(ePos)) return ActionResults.FAILED;
+        if (!grid.isInGoalZone(ePos)) return ActionResults.FAILED;
         Set<Attachable> attachedBlocks = e.collectAllAttachments();
         for (Map.Entry<Position, String> entry : task.getRequirements().entrySet()) {
             var pos = entry.getKey();
