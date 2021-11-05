@@ -1,0 +1,76 @@
+package massim.game.norms;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import massim.game.Entity;
+import massim.game.GameState;
+import massim.protocol.data.NormInfo;
+import massim.protocol.data.Subject;
+
+public abstract class Norm {
+    String name;
+    int start = 0;
+    int until = 0;
+    int punishment = 0;
+    NormInfo.Level level = NormInfo.Level.INDIVIDUAL;
+
+    public abstract void bill(GameState state, JSONObject info);
+    public abstract ArrayList<Entity> enforce(Collection<Entity> entities);
+    abstract JSONArray requirementsAsJSON();
+    abstract Set<Subject> getRequirements();
+
+    public void init(String name, int start, int until, int punishment){
+        this.name = name;
+        this.start = start;
+        this.until = until;
+        this.punishment = punishment;
+    }    
+
+    public String getName() {
+        return name;
+    }
+
+    public void punish(Entity entity) {
+        if (!entity.isDisabled()){
+            entity.consumeNormPunishment(this.punishment);
+            if (entity.getEnergy() == 0)
+                entity.disable();
+        }
+    }
+
+    public boolean toAnnounce(int step){
+        return step < start;
+    }
+
+    public boolean isActive(int step){
+        return start <= step && step <= until;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject norm = new JSONObject();
+
+        norm.put("name", this.name);
+        norm.put("start", this.start);
+        norm.put("until", this.until);
+        norm.put("level", this.level.name().toLowerCase());
+        norm.put("requirement", new JSONArray());
+        for (Subject req : getRequirements()) {
+            JSONObject requirement = new JSONObject();
+            requirement.put("name", req.name);
+            requirement.put("quantity", req.quantity);
+            norm.getJSONArray("requirement").put(requirement);
+        } 
+        norm.put("punishment", this.punishment);
+
+        return norm;
+    }
+
+    public NormInfo toPercept() {
+        return new NormInfo(name, start, until, getRequirements(), punishment);
+    }
+}

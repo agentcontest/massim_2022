@@ -1,0 +1,39 @@
+package massim.protocol.data;
+
+import org.json.JSONObject;
+
+
+
+public class Subject {
+    public enum Type{ BLOCK, ROLE }
+
+    public Type type;
+    public String name;
+    public int quantity;
+    public String details;
+
+    public Subject(Type type, String name, int quantity, String details) {
+        this.type = type;
+        this.name = name;
+        this.quantity = quantity;
+        this.details = details;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject subject = new JSONObject();
+        subject.put("type", type.name().toLowerCase());
+        subject.put("name", name);
+        subject.put("quantity", quantity);
+        subject.put("details", details);
+        return subject;
+    }
+
+    public static Subject fromJson(JSONObject jsonSubject) {
+        return new Subject(Type.valueOf(jsonSubject.getString("type").toUpperCase()), jsonSubject.getString("name"), jsonSubject.getInt("quantity"), jsonSubject.getString("details"));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Subject(%s, %d, %s)", type, quantity, details);
+    }
+}

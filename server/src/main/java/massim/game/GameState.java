@@ -2,6 +2,8 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.*;
+import massim.game.norms.Norm;
+import massim.game.norms.Officer;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.RequestActionMessage;
@@ -31,7 +33,7 @@ import static massim.protocol.messages.scenario.ActionResults.*;
 /**
  * State of the game.
  */
-class GameState {
+public class GameState {
 
     private final Map<String, Team> teams = new HashMap<>();
     private final Map<String, Entity> agentToEntity = new HashMap<>();
@@ -45,6 +47,7 @@ class GameState {
     private final Map<Position, Dispenser> dispensers = new HashMap<>();
     private final Set<String> blockTypes = new TreeSet<>();
     private final Map<String, Role> roles = new HashMap<>();
+    private final Officer officer;
 
     // dynamic env. things
     private final Map<Integer, GameObject> gameObjects = new HashMap<>();
@@ -194,6 +197,8 @@ class GameState {
                 e.printStackTrace();
             }
         }
+
+        this.officer = new Officer(config.getJSONObject("regulation"));
     }
 
     private Role parseRoles(JSONObject config) {
@@ -222,6 +227,14 @@ class GameState {
 
     public Set<String> getBlockTypes() {
         return this.blockTypes;
+    }
+
+    public Map<String, Role> getRoles() {
+        return roles;
+    }
+
+    public Officer getOfficer() {
+        return officer;
     }
 
     private void handleCommand(String[] command) {
@@ -338,6 +351,9 @@ class GameState {
         for (Position pos : agentCausedClearMarkers) grid.createMarker(pos, Marker.Type.CLEAR);
         agentCausedClearMarkers.clear();
 
+        // handle norms before everything else
+        officer.regulateNorms(step, agentToEntity.values());
+
         //handle tasks
         if (RNG.nextDouble() < pNewTask) {
             createTask(RNG.betweenClosed(taskDurationMin, taskDurationMax), RNG.betweenClosed(taskSizeMin, taskSizeMax));
@@ -371,6 +387,9 @@ class GameState {
         }
         clearEvents.removeAll(processedEvents);
 
+        // wait for the environment to get updated, then create norms
+        officer.createNorms(step, this);
+
         return getStepPercepts();
     }
 
@@ -392,6 +411,10 @@ class GameState {
                 .filter(t -> !t.isCompleted())
                 .map(Task::toPercept)
                 .collect(Collectors.toSet());
+        var allNorms = officer.getNorms().stream()
+                .filter(n -> n.toAnnounce(this.step) || n.isActive(this.step))
+                .map(Norm::toPercept)
+                .collect(Collectors.toSet());
         for (Entity entity : entityToAgent.keySet()) {
             var pos = entity.getPosition();
             var visibleThings = new HashSet<Thing>();
@@ -409,7 +432,7 @@ class GameState {
             }
             var percept = new StepPercept(step,
                     teams.get(entity.getTeamName()).getScore(),
-                    visibleThings, visibleTerrain, allTasks,
+                    visibleThings, visibleTerrain, allTasks, allNorms,
                     entity.getLastAction(), entity.getLastActionParams(),
                     entity.getLastActionResult(), attachedThings,
                     surveyResults.get(entity.getAgentName()));
@@ -740,6 +763,10 @@ class GameState {
         snapshot.put("dispensers", dispensers);
         JSONArray taskArr = new JSONArray();
         snapshot.put("tasks", taskArr);
+        JSONArray normArr = new JSONArray();
+        snapshot.put("norms", normArr);
+        JSONArray punishmentArr = new JSONArray();
+        snapshot.put("punishment", punishmentArr);
         JSONArray cells = new JSONArray();
         snapshot.put("cells", cells);
         JSONArray clear = new JSONArray();
@@ -816,6 +843,17 @@ class GameState {
             });
             taskArr.put(task);
         });
+        // TODO: norms
+        officer.getInProcessNorms(this.step)
+                .forEach(n -> normArr.put(n.toJSON()));
+        officer.getArchive(this.step).stream().forEach(
+            r -> {
+                JSONObject record  = new JSONObject();
+                record.put("norm", r.norm());
+                record.put("who", this.entityToAgent.get(r.entity()));
+                punishmentArr.put(record);
+            }
+        );
         teams.values().forEach(t -> scores.put(t.getName(), t.getScore()));
         snapshot.put("events", logEvents);
         return snapshot;

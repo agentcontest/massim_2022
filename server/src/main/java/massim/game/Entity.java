@@ -57,7 +57,7 @@ public class Entity extends Attachable {
         energy = Math.min(energy + 1, maxEnergy);
     }
 
-    String getTeamName() {
+    public String getTeamName() {
         return teamName;
     }
 
@@ -119,21 +119,25 @@ public class Entity extends Attachable {
         clearCounter = 0;
     }
 
-    void disable() {
+    public void disable() {
         disabled = disableDuration;
         detachAll();
     }
 
-    boolean isDisabled() {
+    public boolean isDisabled() {
         return disabled > 0;
     }
 
-    int getEnergy() {
+    public int getEnergy() {
         return energy;
     }
 
     void consumeClearEnergy() {
         energy -= clearEnergyCost;
+    }
+
+    public void consumeNormPunishment(int cost) {
+        energy = Math.max(energy-cost, 0);
     }
 
     public Role getRole() {

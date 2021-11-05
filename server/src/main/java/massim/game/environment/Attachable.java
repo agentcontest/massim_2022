@@ -25,7 +25,7 @@ public abstract class Attachable extends Positionable {
         other.requestDetachment(this);
     }
 
-    Set<Attachable> getAttachments() {
+    public Set<Attachable> getAttachments() {
         return new HashSet<>(attachments);
     }
 
