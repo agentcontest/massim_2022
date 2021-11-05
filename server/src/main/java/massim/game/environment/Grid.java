@@ -2,6 +2,9 @@ package massim.game.environment;
 
 import massim.game.Entity;
 import massim.game.Role;
+import massim.game.environment.zones.Zone;
+import massim.game.environment.zones.ZoneList;
+import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
 import massim.util.Log;
 import massim.util.RNG;
@@ -51,7 +54,7 @@ public class Grid {
                     for (int x = 0; x < width; x++) { for (int y = 0; y < height; y++) {
                         switch(bitmapColors.getOrDefault(img.getRGB(x, y), "empty")) {
                             case "obstacle" -> addObstacle(Position.of(x, y));
-                            case "goal" -> addGoalZone(Position.of(x, y), 1);
+                            case "goal" -> addZone(ZoneType.GOAL, Position.of(x, y), 1);
                             default -> Log.log(Log.Level.ERROR, "Unknown bitmap color: " + img.getRGB(x, y));
                         }
                     }}
@@ -64,7 +67,9 @@ public class Grid {
 
         this.addObstaclesFromConfig(gridConf.getJSONArray("instructions"));
 
-        this.addGoalsFromConfig(gridConf.getJSONObject("goals"));
+        this.addZonesFromConfig(ZoneType.GOAL, gridConf.getJSONObject("goals"));
+
+        this.addZonesFromConfig(ZoneType.ROLE, gridConf.getJSONObject("roleZones"));
     }
 
     private void addObstaclesFromConfig(JSONArray instructions) {
@@ -114,47 +119,39 @@ public class Grid {
         return new HashSet<>(obstacles);
     }
 
-    private void addGoalsFromConfig(JSONObject goalConf) {
-        var goalNumber = goalConf.getInt("number");
-        var goalSize = goalConf.getJSONArray("size");
-        var goalSizeMin = goalSize.getInt(0);
-        var goalSizeMax = goalSize.getInt(1);
-        for (var i = 0; i < goalNumber; i++) {
+    private void addZonesFromConfig(ZoneType type, JSONObject zoneConf) {
+        var zoneCount = zoneConf.getInt("number");
+        var sizeBounds = zoneConf.getJSONArray("size");
+        var sizeMin = sizeBounds.getInt(0);
+        var sizeMax = sizeBounds.getInt(1);
+        for (var i = 0; i < zoneCount; i++) {
             var centerPos = findRandomFreePosition();
-            var size = RNG.betweenClosed(goalSizeMin, goalSizeMax);
-            this.addGoalZone(centerPos, size);
+            var size = RNG.betweenClosed(sizeMin, sizeMax);
+            this.addZone(type, centerPos, size);
         }
     }
 
-    public void addGoalZone(Position xy, int radius) {
-        this.goalZones.add(xy, radius);
+    private ZoneList getZoneList(ZoneType type) {
+        return switch (type) {
+            case GOAL -> this.goalZones;
+            case ROLE -> this.roleZones;
+        };
     }
 
-    public void removeGoalZone(Position pos) {
-        this.goalZones.remove(pos);
+    public void addZone(ZoneType type, Position xy, int radius) {
+        this.getZoneList(type).add(xy, radius);
     }
 
-    public boolean isInGoalZone(Position pos) {
-        return this.goalZones.isInZone(pos);
+    public void removeZone(ZoneType type, Position pos) {
+        this.getZoneList(type).remove(pos);
     }
 
-    public List<ZoneList.Zone> getGoalZones() {
-        return goalZones.getZones();
+    public boolean isInZone(ZoneType type, Position pos) {
+        return this.getZoneList(type).isInZone(pos);
     }
 
-    public void addRoleZone(Position xy, int radius) {
-        this.roleZones.add(xy, radius);
-    }
-
-    public void removeRoleZone(Position pos) {
-        this.roleZones.remove(pos);
-    }
-
-    public boolean isInRoleZone(Position pos) {
-        return this.roleZones.isInZone(pos);
-    }
-    public List<ZoneList.Zone> getRoleZones() {
-        return roleZones.getZones();
+    public List<Zone> getZones(ZoneType type) {
+        return getZoneList(type).getZones();
     }
 
     /**

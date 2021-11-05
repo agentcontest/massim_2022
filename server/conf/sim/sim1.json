@@ -23,7 +23,11 @@
       ],
       "goals": {
         "number" : 3,
-        "size" : [1,2]
+        "size" : [1,3]
+      },
+      "roleZones" : {
+        "number" : 5,
+        "size" : [3, 5]
       }
     },
 

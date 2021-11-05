@@ -2,6 +2,7 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.*;
+import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.RequestActionMessage;
@@ -298,7 +299,7 @@ class GameState {
                 var type = command[3];
                 if (x == null || y == null || type.isEmpty()) break;
                 if (type.equalsIgnoreCase("obstacle")) grid.addObstacle(Position.of(x, y));
-                else if (type.equalsIgnoreCase("goal")) grid.addGoalZone(Position.of(x, y), 1);
+                else if (type.equalsIgnoreCase("goal")) grid.addZone(ZoneType.GOAL, Position.of(x, y), 1);
                 break;
 
             default:
@@ -540,7 +541,7 @@ class GameState {
         if (task == null || task.isCompleted() || step > task.getDeadline())
             return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
-        if (!grid.isInGoalZone(ePos)) return ActionResults.FAILED;
+        if (!grid.isInZone(ZoneType.GOAL, ePos)) return ActionResults.FAILED;
         Set<Attachable> attachedBlocks = e.collectAllAttachments();
         for (Map.Entry<Position, String> entry : task.getRequirements().entrySet()) {
             var pos = entry.getKey();
@@ -747,8 +748,8 @@ class GameState {
         JSONObject scores = new JSONObject();
         snapshot.put("scores", scores);
         grid.getObstacles(); // TODO
-        grid.getGoalZones(); // TODO (zones may overlap)
-        grid.getRoleZones(); // TODO (zones may overlap)
+        grid.getZones(ZoneType.GOAL); // TODO (zones may overlap)
+        grid.getZones(ZoneType.ROLE); // TODO (zones may overlap)
 //        for (int y = 0; y < grid.getDimY(); y++) {
 //            JSONArray row = new JSONArray();
 //            for (int x = 0; x < grid.getDimX(); x++) {
@@ -881,7 +882,7 @@ class GameState {
         if (roleName == null) return FAILED_PARAMETER;
         var role = this.roles.get(roleName);
         if (role == null) return FAILED_PARAMETER;
-        if (!grid.isInRoleZone(entity.getPosition())) return FAILED_LOCATION;
+        if (!grid.isInZone(ZoneType.ROLE, entity.getPosition())) return FAILED_LOCATION;
         entity.setRole(role);
         return SUCCESS;
     }
