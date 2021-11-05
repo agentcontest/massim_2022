@@ -17,11 +17,12 @@ public class GridTest {
     public void setUp() {
         RNG.initialize(17);
         
-        this.gridjson = new JSONObject();
-        this.gridjson.put("height", 70);
-        this.gridjson.put("width", 70);
-        this.gridjson.put("instructions", new JSONArray("[[\"cave\", 0.45, 9, 5, 4]]"));
-        this.gridjson.put("goals", new JSONObject("{\"number\" : 3,\"size\" : [1,2]}"));
+        this.gridjson = new JSONObject()
+                .put("height", 70)
+                .put("width", 70)
+                .put("instructions", new JSONArray("[[\"cave\", 0.45, 9, 5, 4]]"))
+                .put("goals", new JSONObject("{\"number\" : 3,\"size\" : [1,2]}"))
+                .put("roleZones", new JSONObject("{\"number\" : 3,\"size\" : [1,2]}"));
     }
 
     @org.junit.Test
