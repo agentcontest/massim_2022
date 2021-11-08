@@ -86,11 +86,11 @@ public class Officer {
         this.maxActiveNorms = config.getInt("simultaneous");
         this.chance = config.getDouble("chance");
 
-        JSONArray norms = config.getJSONArray("norms");
+        JSONArray norms = config.getJSONArray("subjects");
         for (int i=0; i < norms.length(); i++) {
             JSONObject temp = norms.getJSONObject(i);
             String name = temp.getString("name");
-            this.accumulatedWeight += temp.getDouble("chance");
+            this.accumulatedWeight += temp.getDouble("weight");
             this.templates.put(name, new NormTemplate(temp, this.accumulatedWeight));   
             Log.log(Log.Level.NORMAL, "Template of norm " + name + " added");         
         }    
@@ -141,6 +141,7 @@ public class Officer {
                 Norm norm = createNorm(step, temp);
                 norm.bill(state, temp.getAditionalInfo());
                 norms.put(norm.getName(), norm);
+                Log.log(Log.Level.NORMAL, "Created "+norm.toString());
                 break;
             }
         }     
@@ -169,7 +170,6 @@ public class Officer {
         int announcePeriod = RNG.betweenClosed(template.getMinAnnouncement(), template.getMaxAnnouncement());  
         int punishment = RNG.betweenClosed(template.getMinPunishment(), template.getMaxPunishment());
         norm.init("n"+normsIds, step, step+announcePeriod, step+announcePeriod+duration, punishment);
-        Log.log(Log.Level.NORMAL, "Created "+norm.toString());
         normsIds += 1;
 
         return norm;

@@ -33,6 +33,6 @@ public class Subject {
 
     @Override
     public String toString() {
-        return String.format("subject(%s, %d, %s)", type, quantity, details);
+        return String.format("subject(%s, %s, %d, %s)", type.name().toLowerCase(), name, quantity, details);
     }
 }
