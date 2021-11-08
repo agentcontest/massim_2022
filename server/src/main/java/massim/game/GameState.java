@@ -773,7 +773,7 @@ public class GameState {
         JSONArray normArr = new JSONArray();
         snapshot.put("norms", normArr);
         JSONArray punishmentArr = new JSONArray();
-        snapshot.put("punishment", punishmentArr);
+        snapshot.put("violate", punishmentArr);
         JSONArray cells = new JSONArray();
         snapshot.put("cells", cells);
         JSONArray clear = new JSONArray();

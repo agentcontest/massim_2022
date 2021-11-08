@@ -24,7 +24,7 @@ public class StepPercept extends RequestActionMessage {
     public int energy;
     public boolean disabled;
     public List<String> surveyResult;
-    public List<String> punishment;
+    public List<String> violate;
 
     public StepPercept(JSONObject content) {
         super(content);
@@ -33,7 +33,7 @@ public class StepPercept extends RequestActionMessage {
 
     public StepPercept(int step, long score, Set<Thing> things, Map<String, Set<Position>> terrain,
                        Set<TaskInfo> taskInfo, Set<NormInfo> normInfo, String action, List<String> lastActionParams, String result,
-                       Set<Position> attachedThings, List<String> surveyResult, List<String> punishment) {
+                       Set<Position> attachedThings, List<String> surveyResult, List<String> violate) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -45,7 +45,7 @@ public class StepPercept extends RequestActionMessage {
         this.lastActionParams.addAll(lastActionParams);
         this.attachedThings = attachedThings;
         this.surveyResult = surveyResult;
-        this.punishment = punishment;
+        this.violate = violate;
     }
 
     @Override
@@ -97,10 +97,10 @@ public class StepPercept extends RequestActionMessage {
             }
             percept.put("surveyed", jsonSurvey);
         }
-        if (punishment != null && punishment.size() > 0) {
+        if (violate != null && violate.size() > 0) {
             JSONArray jsonPunishment = new JSONArray();
-            punishment.stream().forEach(p -> jsonPunishment.put(p));
-            percept.put("punishment", jsonPunishment);
+            violate.stream().forEach(p -> jsonPunishment.put(p));
+            percept.put("violate", jsonPunishment);
         }
         return percept;
     }
@@ -158,10 +158,10 @@ public class StepPercept extends RequestActionMessage {
             }
         }
 
-        var punishment = percept.optJSONArray("punishment");
-        if (punishment != null) {
-            this.punishment = new ArrayList<>();
-            punishment.forEach(e -> this.punishment.add(String.valueOf(e)));
+        var violate = percept.optJSONArray("violate");
+        if (violate != null) {
+            this.violate = new ArrayList<>();
+            violate.forEach(e -> this.violate.add(String.valueOf(e)));
         }
     }
 }

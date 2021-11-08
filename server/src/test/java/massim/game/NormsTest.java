@@ -268,7 +268,7 @@ public class NormsTest {
 
         JSONObject snapshot = this.state.takeSnapshot();
         JSONArray norms = snapshot.getJSONArray("norms");
-        JSONArray punishments = snapshot.getJSONArray("punishment");
+        JSONArray punishments = snapshot.getJSONArray("violate");
         assert norms.length() == 1;
         assert punishments.length() == 0;
 
@@ -278,7 +278,7 @@ public class NormsTest {
 
         snapshot = this.state.takeSnapshot();
         norms = snapshot.getJSONArray("norms");
-        punishments = snapshot.getJSONArray("punishment");
+        punishments = snapshot.getJSONArray("violate");
         assert norms.length() == 1;
         assert punishments.length() == 1;
 
@@ -291,7 +291,7 @@ public class NormsTest {
 
         snapshot = this.state.takeSnapshot();
         norms = snapshot.getJSONArray("norms");
-        punishments = snapshot.getJSONArray("punishment");
+        punishments = snapshot.getJSONArray("violate");
         assert norms.length() == 1;
         assert punishments.length() == 0;        
     }
@@ -303,7 +303,7 @@ public class NormsTest {
         } 
 
         String normJSON = "{\"name\": \"n1\"}";
-        String punishmentJSON = "{\"punishment\" : [\"n1\"]}";
+        String punishmentJSON = "{\"violate\" : [\"n1\"]}";
 
         JSONObject perceptA1 = new StepPercept(this.state.getStepPercepts().get("A1").toJson().getJSONObject("content")).makePercept();
         JSONArray norms = perceptA1.getJSONArray("norms");

@@ -95,6 +95,37 @@ When a clear event happens, a certain area is marked similar to a clear action. 
 * `create` - the bounds for how many obstacles are created (additional to the number of objects destroyed by the event)
 * `perimeter` - an additional radius where new obstacles may be created (added to the event's radius)
 
+### Norms
+
+Norms introduce dynamic small changes in the rules of the game. When a norm is in place, an agent must decide whether to follow or violate it. 
+In the latter case, the violator is punished with a decrease in its energy level. 
+Before policing a norm, the game's officer announces it to all agents.
+After a small number of steps, the norm becomes active.
+We call an *approved norm* a norm that is either announced or active.
+Each norm regulates a specific *subject*, that is, a characteristic of the scenario.
+Moreover, a norm regulates either an agent (individual level) or a team (team level).
+For instance, at the team level, a norm may state that at most 2 agents may adopt the role constructor. 
+
+`Config: match.norms.*`:
+
+Regarding the general regulation:
+* `simultaneous` - how many norms are allowed to be in the state approved at the same step.
+* `chance` - the chance for a norm to be created (in %)
+* `subjects` - the subjects a norm may regulate
+
+Regarding each specific subject:
+* `name` - It must be one of the following options: 
+  * Carry: the agents will be prohibited to carry some quantity of things
+  * RoleIndividual: the agents are prohibited to be of a particular role
+  * RoleTeam: the team is prohibited to have many agents of a particular role.
+* `announcement` - the number of steps of the announcement period
+* `duration` - the number of steps the norm stays active after the announcement period is over
+* `punishment` - the number of energy points an agent loses in case it violates a norm
+* `weight` - a weight of a subject to be chosen. For instance, if subject Carry has weight of 15 and subject RoleIndividual has weight of 15, then each subject has probability of 50% of being selected
+* `optional` - subject dependent information to help specifing what a norm should regulate. 
+  * Carry: 
+    * `quantity` - the number of things an agent may carry
+
 ## Tasks
 
 Tasks have to be completed to get score points. They appear randomly during the course of the simulation.
@@ -409,6 +440,23 @@ Example (complete request-action message):
                ]
             },
          ],
+         "norms": [
+            {
+              "name": "n1",
+              "start": 1,
+              "until" : 100,
+              "level" : "individual",
+              "requirement": [
+                  {
+                    "type": "carry",
+                    "name": "any",
+                    "quantity": 1
+                  }
+               ],
+              "punishment" : 15, 
+            },
+         ],
+         "violate": ["n1"],
          "attached": [[2,-1]]
       }
    }
@@ -435,12 +483,22 @@ Example (complete request-action message):
 * __terrain__: the terrain around the agent (if no value is given for a visible cell, the terrain is just *empty*)
 * __task__: a task taht is currently active
   * __name__: the task's identifier
-  * __deadline__: the last step during which the task can be completed
+  * __start__: the step during which the task can be completed
   * __reward__: the score points rewarded for completing the job
   * __requirements__: the relative positions in which blocks have to be attached to the agent (the agent being (0,0))
     * __x/y__: the relative position of the required block
     * __type__: the type of the required block
     * __details__: currently not used
+* __norm__: a norm that is currently approved
+  * __name__: the norm's identifier
+  * __start__: the step in which a norm becomes active
+  * __until__: the step in which a norm becomes inactive
+  * __level__: whether the norm applies to individual agents or a team of agents
+  * __requirements__: what the norm regulates
+    * __type__: the subject of the norm
+    * __name__: the precise name the subject refers to, e.g., the role *constructor*
+    * __quantity__: the maximum quantity that can be carried/adopted
+* __violate__: the list of norms an agent is violating at the current step
 * __attached__: an array of position arrays - each position represents a thing that is (directly or indirectly) attached to an entity
 
 ## Configuration
