@@ -2,6 +2,7 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.Block;
+import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.scenario.ActionResults;
@@ -37,6 +38,10 @@ public class GameStateTest {
                         .put("width", 100)
                         .put("instructions", new JSONArray())
                         .put("goals", new JSONObject()
+                                .put("number", 0)
+                                .put("size", new JSONArray().put(1).put(2))
+                        )
+                        .put("roleZones", new JSONObject()
                                 .put("number", 0)
                                 .put("size", new JSONArray().put(1).put(2))
                         )
@@ -119,7 +124,7 @@ public class GameStateTest {
     @org.junit.Test
     public void taskSubmissionWorks() {
         var a1 = state.getEntityByName("A1");
-        state.getGrid().addGoalZone(Position.of(15, 15), 1);
+        state.getGrid().addZone(ZoneType.GOAL, Position.of(15, 15), 1);
         assert state.teleport("A1", Position.of(15,15));
         String blockType = state.getBlockTypes().iterator().next();
         assert state.createBlock(Position.of(15,16), blockType) != null;
