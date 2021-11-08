@@ -26,7 +26,7 @@ public class NormsTest {
         JSONObject config = new JSONObject();
         config.put("simultaneous", 1);
         config.put("chance", 15);
-        config.put("norms", new JSONArray());
+        config.put("subjects", new JSONArray());
         return config;
     }
     private JSONObject getJSONNorm(){
@@ -36,7 +36,7 @@ public class NormsTest {
         config.put("duration", new JSONArray().put(100).put(200));
         config.put("suspension", new JSONArray().put(10).put(20));
         config.put("punishment", new JSONArray().put(10).put(20));
-        config.put("chance", 15);
+        config.put("weight", 15);
         config.put("optional", new JSONObject());
         return config;
     }
@@ -68,7 +68,7 @@ public class NormsTest {
         JSONObject regulation = getJSONRegulation();
         JSONObject norm = getJSONNorm();
         norm.getJSONObject("optional").put("quantity", new JSONArray().put(1).put(1));
-        regulation.getJSONArray("norms").put(norm);
+        regulation.getJSONArray("subjects").put(norm);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
         
@@ -101,7 +101,7 @@ public class NormsTest {
         JSONObject regulation = getJSONRegulation();
         JSONObject norm = getJSONNorm();
         norm.put("name", "RoleIndividual");
-        regulation.getJSONArray("norms").put(norm);
+        regulation.getJSONArray("subjects").put(norm);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
 
@@ -129,7 +129,7 @@ public class NormsTest {
         JSONObject regulation = getJSONRegulation();
         JSONObject norm = getJSONNorm();
         norm.put("name", "RoleTeam");
-        regulation.getJSONArray("norms").put(norm);
+        regulation.getJSONArray("subjects").put(norm);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
 
@@ -182,7 +182,7 @@ public class NormsTest {
         norm2.put("name", "Carry");
         norm2.getJSONObject("optional").put("quantity", new JSONArray().put(1).put(1));
 
-        regulation.getJSONArray("norms").put(norm1).put(norm2);
+        regulation.getJSONArray("subjects").put(norm1).put(norm2);
         Officer officer = new Officer(regulation);
 
         officer.createNorms(1, this.state);        
@@ -206,7 +206,7 @@ public class NormsTest {
         JSONObject regulation = getJSONRegulation();
         JSONObject norm = getJSONNorm();
         norm.put("name", "RoleIndividual");
-        regulation.getJSONArray("norms").put(norm);
+        regulation.getJSONArray("subjects").put(norm);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
 
