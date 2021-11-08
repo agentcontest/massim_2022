@@ -2,6 +2,7 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.Positionable;
+import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
 import massim.protocol.messages.ActionMessage;
 import massim.protocol.messages.RequestActionMessage;
@@ -239,8 +240,14 @@ public class Simulation {
                         var searchTarget = getStringParam(params, 0);
                         if (searchTarget == null)
                             entity.setLastActionResult(FAILED_PARAMETER);
-                        else
-                            entity.setLastActionResult(state.handleSurveySearchAction(entity, searchTarget));
+                        else {
+                            switch (searchTarget) {
+                                case "dispenser" -> entity.setLastActionResult(state.handleSurveyDispenserAction(entity));
+                                case "goal" -> entity.setLastActionResult(state.handleSurveyZoneAction(entity, ZoneType.GOAL));
+                                case "role" -> entity.setLastActionResult(state.handleSurveyZoneAction(entity, ZoneType.ROLE));
+                                default -> entity.setLastActionResult(FAILED_PARAMETER);
+                            }
+                        }
                     }
                     else if (params.size() == 2) {
                         x = getIntParam(params, 0);

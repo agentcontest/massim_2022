@@ -40,6 +40,7 @@ public class GameStateTest {
                         .put("goals", new JSONObject()
                                 .put("number", 0)
                                 .put("size", new JSONArray().put(1).put(2))
+                                .put("moveProbability", .1)
                         )
                         .put("roleZones", new JSONObject()
                                 .put("number", 0)

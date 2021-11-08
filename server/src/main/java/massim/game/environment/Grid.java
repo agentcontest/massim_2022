@@ -28,6 +28,8 @@ public class Grid {
     private final int dimX;
     private final int dimY;
     private final int attachLimit;
+    private final double moveProbability;
+
     private final Map<Position, Set<Positionable>> thingsMap;
     private final List<Marker> markers = new ArrayList<>();
     private final Set<Obstacle> obstacles = new HashSet<>();
@@ -67,7 +69,9 @@ public class Grid {
 
         this.addObstaclesFromConfig(gridConf.getJSONArray("instructions"));
 
-        this.addZonesFromConfig(ZoneType.GOAL, gridConf.getJSONObject("goals"));
+        var goalConf = gridConf.getJSONObject("goals");
+        this.moveProbability = goalConf.getDouble("moveProbability");
+        this.addZonesFromConfig(ZoneType.GOAL, goalConf);
 
         this.addZonesFromConfig(ZoneType.ROLE, gridConf.getJSONObject("roleZones"));
     }
@@ -155,24 +159,12 @@ public class Grid {
     }
 
     /**
-     * @return distance to the nearest goal zone's center or null if there is no such goal zone
-     */
-    public Integer getDistanceToNextGoalZone(Position pos) {
-        return this.goalZones.getClosest(pos).position().distanceTo(pos);
-    }
-
-    /**
      * @return distance to the nearest role zone's center or null if there is no such role zone
      */
-    public Integer getDistanceToNextRoleZone(Position pos) {
-        return this.roleZones.getClosest(pos).position().distanceTo(pos);
-    }
-
-    public Integer getDistanceToNextZone(String type, Position pos) {
+    public Integer getDistanceToNextZone(ZoneType type, Position pos) {
         return switch(type) {
-            case "goal" -> this.goalZones.getClosest(pos).position().distanceTo(pos);
-            case "role" -> this.roleZones.getClosest(pos).position().distanceTo(pos);
-            default -> null;
+            case GOAL -> this.goalZones.getClosest(pos).position().distanceTo(pos);
+            case ROLE -> this.roleZones.getClosest(pos).position().distanceTo(pos);
         };
     }
 
