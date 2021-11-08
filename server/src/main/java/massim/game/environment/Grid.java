@@ -32,7 +32,7 @@ public class Grid {
 
     private final Map<Position, Set<Positionable>> thingsMap;
     private final List<Marker> markers = new ArrayList<>();
-    private final Set<Obstacle> obstacles = new HashSet<>();
+    private final Set<Position> obstaclePositions = new HashSet<>();
 
     private final ZoneList goalZones = new ZoneList();
     private final ZoneList roleZones = new ZoneList();
@@ -112,15 +112,15 @@ public class Grid {
 
     public void addObstacle(Position pos) {
         var o = new Obstacle(pos);
-        if (this.insertThing(new Obstacle(pos)))
-            obstacles.add(o);
+        if (this.insertThing(o))
+            this.obstaclePositions.add(pos);
     }
 
     /**
      * @return a copy of the set of all obstacles
      */
-    public Set<Obstacle> getObstacles() {
-        return new HashSet<>(obstacles);
+    public Set<Position> getObstaclePositions() {
+        return new HashSet<>(obstaclePositions);
     }
 
     private void addZonesFromConfig(ZoneType type, JSONObject zoneConf) {
@@ -259,7 +259,7 @@ public class Grid {
         if (a instanceof Attachable) ((Attachable) a).detachAll();
         var things = thingsMap.get(a.getPosition());
         if (things != null) things.remove(a);
-        if (a instanceof Obstacle o) obstacles.remove(o);
+        if (a instanceof Obstacle) obstaclePositions.remove(a.getPosition());
     }
 
     /**
@@ -284,7 +284,7 @@ public class Grid {
 
     private void move(Set<Attachable> things, Map<Attachable, Position> newPositions) {
         things.forEach(t -> thingsMap.getOrDefault(t.getPosition(), Collections.emptySet()).remove(t));
-        for (Positionable thing : things) {
+        for (Attachable thing : things) {
             var newPos = newPositions.get(thing);
             thing.setPosition(newPos);
             insertThing(thing);
@@ -488,13 +488,20 @@ public class Grid {
 
 
     public boolean removeObstacle(Position position) {
-        var things = thingsMap.get(position);
-        var obstacle = things.stream().filter(thing -> thing instanceof Obstacle).findAny();
+        var posThings = thingsMap.get(position);
+        var obstacle = posThings.stream().filter(thing -> thing instanceof Obstacle).findAny();
         if (obstacle.isPresent()) {
-            things.remove(obstacle);
-            obstacles.remove(obstacle);
+            posThings.remove(obstacle.get());
+            obstaclePositions.remove(position);
             return true;
         }
         return false;
+    }
+
+    /**
+     * Moves the goal zone (a random one if multiple zones overlap) at the current position to a random location.
+     * @param position
+     */
+    public void moveGoalZone(Position position) {
     }
 }

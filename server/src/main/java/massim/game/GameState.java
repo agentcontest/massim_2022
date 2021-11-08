@@ -562,6 +562,8 @@ class GameState {
         teams.get(e.getTeamName()).addScore(task.getReward());
         task.complete();
 
+        this.grid.moveGoalZone(e.getPosition());
+
         var result = new JSONObject();
         result.put("type", "task completed");
         result.put("task", task.getName());
@@ -747,7 +749,7 @@ class GameState {
         snapshot.put("clear", clear);
         JSONObject scores = new JSONObject();
         snapshot.put("scores", scores);
-        grid.getObstacles(); // TODO
+        grid.getObstaclePositions(); // TODO
         grid.getZones(ZoneType.GOAL); // TODO (zones may overlap)
         grid.getZones(ZoneType.ROLE); // TODO (zones may overlap)
 //        for (int y = 0; y < grid.getDimY(); y++) {
