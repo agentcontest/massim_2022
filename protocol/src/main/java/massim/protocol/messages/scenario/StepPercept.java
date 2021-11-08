@@ -24,6 +24,7 @@ public class StepPercept extends RequestActionMessage {
     public int energy;
     public boolean disabled;
     public List<String> surveyResult;
+    public List<String> punishment;
 
     public StepPercept(JSONObject content) {
         super(content);
@@ -32,18 +33,19 @@ public class StepPercept extends RequestActionMessage {
 
     public StepPercept(int step, long score, Set<Thing> things, Map<String, Set<Position>> terrain,
                        Set<TaskInfo> taskInfo, Set<NormInfo> normInfo, String action, List<String> lastActionParams, String result,
-                       Set<Position> attachedThings, List<String> surveyResult) {
+                       Set<Position> attachedThings, List<String> surveyResult, List<String> punishment) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
         this.taskInfo.addAll(taskInfo);
-        this.normsInfo.addAll(normsInfo);
+        this.normsInfo.addAll(normInfo);
         this.lastAction = action;
         this.lastActionResult = result;
         this.terrain = terrain;
         this.lastActionParams.addAll(lastActionParams);
         this.attachedThings = attachedThings;
         this.surveyResult = surveyResult;
+        this.punishment = punishment;
     }
 
     @Override
@@ -94,6 +96,11 @@ public class StepPercept extends RequestActionMessage {
                 default -> System.out.println("Unknown SurveyResult Type " + type);
             }
             percept.put("surveyed", jsonSurvey);
+        }
+        if (punishment != null && punishment.size() > 0) {
+            JSONArray jsonPunishment = new JSONArray();
+            punishment.stream().forEach(p -> jsonPunishment.put(p));
+            percept.put("punishment", jsonPunishment);
         }
         return percept;
     }
@@ -149,6 +156,12 @@ public class StepPercept extends RequestActionMessage {
                     surveyResult.add(surveyed.getString("role"));
                 }
             }
+        }
+
+        var punishment = percept.optJSONArray("punishment");
+        if (punishment != null) {
+            this.punishment = new ArrayList<>();
+            punishment.forEach(e -> this.punishment.add(String.valueOf(e)));
         }
     }
 }
