@@ -3,6 +3,9 @@ package massim.game;
 import massim.config.TeamConfig;
 import massim.game.environment.*;
 import massim.game.environment.zones.ZoneType;
+import massim.game.norms.Norm;
+import massim.game.norms.Officer;
+import massim.game.norms.Officer.Record;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.RequestActionMessage;
@@ -410,10 +413,11 @@ public class GameState {
                 .filter(t -> !t.isCompleted())
                 .map(Task::toPercept)
                 .collect(Collectors.toSet());
-        var allNorms = officer.getNorms().stream()
+        var allNorms = officer.getApprovedNorms(this.step).stream()
                 .filter(n -> n.toAnnounce(this.step) || n.isActive(this.step))
                 .map(Norm::toPercept)
                 .collect(Collectors.toSet());
+        List<Record> records = officer.getArchive(this.step);
         for (Entity entity : entityToAgent.keySet()) {
             var pos = entity.getPosition();
             var visibleThings = new HashSet<Thing>();
@@ -429,12 +433,16 @@ public class GameState {
                 var d = dispensers.get(currentPos);
                 if (d != null) visibleThings.add(d.toPercept(pos));
             }
+            List<String> punishment = records.stream()
+                                                .filter(p -> p.entity().getAgentName().equals(entity.getAgentName()))
+                                                .map(r -> r.norm())
+                                                .collect(Collectors.toList());
             var percept = new StepPercept(step,
                     teams.get(entity.getTeamName()).getScore(),
                     visibleThings, visibleTerrain, allTasks, allNorms,
                     entity.getLastAction(), entity.getLastActionParams(),
                     entity.getLastActionResult(), attachedThings,
-                    surveyResults.get(entity.getAgentName()));
+                    surveyResults.get(entity.getAgentName()), punishment);
             percept.energy = entity.getEnergy();
             percept.disabled = entity.isDisabled();
             result.put(entity.getAgentName(), percept);
@@ -842,8 +850,7 @@ public class GameState {
             });
             taskArr.put(task);
         });
-        // TODO: norms
-        officer.getInProcessNorms(this.step)
+        officer.getApprovedNorms(this.step)
                 .forEach(n -> normArr.put(n.toJSON()));
         officer.getArchive(this.step).stream().forEach(
             r -> {

@@ -65,7 +65,7 @@ public class Entity extends Attachable {
         this.lastActionResult = result;
     }
 
-    String getAgentName() {
+    public String getAgentName() {
         return agentName;
     }
 

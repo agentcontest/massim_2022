@@ -3,6 +3,7 @@ package massim.game.norms;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,6 +15,7 @@ import massim.protocol.data.Subject;
 
 public abstract class Norm {
     String name;
+    int announcedAt = 0;
     int start = 0;
     int until = 0;
     int punishment = 0;
@@ -24,8 +26,9 @@ public abstract class Norm {
     abstract JSONArray requirementsAsJSON();
     abstract Set<Subject> getRequirements();
 
-    public void init(String name, int start, int until, int punishment){
+    public void init(String name, int announcedAt, int start, int until, int punishment){
         this.name = name;
+        this.announcedAt = announcedAt;
         this.start = start;
         this.until = until;
         this.punishment = punishment;
@@ -44,7 +47,7 @@ public abstract class Norm {
     }
 
     public boolean toAnnounce(int step){
-        return step < start;
+        return announcedAt <= step && step < start;
     }
 
     public boolean isActive(int step){
@@ -72,5 +75,17 @@ public abstract class Norm {
 
     public NormInfo toPercept() {
         return new NormInfo(name, start, until, getRequirements(), punishment);
+    }
+
+    @Override
+    public String toString(){
+        return String.format("norm(name=%s,announcedat=%d,start=%d,until=%d,level=%s,req=[%s],pun=%d)", 
+                this.name,
+                this.announcedAt,
+                this.start,
+                this.until,
+                this.level.name().toLowerCase(),
+                getRequirements().stream().map(s -> s.toString()+",").collect(Collectors.joining()),
+                this.punishment);
     }
 }

@@ -1,0 +1,33 @@
+{
+    "simultaneous" : 1,
+    "chance": 15,
+    "norms" : [
+        {
+            "name" : "Carry",
+            "announcement" : [10, 20],
+            "duration" : [100, 200],
+            "suspension": [10, 20],
+            "punishment": [10, 20],
+            "chance": 15,
+            "optional": {
+                "quantity": [1,1]
+            }          
+        },
+        {
+            "name" : "RoleIndividual",
+            "announcement" : [10, 20],
+            "duration" : [100, 200],
+            "suspension": [10, 20],
+            "punishment": [10, 20],
+            "chance": 15
+        },
+        {
+            "name" : "RoleTeam",
+            "announcement" : [10, 20],
+            "duration" : [100, 200],
+            "suspension": [10, 20],
+            "punishment": [10, 20],
+            "chance": 15
+        }
+    ]
+}

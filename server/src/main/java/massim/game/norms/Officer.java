@@ -1,22 +1,20 @@
 package massim.game.norms;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.print.DocFlavor.STRING;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import massim.game.Entity;
 import massim.game.GameState;
+import massim.util.Log;
 import massim.util.RNG;
 
 public class Officer {
@@ -93,13 +91,11 @@ public class Officer {
             JSONObject temp = norms.getJSONObject(i);
             String name = temp.getString("name");
             this.accumulatedWeight += temp.getDouble("chance");
-            this.templates.put(name, new NormTemplate(temp, this.accumulatedWeight));            
+            this.templates.put(name, new NormTemplate(temp, this.accumulatedWeight));   
+            Log.log(Log.Level.NORMAL, "Template of norm " + name + " added");         
         }    
     }
 
-    // public Map<String, Norm> getNorms() {
-    //     return norms;
-    // }
     public Collection<Norm> getNorms() {
         return norms.values();
     }
@@ -108,17 +104,31 @@ public class Officer {
                 .filter(n -> n.isActive(step))
                 .collect(Collectors.toList());
     }
-    public List<Norm> getInProcessNorms(int step) {
+    public List<Norm> getOnlyAnnouncedNorms(int step) {
+        return this.norms.values().stream()
+                .filter(n -> n.toAnnounce(step))
+                .collect(Collectors.toList());
+    }
+    public List<Norm> getApprovedNorms(int step) {
         return this.norms.values().stream()
                 .filter(n -> n.toAnnounce(step) || n.isActive(step))
                 .collect(Collectors.toList());
     }
     public ArrayList<Record> getArchive(int step) {
-        return archive.get(step);
+        return archive.containsKey(step) ? archive.get(step) : new ArrayList<>();
+    }
+    public Set<String> getPunishments(int step, Entity entity) {
+        if (archive.containsKey(step)){
+            return archive.get(step).stream()
+                        .filter(r -> r.entity.equals(entity))
+                        .map(r -> r.norm)
+                        .collect(Collectors.toSet());
+        }
+        return new HashSet<String>();
     }
 
     public void createNorms(int step, GameState state){
-        int inProcessNorms = getInProcessNorms(step).size();
+        int inProcessNorms = getApprovedNorms(step).size();
         if (inProcessNorms >= this.maxActiveNorms)
             return;
         
@@ -145,6 +155,7 @@ public class Officer {
             for (Entity violator : violators) {
                 norm.punish(violator);
                 allViolators.add(new Record(norm.getName(), violator));
+                Log.log(Log.Level.NORMAL, violator.getAgentName()+" violated "+norm.getName());
             }
         }       
         if (allViolators.size() > 0)
@@ -157,7 +168,8 @@ public class Officer {
         int duration = RNG.betweenClosed(template.getMinDuration(), template.getMaxDuration());
         int announcePeriod = RNG.betweenClosed(template.getMinAnnouncement(), template.getMaxAnnouncement());  
         int punishment = RNG.betweenClosed(template.getMinPunishment(), template.getMaxPunishment());
-        norm.init("n"+normsIds, step+announcePeriod, step+announcePeriod+duration, punishment);
+        norm.init("n"+normsIds, step, step+announcePeriod, step+announcePeriod+duration, punishment);
+        Log.log(Log.Level.NORMAL, "Created "+norm.toString());
         normsIds += 1;
 
         return norm;
