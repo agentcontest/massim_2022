@@ -12,10 +12,7 @@ import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.Actions;
 import massim.protocol.messages.scenario.InitialPercept;
 import massim.protocol.messages.scenario.StepPercept;
-import massim.util.JSONUtil;
-import massim.util.Log;
-import massim.util.RNG;
-import massim.util.Util;
+import massim.util.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -51,96 +48,52 @@ class GameState {
     private final Map<Integer, GameObject> gameObjects = new HashMap<>();
     private final Map<String, Task> tasks = new HashMap<>();
     private final Set<ClearEvent> clearEvents = new HashSet<>();
-    private final Set<Position> agentCausedClearMarkers = new HashSet<>();
 
     // config parameters
     private final int randomFail;
     private final double pNewTask;
-    private final int taskDurationMin;
-    private final int taskDurationMax;
-    private final int taskSizeMin;
-    private final int taskSizeMax;
-    private final int taskRewardDecayMin;
-    private final int taskRewardDecayMax;
-    int clearSteps;
+    private final Bounds taskDurationBounds;
+    private final Bounds taskSizeBounds;
+    private final Bounds eventRadiusBounds;
+    private final Bounds eventCreateBounds;
     private final int eventChance;
-    private final int eventRadiusMin;
-    private final int eventRadiusMax;
     private final int eventWarning;
-    private final int eventCreateMin;
-    private final int eventCreateMax;
     private final int eventCreatePerimeter;
+    private final int[] clearDamage;
 
     private final Map<String, List<String>> surveyResults = new HashMap<>();
 
     private JSONArray logEvents = new JSONArray();
 
     GameState(JSONObject config, Set<TeamConfig> matchTeams) {
-        // parse simulation config
-        randomFail = config.getInt("randomFail");
-        Log.log(Log.Level.NORMAL, "config.randomFail: " + randomFail);
-        int attachLimit = config.getInt("attachLimit");
-        Log.log(Log.Level.NORMAL, "config.attachLimit: " + attachLimit);
-        clearSteps = config.getInt("clearSteps");
-        Log.log(Log.Level.NORMAL, "config.clearSteps: " + clearSteps);
-        var clusterSizes = config.getJSONArray("clusterBounds");
-        int clusterSizeMin = clusterSizes.getInt(0);
-        int clusterSizeMax = clusterSizes.getInt(1);
-        Log.log(Log.Level.NORMAL, "config.clusterBounds: " + clusterSizeMin + ", " + clusterSizeMax);
+        this.randomFail = ConfigUtil.getInt(config, "randomFail");
+        int attachLimit = ConfigUtil.getInt(config, "attachLimit");
+        var clusterSizes = ConfigUtil.getBounds(config, "clusterBounds");
 
-        Entity.clearEnergyCost = config.getInt("clearEnergyCost");
-        Log.log(Log.Level.NORMAL, "config.clearEnergyCost: " + Entity.clearEnergyCost);
-        Entity.disableDuration = config.getInt("disableDuration");
-        Log.log(Log.Level.NORMAL, "config.disableDuration: " + Entity.disableDuration);
-        Entity.maxEnergy = config.getInt("maxEnergy");
-        Log.log(Log.Level.NORMAL, "config.maxEnergy: " + Entity.maxEnergy);
+        Entity.clearEnergyCost = ConfigUtil.getInt(config, "clearEnergyCost");
+        Entity.deactivatedDuration = ConfigUtil.getInt(config, "deactivatedDuration");
+        Entity.maxEnergy = ConfigUtil.getInt(config, "maxEnergy");
+        Entity.stepRecharge = ConfigUtil.getInt(config, "stepRecharge");
 
-        var blockTypeBounds = config.getJSONArray("blockTypes");
-        var numberOfBlockTypes = RNG.betweenClosed(blockTypeBounds.getInt(0), blockTypeBounds.getInt(1));
-        Log.log(Log.Level.NORMAL, "config.blockTypes: " + blockTypeBounds + " -> " + numberOfBlockTypes);
-        for (int i = 0; i < numberOfBlockTypes; i++) {
-            blockTypes.add("b" + i);
-        }
-        var dispenserBounds = config.getJSONArray("dispensers");
-        Log.log(Log.Level.NORMAL, "config.dispensersBounds: " + dispenserBounds);
+        var blockTypeBounds = ConfigUtil.getBounds(config, "blockTypes");
+        var numberOfBlockTypes = RNG.betweenClosed(blockTypeBounds.lower(), blockTypeBounds.upper());
+        for (int i = 0; i < numberOfBlockTypes; i++) blockTypes.add("b" + i);
+
+        var dispenserBounds = ConfigUtil.getBounds(config, "dispensers");
+
+        clearDamage = ConfigUtil.getIntArray(config, "clearDamage");
 
         var taskConfig = config.getJSONObject("tasks");
-        var taskDurationBounds = taskConfig.getJSONArray("duration");
-        Log.log(Log.Level.NORMAL, "config.tasks.duration: " + taskDurationBounds);
-        taskDurationMin = taskDurationBounds.getInt(0);
-        taskDurationMax = taskDurationBounds.getInt(1);
-        var taskSizeBounds = taskConfig.getJSONArray("size");
-        Log.log(Log.Level.NORMAL, "config.tasks.size: " + taskSizeBounds);
-        taskSizeMin = taskSizeBounds.getInt(0);
-        taskSizeMax = taskSizeBounds.getInt(1);
-        pNewTask = taskConfig.getDouble("probability");
-        var taskRewardDecayBounds = taskConfig.getJSONArray("rewardDecay");
-        Log.log(Log.Level.NORMAL, "config.tasks.rewardDecay: " + taskRewardDecayBounds);
-        taskRewardDecayMin = taskRewardDecayBounds.getInt(0);
-        taskRewardDecayMax = taskRewardDecayBounds.getInt(1);
-        Log.log(Log.Level.NORMAL, "config.tasks.probability: " + pNewTask);
-        /* Minimum percentage of a reward to not decay beyond - range: [0,100] */
-        int lowerRewardLimit = taskConfig.getInt("lowerRewardLimit");
-        Log.log(Log.Level.NORMAL, "config.tasks.lowerRewardLimit: " + lowerRewardLimit);
+        this.taskDurationBounds = ConfigUtil.getBounds(taskConfig, "duration");
+        this.taskSizeBounds = ConfigUtil.getBounds(taskConfig, "size");
+        this.pNewTask = ConfigUtil.getDouble(taskConfig, "probability");
 
         var eventConfig = config.getJSONObject("events");
-        eventChance = eventConfig.getInt("chance");
-        Log.log(Log.Level.NORMAL, "config.events.chance: " + eventChance);
-        var eventRadius = eventConfig.getJSONArray("radius");
-        eventRadiusMin = eventRadius.getInt(0);
-        eventRadiusMax = eventRadius.getInt(1);
-        Log.log(Log.Level.NORMAL, "config.events.radius: " + eventRadiusMin + " - " + eventRadiusMax);
-        eventWarning = eventConfig.getInt("warning");
-        Log.log(Log.Level.NORMAL, "config.events.warning: " + eventWarning);
-        var eventCreate = eventConfig.getJSONArray("create");
-        eventCreateMin = eventCreate.getInt(0);
-        eventCreateMax = eventCreate.getInt(1);
-        Log.log(Log.Level.NORMAL, "config.events.create: " + eventCreateMin + " - " + eventCreateMax);
-        eventCreatePerimeter = eventConfig.getInt("perimeter");
-        Log.log(Log.Level.NORMAL, "config.events.perimeter: " + eventCreatePerimeter);
-
-        // set config values
-        Task.setLowerRewardLimit(lowerRewardLimit);
+        this.eventChance = ConfigUtil.getInt(eventConfig, "chance");
+        this.eventRadiusBounds = ConfigUtil.getBounds(eventConfig, "radius");
+        this.eventWarning = ConfigUtil.getInt(eventConfig, "warning");
+        this.eventCreateBounds = ConfigUtil.getBounds(eventConfig, "create");
+        this.eventCreatePerimeter = ConfigUtil.getInt(eventConfig, "perimeter");
 
         // create teams
         matchTeams.forEach(team -> teams.put(team.getName(), new Team(team.getName())));
@@ -158,7 +111,7 @@ class GameState {
             var numberOfAgents = entities.getInt(it.next());
             List<Integer> agentsRange = IntStream.rangeClosed(0, numberOfAgents-1).boxed().collect(Collectors.toList());
             while (!agentsRange.isEmpty()) {
-                int clusterSize = Math.min(RNG.betweenClosed(clusterSizeMin, clusterSizeMax), agentsRange.size());
+                int clusterSize = Math.min(RNG.betweenClosed(clusterSizes), agentsRange.size());
                 ArrayList<Position> cluster = grid.findRandomFreeClusterPosition(clusterSize);
                 for (Position p : cluster) {
                     int index = agentsRange.remove(RNG.nextInt(agentsRange.size()));
@@ -174,7 +127,7 @@ class GameState {
 
         // create env. things
         for (var block : blockTypes) {
-            var numberOfDispensers = RNG.betweenClosed(dispenserBounds.getInt(0), dispenserBounds.getInt(1));
+            var numberOfDispensers = RNG.betweenClosed(dispenserBounds);
             for (var i = 0; i < numberOfDispensers; i++) {
                 createDispenser(grid.findRandomFreePosition(), block);
             }
@@ -336,12 +289,10 @@ class GameState {
 
         //cleanup & transfer markers
         grid.deleteMarkers();
-        for (Position pos : agentCausedClearMarkers) grid.createMarker(pos, Marker.Type.CLEAR);
-        agentCausedClearMarkers.clear();
 
         //handle tasks
         if (RNG.nextDouble() < pNewTask) {
-            createTask(RNG.betweenClosed(taskDurationMin, taskDurationMax), RNG.betweenClosed(taskSizeMin, taskSizeMax));
+            createTask(RNG.betweenClosed(taskDurationBounds), RNG.betweenClosed(taskSizeBounds));
         }
 
         //handle entities
@@ -353,7 +304,7 @@ class GameState {
         //handle (map) events
         if (RNG.nextInt(100) < eventChance) {
             clearEvents.add(new ClearEvent(grid.getRandomPosition(), step + eventWarning,
-                    RNG.betweenClosed(eventRadiusMin, eventRadiusMax)));
+                    RNG.betweenClosed(eventRadiusBounds)));
         }
         var processedEvents = new HashSet<ClearEvent>();
         for (ClearEvent event: clearEvents) {
@@ -376,8 +327,8 @@ class GameState {
     }
 
     private void processEvent(ClearEvent event) {
-        var removed = clearArea(event.getPosition(), event.getRadius());
-        var distributeNew = RNG.betweenClosed(eventCreateMin, eventCreateMax) + removed;
+        var removed = clearArea(event.getPosition(), event.getRadius(), 1000, true);
+        var distributeNew = RNG.betweenClosed(eventCreateBounds) + removed;
 
         for (var i = 0; i < distributeNew; i++) {
             var pos = grid.findRandomFreePosition(event.getPosition(),eventCreatePerimeter + event.getRadius());
@@ -415,7 +366,7 @@ class GameState {
                     entity.getLastActionResult(), attachedThings,
                     surveyResults.get(entity.getAgentName()));
             percept.energy = entity.getEnergy();
-            percept.disabled = entity.isDisabled();
+            percept.disabled = entity.isDeactivated();
             result.put(entity.getAgentName(), percept);
         }
 
@@ -580,42 +531,54 @@ class GameState {
      */
     String handleClearAction(Entity entity, Position xy) {
         var target = xy.translate(entity.getPosition());
-        if (target.distanceTo(entity.getPosition()) > entity.getVision()) return ActionResults.FAILED_TARGET;
-        if (entity.getEnergy() < Entity.clearEnergyCost) return ActionResults.FAILED_RESOURCES;
+        var distance = entity.getPosition().distanceTo(target);
+        if (distance > entity.getVision()) return FAILED_LOCATION;
+        if (entity.getEnergy() < Entity.clearEnergyCost) return FAILED_RESOURCES;
 
-        var previousPos = entity.getPreviousClearPosition();
-        if(entity.getPreviousClearStep() != step - 1 || previousPos.x != target.x || previousPos.y != target.y) {
-            entity.resetClearCounter();
+        entity.consumeClearEnergy();
+
+        var removed = clearArea(target, 0, 0, false);
+
+        var targetEntity = getThingsAt(target).stream()
+                .filter(Entity.class::isInstance)
+                .map(Entity.class::cast)
+                .findAny();
+        if (targetEntity.isPresent()) {
+            var damage = getClearDamage(distance);
+            targetEntity.get().decreaseEnergy(damage);
         }
-        var counter = entity.incrementClearCounter();
-        if (counter == clearSteps) {
-            clearArea(target, 1);
-            entity.consumeClearEnergy();
-            entity.resetClearCounter();
-        }
-        else {
-            agentCausedClearMarkers.addAll(target.spanArea(1));
-        }
-        entity.recordClearAction(step, target);
-        return ActionResults.SUCCESS;
+
+        if (removed > 0 || targetEntity.isPresent())
+            return SUCCESS;
+        else
+            return FAILED_TARGET;
     }
 
-    int clearArea(Position center, int radius) {
+    private int getClearDamage(int distance) {
+        if (distance > clearDamage.length)
+            return clearDamage[clearDamage.length - 1];
+        return clearDamage[distance];
+    }
+
+    int clearArea(Position center, int radius, int damage, boolean destroyAttachments) {
         var removed = 0;
         for (var position : center.spanArea(radius)) {
             for (var go : getThingsAt(position)) {
                 if (go instanceof Entity) {
-                    ((Entity)go).disable();
+                    ((Entity)go).decreaseEnergy(damage);
                 }
-                else if (go instanceof Block) {
-                    removed++;
-                    grid.destroyThing(go);
-                    gameObjects.remove(go.getID());
-                }
-                else if (go instanceof Obstacle) {
-                    removed++;
-                    grid.destroyThing(go);
-                    gameObjects.remove(go.getID());
+                if (go instanceof Block block) {
+                    if (destroyAttachments || !block.isAttachedToAnotherEntity()) {
+                        removed++;
+                        grid.destroyThing(go);
+                        gameObjects.remove(go.getID());
+                    }
+                } else if (go instanceof Obstacle obs) {
+                    if (destroyAttachments || !obs.isAttachedToAnotherEntity()) {
+                        removed++;
+                        grid.destroyThing(go);
+                        gameObjects.remove(go.getID());
+                    }
                 }
             }
         }
@@ -643,14 +606,14 @@ class GameState {
             }
             requirements.put(lastPosition, blockList.get(index));
         }
-        Task t = new Task(name, step + duration, requirements, RNG.betweenClosed(this.taskRewardDecayMin, this.taskRewardDecayMax));
+        Task t = new Task(name, step + duration, requirements);
         tasks.put(t.getName(), t);
         return t;
     }
 
     Task createTask(String name, int duration, Map<Position, String> requirements) {
         if (requirements.size() == 0) return null;
-        Task t = new Task(name, step + duration, requirements, RNG.betweenClosed(this.taskRewardDecayMin, this.taskRewardDecayMax));
+        Task t = new Task(name, step + duration, requirements);
         tasks.put(t.getName(), t);
         return t;
     }
@@ -785,7 +748,7 @@ class GameState {
                 obj.put("action", e.getLastAction());
                 obj.put("actionParams", e.getLastActionParams());
                 obj.put("actionResult", e.getLastActionResult());
-                if (e.isDisabled()) obj.put("disabled", true);
+                if (e.isDeactivated()) obj.put("deactivated", true);
                 entities.put(obj);
             } else if (o instanceof Block) {
                 obj.put("type", ((Block) o).getBlockType());

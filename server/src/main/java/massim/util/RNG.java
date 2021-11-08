@@ -51,4 +51,8 @@ public abstract class RNG {
     public static synchronized int betweenClosed(int lower, int upper){
         return lower + nextInt(upper - lower + 1);
     }
+
+    public static synchronized int betweenClosed(Bounds bounds) {
+        return betweenClosed(bounds.lower(), bounds.upper());
+    }
 }

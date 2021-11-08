@@ -17,7 +17,9 @@ public class Entity extends Attachable {
 
     static int maxEnergy = 0;
     static int clearEnergyCost = 0;
-    static int disableDuration = 0;
+    static int deactivatedDuration = 0;
+    static int stepRecharge = 0;
+    static int refreshEnergy = 0;
 
     private final String agentName;
     private final String teamName;
@@ -28,12 +30,7 @@ public class Entity extends Attachable {
     private String lastActionResult = "";
 
     private int energy;
-
-    private int previousClearStep = -1;
-    private Position previousClearPosition = Position.of(-1, -1);
-    private int clearCounter = 0;
-
-    private int disabled = 0;
+    private int deactivatedSteps = 0;
 
     public Entity(Position xy, String agentName, String teamName, Role role) {
         super(xy);
@@ -50,11 +47,13 @@ public class Entity extends Attachable {
     }
 
     /**
-     * recharge and repair
+     * recharge or repair
      */
     void preStep() {
-        disabled--;
-        energy = Math.min(energy + 1, maxEnergy);
+        if (deactivatedSteps > 0 && --deactivatedSteps == 0)
+            this.energy = Entity.refreshEnergy;
+        else
+            energy = Math.min(this.energy + Entity.stepRecharge, Entity.maxEnergy);
     }
 
     String getTeamName() {
@@ -98,34 +97,13 @@ public class Entity extends Attachable {
         return this.role.maxSpeed(collectAllAttachments().size() - 1);
     }
 
-    void recordClearAction(int step, Position position) {
-        previousClearPosition = position;
-        previousClearStep = step;
-    }
-
-    int getPreviousClearStep() {
-        return previousClearStep;
-    }
-
-    Position getPreviousClearPosition() {
-        return previousClearPosition;
-    }
-
-    int incrementClearCounter() {
-        return ++clearCounter;
-    }
-
-    void resetClearCounter() {
-        clearCounter = 0;
-    }
-
-    void disable() {
-        disabled = disableDuration;
+    void deactivate() {
+        deactivatedSteps = Entity.deactivatedDuration + 1; //entity repaired in preStep
         detachAll();
     }
 
-    boolean isDisabled() {
-        return disabled > 0;
+    boolean isDeactivated() {
+        return deactivatedSteps > 0;
     }
 
     int getEnergy() {
@@ -133,7 +111,14 @@ public class Entity extends Attachable {
     }
 
     void consumeClearEnergy() {
-        energy -= clearEnergyCost;
+        this.decreaseEnergy(Entity.clearEnergyCost);
+    }
+
+    void decreaseEnergy(int amount) {
+        this.energy = Math.max(energy - amount, 0);
+        if (this.energy <= 0) {
+            this.deactivate();
+        }
     }
 
     public Role getRole() {

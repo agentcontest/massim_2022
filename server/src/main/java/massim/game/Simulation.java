@@ -105,7 +105,7 @@ public class Simulation {
         for (Entity entity : entities) {
             var action = actions.get(entity.getAgentName());
             entity.setNewAction(action);
-            if (entity.isDisabled()) {
+            if (entity.isDeactivated()) {
                 entity.setLastActionResult(FAILED_STATUS);
             }
             else if (RNG.nextInt(100) < state.getRandomFail()) {
