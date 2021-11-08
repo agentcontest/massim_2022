@@ -84,7 +84,7 @@ public class Officer {
         this.templates = new HashMap<>();
         this.archive = new HashMap<>();
         this.maxActiveNorms = config.getInt("simultaneous");
-        this.chance = config.getDouble("chance");
+        this.chance = config.getDouble("chance")/100;
 
         JSONArray norms = config.getJSONArray("subjects");
         for (int i=0; i < norms.length(); i++) {
