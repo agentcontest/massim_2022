@@ -127,46 +127,38 @@ public class Simulation {
             }
 
             switch(action) {
-                case NO_ACTION:
-                case SKIP:
-                    entity.setLastActionResult(SUCCESS);
-                    continue;
+                case NO_ACTION, SKIP -> entity.setLastActionResult(SUCCESS);
 
-                case MOVE:
-                    if (params.isEmpty())
-                        entity.setLastActionResult(FAILED_PARAMETER);
-                    else
-                        entity.setLastActionResult(state.handleMoveAction(entity, params));
-                    continue;
+                case MOVE -> entity.setLastActionResult(params.isEmpty() ? FAILED_PARAMETER
+                        : state.handleMoveAction(entity, params));
 
-                case ATTACH:
+                case ATTACH -> {
                     var direction = getStringParam(params, 0);
                     if (!Grid.DIRECTIONS.contains(direction)) {
                         entity.setLastActionResult(FAILED_PARAMETER);
                     } else {
                         entity.setLastActionResult(state.handleAttachAction(entity, direction));
                     }
-                    continue;
+                }
 
-                case DETACH:
-                    direction = getStringParam(params, 0);
+                case DETACH -> {
+                    var direction = getStringParam(params, 0);
                     if (!Grid.DIRECTIONS.contains(direction)) {
                         entity.setLastActionResult(FAILED_PARAMETER);
                     } else {
                         entity.setLastActionResult(state.handleDetachAction(entity, direction));
                     }
-                    continue;
+                }
 
-                case ROTATE:
-                    direction = getStringParam(params, 0);
-                    if (!Grid.ROTATION_DIRECTIONS.contains(direction)) {
+                case ROTATE -> {
+                    var direction = getStringParam(params, 0);
+                    if (!Grid.ROTATION_DIRECTIONS.contains(direction))
                         entity.setLastActionResult(FAILED_PARAMETER);
-                        continue;
-                    }
-                    entity.setLastActionResult(state.handleRotateAction(entity, "cw".equals(direction)));
-                    continue;
+                    else
+                        entity.setLastActionResult(state.handleRotateAction(entity, "cw".equals(direction)));
+                }
 
-                case CONNECT:
+                case CONNECT -> {
                     var partnerEntityName = getStringParam(params, 0);
                     var partnerEntity = state.getEntityByName(partnerEntityName);
                     var x = getIntParam(params, 1);
@@ -197,45 +189,43 @@ public class Simulation {
                     var result = state.handleConnectAction(entity, Position.of(x, y), partnerEntity, Position.of(px, py));
                     entity.setLastActionResult(result);
                     partnerEntity.setLastActionResult(result);
-                    continue;
+                }
 
-                case REQUEST:
-                    direction = getStringParam(params, 0);
-                    if (!Grid.DIRECTIONS.contains(direction)) {
+                case REQUEST -> {
+                    var direction = getStringParam(params, 0);
+                    if (!Grid.DIRECTIONS.contains(direction))
                         entity.setLastActionResult(FAILED_PARAMETER);
-                    } else {
+                    else
                         entity.setLastActionResult(state.handleRequestAction(entity, direction));
-                    }
-                    continue;
+                }
 
-                case SUBMIT:
+                case SUBMIT -> {
                     var taskName = getStringParam(params, 0);
                     entity.setLastActionResult(state.handleSubmitAction(entity, taskName));
-                    continue;
+                }
 
-                case CLEAR:
-                    x = getIntParam(params, 0);
-                    y = getIntParam(params, 1);
-                    if (x == null || y == null) entity.setLastActionResult(FAILED_PARAMETER);
-                    else {
+                case CLEAR -> {
+                    var x = getIntParam(params, 0);
+                    var y = getIntParam(params, 1);
+                    if (x == null || y == null)
+                        entity.setLastActionResult(FAILED_PARAMETER);
+                    else
                         entity.setLastActionResult(state.handleClearAction(entity, Position.of(x, y)));
-                    }
-                    continue;
+                }
 
-                case DISCONNECT:
+                case DISCONNECT -> {
                     var x1 = getIntParam(params, 0);
                     var y1 = getIntParam(params, 1);
                     var x2 = getIntParam(params, 2);
                     var y2 = getIntParam(params, 3);
-                    if (x1 == null || y1 == null || x2 == null || y2 == null) {
+                    if (x1 == null || y1 == null || x2 == null || y2 == null)
                         entity.setLastActionResult(FAILED_PARAMETER);
-                        continue;
-                    }
+                    else
                     entity.setLastActionResult(
                             state.handleDisconnectAction(entity, Position.of(x1, y1), Position.of(x2, y2)));
-                    continue;
+                }
 
-                case SURVEY:
+                case SURVEY -> {
                     if (params.size() == 1) {
                         var searchTarget = getStringParam(params, 0);
                         if (searchTarget == null)
@@ -248,33 +238,28 @@ public class Simulation {
                                 default -> entity.setLastActionResult(FAILED_PARAMETER);
                             }
                         }
-                    }
-                    else if (params.size() == 2) {
-                        x = getIntParam(params, 0);
-                        y = getIntParam(params, 1);
-                        if (x == null || y == null)
+                    } else if (params.size() == 2) {
+                        var x = getIntParam(params, 0);
+                        var y = getIntParam(params, 1);
+                        if (x == null || y == null) {
                             entity.setLastActionResult(FAILED_PARAMETER);
-                        else {
-                            var targetEntity = previousPositions.get(Position.of(x, y));
-                            if (targetEntity == null) {
-                                entity.setLastActionResult(FAILED_TARGET);
-                            }
-                            else {
-                                entity.setLastActionResult(state.handleSurveyTargetAction(entity, targetEntity));
-                            }
+                            continue;
                         }
-                    }
-                    else
+                        var targetEntity = previousPositions.get(Position.of(x, y));
+                        if (targetEntity == null)
+                            entity.setLastActionResult(FAILED_TARGET);
+                        else
+                            entity.setLastActionResult(state.handleSurveyTargetAction(entity, targetEntity));
+                    } else
                         entity.setLastActionResult(FAILED_PARAMETER);
-                    continue;
+                }
 
-                case ADOPT:
+                case ADOPT -> {
                     var roleName = getStringParam(params, 0);
                     entity.setLastActionResult(state.handleAdoptAction(entity, roleName));
-                    continue;
+                }
 
-                default:
-                    entity.setLastActionResult(UNKNOWN_ACTION);
+                default -> entity.setLastActionResult(UNKNOWN_ACTION);
             }
         }
     }

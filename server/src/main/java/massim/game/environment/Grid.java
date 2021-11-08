@@ -486,7 +486,6 @@ public class Grid {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
     }
 
-
     public boolean removeObstacle(Position position) {
         var posThings = thingsMap.get(position);
         var obstacle = posThings.stream().filter(thing -> thing instanceof Obstacle).findAny();
