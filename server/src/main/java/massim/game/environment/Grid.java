@@ -499,9 +499,24 @@ public class Grid {
     }
 
     /**
-     * Moves the goal zone (a random one if multiple zones overlap) at the current position to a random location.
-     * @param position
+     * Moves the goal zone (a random one if multiple zones overlap) at the current position to a random location
+     * according to moveProbability.
+     * @param position the position at which to look for a goal zone
      */
     public void moveGoalZone(Position position) {
+        if (RNG.nextDouble() > this.moveProbability) return;
+
+        var possibleZone = goalZones.findOneZoneAt(position);
+        if (possibleZone.isEmpty()) return;
+
+        var zone = possibleZone.get();
+        var newPos = zone.position();
+        while (goalZones.contains(newPos)) {
+            newPos = getRandomPosition();
+        }
+
+        goalZones.remove(zone.position());
+        addZone(ZoneType.GOAL, newPos, zone.radius());
+        Log.log(Log.Level.NORMAL, "Goal moved from " + zone.position() + " to " + newPos);
     }
 }
