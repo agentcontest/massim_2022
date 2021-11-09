@@ -309,7 +309,7 @@ public class GameState {
 
         //handle tasks
         if (RNG.nextDouble() < pNewTask) {
-            createTask(RNG.betweenClosed(taskDurationBounds), RNG.betweenClosed(taskSizeBounds));
+            createRandomTask(RNG.betweenClosed(taskDurationBounds), RNG.betweenClosed(taskSizeBounds));
         }
 
         //handle entities
@@ -388,7 +388,7 @@ public class GameState {
             }
             List<String> punishment = records.stream()
                                                 .filter(p -> p.entity().getAgentName().equals(entity.getAgentName()))
-                                                .map(r -> r.norm())
+                                                .map(Record::norm)
                                                 .collect(Collectors.toList());
             result.put(entity.getAgentName(), new StepPercept(
                     step,
@@ -626,30 +626,24 @@ public class GameState {
         return removed;
     }
 
-    Task createTask(int duration, int size) {
-        if (size < 1) return null;
+    void createRandomTask(int duration, int size) {
+        if (size < 1) return;
         var name = "task" + tasks.values().size();
         var requirements = new HashMap<Position, String>();
         var blockList = new ArrayList<>(blockTypes);
         Position lastPosition = Position.of(0, 1);
         requirements.put(lastPosition, blockList.get(RNG.nextInt(blockList.size())));
-        for (int i = 0; i < size - 1; i++) {
-            int index = RNG.nextInt(blockTypes.size());
+        while (requirements.size() < size) {
             double direction = RNG.nextDouble();
-            if (direction <= .3) {
-                lastPosition = Position.of(lastPosition.x - 1, lastPosition.y);
-            }
-            else if (direction <= .6) {
-                lastPosition = Position.of(lastPosition.x + 1, lastPosition.y);
-            }
-            else {
-                lastPosition = Position.of(lastPosition.x, lastPosition.y + 1);
-            }
-            requirements.put(lastPosition, blockList.get(index));
+            if (direction <= .3)
+                lastPosition = lastPosition.west();
+            else if (direction <= .6)
+                lastPosition = lastPosition.east();
+            else
+                lastPosition = lastPosition.south();
+            requirements.put(lastPosition, blockList.get(RNG.nextInt(blockTypes.size())));
         }
-        Task t = new Task(name, step + duration, requirements);
-        tasks.put(t.getName(), t);
-        return t;
+        createTask(name, duration, requirements);
     }
 
     Task createTask(String name, int duration, Map<Position, String> requirements) {
@@ -829,7 +823,7 @@ public class GameState {
         });
         officer.getApprovedNorms(this.step)
                 .forEach(n -> normArr.put(n.toJSON()));
-        officer.getArchive(this.step).stream().forEach(
+        officer.getArchive(this.step).forEach(
             r -> {
                 JSONObject record  = new JSONObject();
                 record.put("norm", r.norm());

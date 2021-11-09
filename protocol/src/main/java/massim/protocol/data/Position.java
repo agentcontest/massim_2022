@@ -125,4 +125,20 @@ public final class Position {
         var dy = clockwise? pos.x : -pos.x;
         return Position.wrapped(center.x + dx, center.y + dy);
     }
+
+    public Position north() {
+        return Position.of(this.x, this.y - 1);
+    }
+
+    public Position east() {
+        return Position.of(this.x + 1, this.y);
+    }
+
+    public Position south() {
+        return Position.of(this.x, this.y + 1);
+    }
+
+    public Position west() {
+        return Position.of(this.x - 1, this.y);
+    }
 }
