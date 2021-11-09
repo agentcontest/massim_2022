@@ -350,7 +350,6 @@ class GameState {
         for (Entity entity : entityToAgent.keySet()) {
             var pos = entity.getPosition();
             var visibleThings = new HashSet<Thing>();
-            Map<String, Set<Position>> visibleTerrain = new HashMap<>();
             Set<Position> attachedThings = new HashSet<>();
             for (Position currentPos: pos.spanArea(entity.getVision())){
                 getThingsAt(currentPos).forEach(go -> {
@@ -364,7 +363,7 @@ class GameState {
             }
             var percept = new StepPercept(step,
                     teams.get(entity.getTeamName()).getScore(),
-                    visibleThings, visibleTerrain, allTasks,
+                    visibleThings, allTasks,
                     entity.getLastAction(), entity.getLastActionParams(),
                     entity.getLastActionResult(), attachedThings,
                     stepEvents.get(entity.getAgentName()),
