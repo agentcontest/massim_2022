@@ -61,7 +61,7 @@ class GameState {
     private final int eventCreatePerimeter;
     private final int[] clearDamage;
 
-    private final Map<String, List<String>> surveyResults = new HashMap<>();
+    private final Map<String, JSONArray> stepEvents = new HashMap<>();
 
     private JSONArray logEvents = new JSONArray();
 
@@ -283,11 +283,8 @@ class GameState {
     Map<String, RequestActionMessage> prepareStep(int step) {
         this.step = step;
 
-        this.surveyResults.clear();
-
         logEvents = new JSONArray();
 
-        //cleanup & transfer markers
         grid.deleteMarkers();
 
         //handle tasks
@@ -298,16 +295,13 @@ class GameState {
         //handle entities
         agentToEntity.values().forEach(Entity::preStep);
 
-        //handle activated tasks
-        tasks.values().forEach(Task::preStep);
-
         //handle (map) events
         if (RNG.nextInt(100) < eventChance) {
             clearEvents.add(new ClearEvent(grid.getRandomPosition(), step + eventWarning,
                     RNG.betweenClosed(eventRadiusBounds)));
         }
         var processedEvents = new HashSet<ClearEvent>();
-        for (ClearEvent event: clearEvents) {
+        for (var event: clearEvents) {
             if (event.getStep() == step) {
                 processEvent(event);
                 processedEvents.add(event);
@@ -323,7 +317,13 @@ class GameState {
         }
         clearEvents.removeAll(processedEvents);
 
-        return getStepPercepts();
+        return this.getStepPerceptsAndCleanUp();
+    }
+
+    private Map<String, RequestActionMessage> getStepPerceptsAndCleanUp() {
+        var result = this.getStepPercepts();
+        this.stepEvents.clear();
+        return result;
     }
 
     private void processEvent(ClearEvent event) {
@@ -364,7 +364,7 @@ class GameState {
                     visibleThings, visibleTerrain, allTasks,
                     entity.getLastAction(), entity.getLastActionParams(),
                     entity.getLastActionResult(), attachedThings,
-                    surveyResults.get(entity.getAgentName()));
+                    stepEvents.get(entity.getAgentName()));
             percept.energy = entity.getEnergy();
             percept.disabled = entity.isDeactivated();
             result.put(entity.getAgentName(), percept);
@@ -546,6 +546,7 @@ class GameState {
         if (targetEntity.isPresent()) {
             var damage = getClearDamage(distance);
             targetEntity.get().decreaseEnergy(damage);
+
         }
 
         if (removed > 0 || targetEntity.isPresent())
@@ -820,22 +821,35 @@ class GameState {
         if (optDispenser.isEmpty()) return FAILED_TARGET;
 
         var distance = optDispenser.get().getPosition().distanceTo(entity.getPosition());
-        surveyResults.put(entity.getAgentName(), List.of("dispenser", String.valueOf(distance)));
+        this.addAdditionalPercept(entity, new JSONObject()
+                .put("type", "surveyed")
+                .put("target", "dispenser")
+                .put("distance", distance)
+        );
         return SUCCESS;
     }
 
     public String handleSurveyZoneAction(Entity entity, ZoneType zoneType) {
         var distance = grid.getDistanceToNextZone(zoneType, entity.getPosition());
         if (distance == null) return FAILED_TARGET;
-        surveyResults.put(entity.getAgentName(), List.of(zoneType.toString(), String.valueOf(distance)));
+        this.addAdditionalPercept(entity, new JSONObject()
+                .put("type", "surveyed")
+                .put("target", zoneType.toString())
+                .put("distance", distance)
+        );
         return SUCCESS;
     }
 
     public String handleSurveyTargetAction(Entity entity, Entity targetEntity) {
         var distance = entity.getPosition().distanceTo(targetEntity.getPosition());
         if (distance > entity.getVision()) return FAILED_LOCATION;
-        surveyResults.put(entity.getAgentName(),
-                List.of("agent", targetEntity.getAgentName(), targetEntity.getRole().name()));
+        this.addAdditionalPercept(entity, new JSONObject()
+                .put("type", "surveyed")
+                .put("target", "agent")
+                .put("name", targetEntity.getAgentName())
+                .put("role", targetEntity.getRole().name())
+                .put("energy", targetEntity.getEnergy())
+        );
         return SUCCESS;
     }
 
@@ -846,5 +860,14 @@ class GameState {
         if (!grid.isInZone(ZoneType.ROLE, entity.getPosition())) return FAILED_LOCATION;
         entity.setRole(role);
         return SUCCESS;
+    }
+
+    /**
+     * Adds a percept for the current step that cannot be determined at perception time.
+     * These percepts survive until the next time percepts are sent out in prepareStep()
+     */
+    private void addAdditionalPercept(Entity entity, JSONObject percept) {
+        stepEvents.computeIfAbsent(entity.getAgentName(), k -> new JSONArray())
+                .put(percept);
     }
 }

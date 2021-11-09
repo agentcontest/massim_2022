@@ -21,7 +21,7 @@ public class StepPercept extends RequestActionMessage {
     public Set<Position> attachedThings = new HashSet<>();
     public int energy;
     public boolean disabled;
-    public List<String> surveyResult;
+    public JSONArray stepEvents;
 
     public StepPercept(JSONObject content) {
         super(content);
@@ -30,7 +30,7 @@ public class StepPercept extends RequestActionMessage {
 
     public StepPercept(int step, long score, Set<Thing> things, Map<String, Set<Position>> terrain,
                        Set<TaskInfo> taskInfo, String action, List<String> lastActionParams, String result,
-                       Set<Position> attachedThings, List<String> surveyResult) {
+                       Set<Position> attachedThings, JSONArray stepEvents) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -40,7 +40,7 @@ public class StepPercept extends RequestActionMessage {
         this.terrain = terrain;
         this.lastActionParams.addAll(lastActionParams);
         this.attachedThings = attachedThings;
-        this.surveyResult = surveyResult;
+        this.stepEvents = stepEvents;
     }
 
     @Override
@@ -75,20 +75,9 @@ public class StepPercept extends RequestActionMessage {
             attached.put(pos);
         });
         percept.put("attached", attached);
-        if (surveyResult != null) {
-            JSONObject jsonSurvey = new JSONObject();
-            var type = surveyResult.get(0);
-            jsonSurvey.put("type", type);
-            switch (type) {
-                case "dispenser", "goal" -> jsonSurvey.put("distance", Integer.parseInt(surveyResult.get(1)));
-                case "agent" -> {
-                    jsonSurvey.put("name", surveyResult.get(1));
-                    jsonSurvey.put("role", surveyResult.get(2));
-                }
-                default -> System.out.println("Unknown SurveyResult Type " + type);
-            }
-            percept.put("surveyed", jsonSurvey);
-        }
+
+        percept.put("events", stepEvents != null? stepEvents : new JSONArray());
+
         return percept;
     }
 
@@ -126,18 +115,7 @@ public class StepPercept extends RequestActionMessage {
         energy = percept.getInt("energy");
         disabled = percept.getBoolean("disabled");
 
-        var surveyed = percept.optJSONObject("surveyed");
-        if (surveyed != null) {
-            surveyResult = new ArrayList<>();
-            var type = surveyed.getString("type");
-            surveyResult.add(type);
-            switch (type) {
-                case "dispenser", "goal" -> surveyResult.add(String.valueOf(surveyed.getInt("distance")));
-                case "agent" -> {
-                    surveyResult.add(surveyed.getString("name"));
-                    surveyResult.add(surveyed.getString("role"));
-                }
-            }
-        }
+        var stepEvents = percept.optJSONArray("events");
+        this.stepEvents = stepEvents != null? stepEvents : new JSONArray();
     }
 }

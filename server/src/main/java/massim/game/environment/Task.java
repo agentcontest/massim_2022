@@ -52,8 +52,6 @@ public class Task {
                 .collect(Collectors.joining(","));
     }
 
-    public void preStep() {}
-
     public int getReward() {
         return this.reward;
     }
