@@ -46,7 +46,7 @@ public class StepPercept extends RequestActionMessage {
 
     @Override
     public JSONObject makePercept() {
-        var percept = new JSONObject()
+        return new JSONObject()
                 .put("score", score)
                 .put("things", new JSONArray(things.stream().map(Thing::toJSON).collect(Collectors.toList())))
                 .put("tasks", new JSONArray(taskInfo.stream().map(TaskInfo::toJSON).collect(Collectors.toList())))
@@ -58,7 +58,6 @@ public class StepPercept extends RequestActionMessage {
                 .put("events", stepEvents != null? stepEvents : new JSONArray())
                 .put("role", this.role)
                 .put("attached", new JSONArray(attachedThings.stream().map(Position::toJSON).collect(Collectors.toList())));
-        return percept;
     }
 
     private void parsePercept(JSONObject percept) {
