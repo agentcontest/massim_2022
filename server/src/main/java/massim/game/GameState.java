@@ -4,6 +4,7 @@ import massim.config.TeamConfig;
 import massim.game.environment.*;
 import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
+import massim.protocol.data.Role;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.RequestActionMessage;
 import massim.protocol.messages.SimEndMessage;
@@ -12,6 +13,7 @@ import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.Actions;
 import massim.protocol.messages.scenario.InitialPercept;
 import massim.protocol.messages.scenario.StepPercept;
+import massim.protocol.util.JSONUtil;
 import massim.util.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -81,7 +83,7 @@ class GameState {
 
         var dispenserBounds = ConfigUtil.getBounds(config, "dispensers");
 
-        clearDamage = ConfigUtil.getIntArray(config, "clearDamage");
+        clearDamage = JSONUtil.getIntArray(config, "clearDamage");
 
         var taskConfig = config.getJSONObject("tasks");
         this.taskDurationBounds = ConfigUtil.getBounds(taskConfig, "duration");
@@ -275,7 +277,8 @@ class GameState {
     Map<String, SimStartMessage> getInitialPercepts(int steps) {
         Map<String, SimStartMessage> result = new HashMap<>();
         for (Entity e: entityToAgent.keySet()) {
-            result.put(e.getAgentName(), new InitialPercept(e.getAgentName(), e.getTeamName(), teamSize, steps, e.getVision()));
+            result.put(e.getAgentName(),
+                    new InitialPercept(e.getAgentName(), e.getTeamName(), teamSize, steps, roles.values()));
         }
         return result;
     }

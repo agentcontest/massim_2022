@@ -11,6 +11,7 @@ import massim.protocol.messages.scenario.StepPercept;
 import org.json.JSONObject;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * An EIS compatible entity.
@@ -31,9 +32,27 @@ public class ScenarioEntity extends ConnectedEntity {
         ret.add(new Percept("team", new Identifier(simStart.teamName)));
         ret.add(new Percept("teamSize", new Numeral(simStart.teamSize)));
         ret.add(new Percept("steps", new Numeral(simStart.steps)));
-        ret.add(new Percept("vision", new Numeral(simStart.vision)));
+
+        simStart.roles.forEach(role ->
+                ret.add(new Percept("role",
+                        new Identifier(role.name()),
+                        new Numeral(role.vision()),
+                        makeListOfIdentifiers(role.actions()),
+                        makeListOfNumerals(role.speed())))
+        );
 
         return ret;
+    }
+
+    private ParameterList makeListOfIdentifiers(Collection<String> identifiers) {
+        return new ParameterList(identifiers.stream().map(Identifier::new).collect(Collectors.toList()));
+    }
+
+    private ParameterList makeListOfNumerals(int[] numerals) {
+        var result = new ParameterList();
+        for (int numeral : numerals)
+            result.add(new Numeral(numeral));
+        return result;
     }
 
     @Override

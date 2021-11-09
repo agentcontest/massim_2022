@@ -2,6 +2,7 @@ package massim.game;
 
 import massim.game.environment.Attachable;
 import massim.protocol.data.Position;
+import massim.protocol.data.Role;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.ActionMessage;
 import massim.protocol.messages.scenario.ActionResults;

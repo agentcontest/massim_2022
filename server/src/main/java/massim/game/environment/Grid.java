@@ -1,7 +1,7 @@
 package massim.game.environment;
 
 import massim.game.Entity;
-import massim.game.Role;
+import massim.protocol.data.Role;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneList;
 import massim.game.environment.zones.ZoneType;

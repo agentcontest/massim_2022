@@ -1,7 +1,12 @@
 package massim.protocol.messages.scenario;
 
+import massim.protocol.data.Role;
 import massim.protocol.messages.SimStartMessage;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class InitialPercept extends SimStartMessage {
 
@@ -9,38 +14,37 @@ public class InitialPercept extends SimStartMessage {
     public String teamName;
     public int teamSize;
     public int steps;
-    public int vision;
+    public Collection<Role> roles;
 
     public InitialPercept(JSONObject content) {
         super(content);
         parsePercept(content.getJSONObject("percept"));
     }
 
-    public InitialPercept(String agentName, String teamName, int teamSize, int steps, int vision) {
+    public InitialPercept(String agentName, String teamName, int teamSize, int steps, Collection<Role> roles) {
         super(System.currentTimeMillis());
         this.agentName = agentName;
         this.teamName = teamName;
         this.teamSize = teamSize;
         this.steps = steps;
-        this.vision = vision;
+        this.roles = roles;
     }
 
     @Override
     public JSONObject makePercept() {
-        JSONObject percept = new JSONObject();
-        percept.put("name", agentName);
-        percept.put("team", teamName);
-        percept.put("teamSize", teamSize);
-        percept.put("steps", steps);
-        percept.put("vision", vision);
-        return percept;
+        return new JSONObject()
+                .put("name", this.agentName)
+                .put("team", this.teamName)
+                .put("teamSize", this.teamSize)
+                .put("steps", this.steps)
+                .put("roles", new JSONArray(this.roles.stream().map(Role::toJSON).collect(Collectors.toList())));
     }
 
     private void parsePercept(JSONObject percept) {
-        agentName = percept.getString("name");
-        teamName = percept.getString("team");
-        steps = percept.getInt("steps");
-        teamSize = percept.getInt("teamSize");
-        vision = percept.getInt("vision");
+        this.agentName = percept.getString("name");
+        this.teamName = percept.getString("team");
+        this.steps = percept.getInt("steps");
+        this.teamSize = percept.getInt("teamSize");
+        this.roles = Role.fromJSON(percept.getJSONArray("roles"));
     }
 }
