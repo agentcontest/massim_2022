@@ -18,28 +18,28 @@ import massim.util.Log;
 import massim.util.RNG;
 
 public class Officer {
-    class NormTemplate {
-        private String name;
-        private double chance;
-        private int minDuration;
-        private int maxDuration;
-        private int minAnnouncement;
-        private int maxAnnouncement;
-        private int minPunishment;
-        private int maxPunishment;
-        private JSONObject aditionalInfo;
+    static class NormTemplate {
+        private final String name;
+        private final double chance;
+        private final int minDuration;
+        private final int maxDuration;
+        private final int minAnnouncement;
+        private final int maxAnnouncement;
+        private final int minPunishment;
+        private final int maxPunishment;
+        private JSONObject additionalInfo;
         public NormTemplate(JSONObject template, double weight) {   
             this.name = template.getString("name");      
             this.chance = weight;
-            this.minDuration = (int) template.getJSONArray("duration").getInt(0);
-            this.maxDuration = (int) template.getJSONArray("duration").getInt(1);
-            this.minAnnouncement = (int) template.getJSONArray("announcement").getInt(0);
-            this.maxAnnouncement = (int) template.getJSONArray("announcement").getInt(1);
-            this.minPunishment = (int) template.getJSONArray("punishment").getInt(0);
-            this.maxPunishment = (int) template.getJSONArray("punishment").getInt(1);
-            this.aditionalInfo = template.optJSONObject("optional");
-            if (this.aditionalInfo==null)
-                this.aditionalInfo = new JSONObject();
+            this.minDuration = template.getJSONArray("duration").getInt(0);
+            this.maxDuration = template.getJSONArray("duration").getInt(1);
+            this.minAnnouncement = template.getJSONArray("announcement").getInt(0);
+            this.maxAnnouncement = template.getJSONArray("announcement").getInt(1);
+            this.minPunishment = template.getJSONArray("punishment").getInt(0);
+            this.maxPunishment = template.getJSONArray("punishment").getInt(1);
+            this.additionalInfo = template.optJSONObject("optional");
+            if (this.additionalInfo==null)
+                this.additionalInfo = new JSONObject();
         }
         public String getName() {
             return name;
@@ -65,19 +65,19 @@ public class Officer {
         public double getChance() {
             return chance;
         }
-        public JSONObject getAditionalInfo() {
-            return aditionalInfo;
+        public JSONObject getAdditionalInfo() {
+            return additionalInfo;
         }
     }
 
     public record Record(String norm, Entity entity) {    }
     private int normsIds = 1;
-    private int maxActiveNorms = 0;
-    private double chance = 0;
+    private final int maxActiveNorms;
+    private final double chance;
     private double accumulatedWeight = 0;
-    private Map<String, Norm> norms;
-    private Map<String, NormTemplate> templates;
-    private Map<Integer, ArrayList<Record>> archive;
+    private final Map<String, Norm> norms;
+    private final Map<String, NormTemplate> templates;
+    private final Map<Integer, ArrayList<Record>> archive;
 
     public Officer(JSONObject config) {
         this.norms = new HashMap<>();
@@ -91,7 +91,7 @@ public class Officer {
             JSONObject temp = norms.getJSONObject(i);
             String name = temp.getString("name");
             this.accumulatedWeight += temp.getDouble("weight");
-            this.templates.put(name, new NormTemplate(temp, this.accumulatedWeight));   
+            this.templates.put(name, new NormTemplate(temp, this.accumulatedWeight));
             Log.log(Log.Level.NORMAL, "Template of norm " + name + " added");         
         }    
     }
@@ -124,7 +124,7 @@ public class Officer {
                         .map(r -> r.norm)
                         .collect(Collectors.toSet());
         }
-        return new HashSet<String>();
+        return new HashSet<>();
     }
 
     public void createNorms(int step, GameState state){
@@ -139,9 +139,9 @@ public class Officer {
         for (NormTemplate temp : this.templates.values()) {
             if (temp.getChance() >= p) {
                 Norm norm = createNorm(step, temp);
-                norm.bill(state, temp.getAditionalInfo());
+                norm.bill(state, temp.getAdditionalInfo());
                 norms.put(norm.getName(), norm);
-                Log.log(Log.Level.NORMAL, "Created "+norm.toString());
+                Log.log(Log.Level.NORMAL, "Created "+ norm);
                 break;
             }
         }     
