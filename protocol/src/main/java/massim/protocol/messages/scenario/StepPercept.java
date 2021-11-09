@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class StepPercept extends RequestActionMessage {
 
@@ -47,41 +48,27 @@ public class StepPercept extends RequestActionMessage {
 
     @Override
     public JSONObject makePercept() {
-        var percept = new JSONObject();
-        var jsonThings = new JSONArray();
-        var jsonTasks = new JSONArray();
         var jsonTerrain = new JSONObject();
-        percept.put("score", score);
-        percept.put("things", jsonThings);
-        percept.put("tasks", jsonTasks);
-        percept.put("terrain", jsonTerrain);
-        percept.put("energy", energy);
-        percept.put("deactivated", deactivated);
-        things.forEach(t -> jsonThings.put(t.toJSON()));
-        taskInfo.forEach(t -> jsonTasks.put(t.toJSON()));
+        var percept = new JSONObject()
+                .put("score", score)
+                .put("things", new JSONArray(things.stream().map(Thing::toJSON).collect(Collectors.toList())))
+                .put("tasks", new JSONArray(taskInfo.stream().map(TaskInfo::toJSON).collect(Collectors.toList())))
+                .put("terrain", jsonTerrain)
+                .put("energy", energy)
+                .put("deactivated", deactivated)
+                .put("lastAction", lastAction)
+                .put("lastActionResult", lastActionResult)
+                .put("lastActionParams", new JSONArray(lastActionParams))
+                .put("events", stepEvents != null? stepEvents : new JSONArray())
+                .put("role", this.role)
+                .put("attached", new JSONArray(attachedThings.stream().map(Position::toJSON).collect(Collectors.toList())));
+
         terrain.forEach((t, positions) -> {
-            JSONArray jsonPositions = new JSONArray();
+            var jsonPositions = new JSONArray();
             positions.forEach(p -> jsonPositions.put(p.toJSON()));
             jsonTerrain.put(t, jsonPositions);
         });
-        percept.put("lastAction", lastAction);
-        percept.put("lastActionResult", lastActionResult);
-        var params = new JSONArray();
-        lastActionParams.forEach(params::put);
-        percept.put("lastActionParams", params);
-        JSONArray attached = new JSONArray();
-        attachedThings.forEach(a -> {
-            JSONArray pos = new JSONArray();
-            pos.put(a.x);
-            pos.put(a.y);
-            attached.put(pos);
-        });
-        percept.put("attached", attached);
-
-        percept.put("events", stepEvents != null? stepEvents : new JSONArray());
-
-        percept.put("role", this.role);
-
+        
         return percept;
     }
 
