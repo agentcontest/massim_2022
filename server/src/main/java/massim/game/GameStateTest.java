@@ -11,7 +11,6 @@ import massim.util.RNG;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -28,10 +27,12 @@ public class GameStateTest {
                 .put("randomFail", 1)
                 .put("entities", new JSONObject().put("standard", 10))
                 .put("clusterBounds", new JSONArray().put(1).put(3))
-                .put("clearSteps", 3)
-                .put("clearEnergyCost", 30)
-                .put("disableDuration", 4)
-                .put("maxEnergy", 300)
+                .put("clearEnergyCost", 2)
+                .put("clearDamage", new JSONArray("[32, 16, 8, 4, 2, 1]"))
+                .put("deactivatedDuration", 4)
+                .put("stepRecharge", 1)
+                .put("refreshEnergy", 50)
+                .put("maxEnergy", 100)
                 .put("attachLimit", 10)
                 .put("grid", new JSONObject()
                         .put("height", 100)
@@ -40,6 +41,7 @@ public class GameStateTest {
                         .put("goals", new JSONObject()
                                 .put("number", 0)
                                 .put("size", new JSONArray().put(1).put(2))
+                                .put("moveProbability", .1)
                         )
                         .put("roleZones", new JSONObject()
                                 .put("number", 0)
@@ -52,10 +54,6 @@ public class GameStateTest {
                         .put("size", new JSONArray().put(2).put(4))
                         .put("duration", new JSONArray().put(100).put(200))
                         .put("probability", 0.05)
-                        .put("taskboards", 5)
-                        .put("rewardDecay", new JSONArray().put(1).put(5))
-                        .put("lowerRewardLimit", 10)
-                        .put("distanceToTaskboards", 10)
                 )
                 .put("events", new JSONObject()
                         .put("chance", 15)
@@ -162,9 +160,9 @@ public class GameStateTest {
         var block2 = state.createBlock(Position.of(10,12), "b1");
         state.getGrid().addObstacle(Position.of(11, 10));
 
-        var result = state.clearArea(Position.of(10,10), 1);
+        var result = state.clearArea(Position.of(10,10), 1, 1000, true);
 
-        assert(a1.isDisabled());
+        assert(a1.isDeactivated());
         assert(state.getThingsAt(block1.getPosition()).size() == 0);
         assert(state.getThingsAt(block2.getPosition()).size() == 1);
         assert state.getGrid().isUnblocked(Position.of(11, 10));
@@ -175,31 +173,34 @@ public class GameStateTest {
     public void handleClearAction() {
         var a1 = state.getEntityByName("A1");
         var a2 = state.getEntityByName("A2");
-        var posA2 = Position.of(22, 20);
+        var posA2 = Position.of(21, 20);
         state.teleport(a1.getAgentName(), Position.of(20, 20));
         state.teleport("A2", posA2);
-        var block = state.createBlock(Position.of(21, 20), "b1");
+        var block = state.createBlock(Position.of(22, 20), "b1");
         assert block != null;
 
-        assert(!a2.isDisabled());
-        int i;
-        for (i = 0; i < state.clearSteps - 1; i++) {
-            state.prepareStep(i);
-            if (i!=0) {
-                var percept = (StepPercept) state.getStepPercepts().get("A1");
-                assert (containsThing(percept.things, Thing.TYPE_MARKER, Position.of(2, 0)));
-            }
-            assert(state.handleClearAction(a1, Position.of(2, 0)).equals(ActionResults.SUCCESS));
-        }
-        state.prepareStep(i++);
-        assert(state.handleClearAction(a1, Position.of(2, 0)).equals(ActionResults.SUCCESS));
+        int step = -1;
+
+        state.prepareStep(step++);
+        var result = state.handleClearAction(a1, Position.of(2, 0));
+        assert(result.equals(ActionResults.SUCCESS));
         assert(!state.getThingsAt(block.getPosition()).contains(block));
-        assert(a2.isDisabled());
-        for (var j = 0; j < Entity.disableDuration; j++) {
-            assert(a2.isDisabled());
-            state.prepareStep(i + j);
+
+        assert(!a2.isDeactivated());
+        for (int i = 0; i < 7; i++) {
+            state.prepareStep(step++);
+            assert(!a2.isDeactivated());
+            var energy = a2.getEnergy();
+            result = state.handleClearAction(a1, Position.of(1, 0));
+            assert(result.equals(ActionResults.SUCCESS));
+            assert(a2.getEnergy() < energy);
         }
-        assert(!a2.isDisabled());
+
+        for (var j = 0; j < Entity.deactivatedDuration + 1; j++) {
+            assert(a2.isDeactivated());
+            state.prepareStep(step + j);
+        }
+        assert(!a2.isDeactivated());
     }
 
     @org.junit.Test
@@ -273,15 +274,20 @@ public class GameStateTest {
         assert(a1.getPosition().equals(Position.of(grid.getDimX() - 1, grid.getDimY() - 1)));
 
         // test clear across boundaries
-        state.getGrid().addObstacle(Position.of(0, 0));
-        assert state.getGrid().isBlocked(Position.of(0, 0));
-        for (var i = 0; i < state.clearSteps; i++) {
-            state.prepareStep(i);
-            assert state.handleClearAction(a1, Position.of(1, 1)).equals(ActionResults.SUCCESS);
-        }
+        state.handleMoveAction(a1, List.of("s"));
+        state.handleMoveAction(a1, List.of("e"));
+        state.handleMoveAction(a1, List.of("e"));
+        assert(a1.getPosition().equals(Position.of(1, 0)));
+        state.getGrid().addObstacle(Position.of(1, 1));
+        assert state.getGrid().isBlocked(Position.of(1, 1));
+        state.prepareStep(0);
+        var result = state.handleClearAction(a1, Position.of(0, 1));
+        System.out.println(result);
+        assert result.equals(ActionResults.SUCCESS);
         assert state.getGrid().isUnblocked(Position.of(0, 0));
 
-        state.handleMoveAction(a1, List.of("s"));
+        state.handleMoveAction(a1, List.of("w"));
+        state.handleMoveAction(a1, List.of("w"));
         assert a1.getPosition().equals(Position.of(grid.getDimX() - 1, 0));
 
         // rotate some blocks across the map boundaries

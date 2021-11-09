@@ -55,13 +55,13 @@ public final class Position {
     }
 
     public Position moved(String direction, int distance) {
-        switch (direction) {
-            case "n": return Position.wrapped(x, y - distance);
-            case "s": return Position.wrapped(x, y + distance);
-            case "w": return Position.wrapped(x - distance, y);
-            case "e": return Position.wrapped(x + distance, y);
-        }
-        return Position.of(x, y);
+        return switch (direction) {
+            case "n" -> Position.wrapped(x, y - distance);
+            case "s" -> Position.wrapped(x, y + distance);
+            case "w" -> Position.wrapped(x - distance, y);
+            case "e" -> Position.wrapped(x + distance, y);
+            default -> Position.of(x, y);
+        };
     }
 
     public static Position of(int x, int y) {
@@ -92,10 +92,7 @@ public final class Position {
     }
 
     public JSONArray toJSON() {
-        JSONArray result = new JSONArray();
-        result.put(x);
-        result.put(y);
-        return result;
+        return new JSONArray().put(x).put(y);
     }
 
     public static Position fromJSON(JSONArray json) {

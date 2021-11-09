@@ -89,11 +89,11 @@ public class NormsTest {
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
 
-        assert !a1.isDisabled();
+        assert !a1.isDeactivated();
         for (int i=0; i<=30; i++){
             officer.regulateNorms(25, agents);
         }
-        assert a1.isDisabled();
+        assert a1.isDeactivated();
     }
 
     @org.junit.Test

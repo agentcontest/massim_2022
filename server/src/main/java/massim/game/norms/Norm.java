@@ -39,10 +39,10 @@ public abstract class Norm {
     }
 
     public void punish(Entity entity) {
-        if (!entity.isDisabled()){
+        if (!entity.isDeactivated()){
             entity.consumeNormPunishment(this.punishment);
             if (entity.getEnergy() == 0)
-                entity.disable();
+                entity.deactivate();
         }
     }
 

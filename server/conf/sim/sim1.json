@@ -9,10 +9,13 @@
 
     "roles" : "$(roles/standard.json)",
 
-    "clearSteps" : 3,
-    "clearEnergyCost" : 30,
-    "disableDuration" : 4,
-    "maxEnergy" : 300,
+    "clearEnergyCost" : 2,
+    "deactivatedDuration" : 10,
+    "maxEnergy" : 100,
+    "refreshEnergy" : 50,
+    "stepRecharge" : 1,
+    "clearDamage" : [32, 16, 8, 4, 2, 1],
+
     "attachLimit" : 10,
 
     "grid" : {
@@ -23,7 +26,8 @@
       ],
       "goals": {
         "number" : 3,
-        "size" : [1,3]
+        "size" : [1,3],
+        "moveProbability": 0.1
       },
       "roleZones" : {
         "number" : 5,
@@ -38,10 +42,8 @@
       "size" : [1, 4],
       "duration" : [100, 200],
       "probability" : 0.05,
-      "taskboards" : 3,
       "rewardDecay" : [1, 2],
-      "lowerRewardLimit" : 10,
-      "distanceToTaskboards" : 8
+      "lowerRewardLimit" : 10
     },
 
     "events" : {

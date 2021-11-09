@@ -36,4 +36,16 @@ public class ZoneList {
         return new ArrayList<>(zones.values());
     }
 
+    public Optional<Zone> findOneZoneAt(Position pos) {
+        return zones.values().stream()
+                .filter(zone -> zone.position().distanceTo(pos) <= zone.radius())
+                .findAny();
+    }
+
+    /**
+     * @return whether there is a zone with the given center
+     */
+    public boolean contains(Position pos) {
+        return this.zones.containsKey(pos);
+    }
 }

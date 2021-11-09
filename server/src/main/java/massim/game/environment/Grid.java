@@ -1,7 +1,7 @@
 package massim.game.environment;
 
 import massim.game.Entity;
-import massim.game.Role;
+import massim.protocol.data.Role;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneList;
 import massim.game.environment.zones.ZoneType;
@@ -28,9 +28,11 @@ public class Grid {
     private final int dimX;
     private final int dimY;
     private final int attachLimit;
+    private final double moveProbability;
+
     private final Map<Position, Set<Positionable>> thingsMap;
     private final List<Marker> markers = new ArrayList<>();
-    private final Set<Obstacle> obstacles = new HashSet<>();
+    private final Set<Position> obstaclePositions = new HashSet<>();
 
     private final ZoneList goalZones = new ZoneList();
     private final ZoneList roleZones = new ZoneList();
@@ -67,7 +69,9 @@ public class Grid {
 
         this.addObstaclesFromConfig(gridConf.getJSONArray("instructions"));
 
-        this.addZonesFromConfig(ZoneType.GOAL, gridConf.getJSONObject("goals"));
+        var goalConf = gridConf.getJSONObject("goals");
+        this.moveProbability = goalConf.getDouble("moveProbability");
+        this.addZonesFromConfig(ZoneType.GOAL, goalConf);
 
         this.addZonesFromConfig(ZoneType.ROLE, gridConf.getJSONObject("roleZones"));
     }
@@ -108,15 +112,15 @@ public class Grid {
 
     public void addObstacle(Position pos) {
         var o = new Obstacle(pos);
-        if (this.insertThing(new Obstacle(pos)))
-            obstacles.add(o);
+        if (this.insertThing(o))
+            this.obstaclePositions.add(pos);
     }
 
     /**
      * @return a copy of the set of all obstacles
      */
-    public Set<Obstacle> getObstacles() {
-        return new HashSet<>(obstacles);
+    public Set<Position> getObstaclePositions() {
+        return new HashSet<>(obstaclePositions);
     }
 
     private void addZonesFromConfig(ZoneType type, JSONObject zoneConf) {
@@ -155,24 +159,12 @@ public class Grid {
     }
 
     /**
-     * @return distance to the nearest goal zone's center or null if there is no such goal zone
-     */
-    public Integer getDistanceToNextGoalZone(Position pos) {
-        return this.goalZones.getClosest(pos).position().distanceTo(pos);
-    }
-
-    /**
      * @return distance to the nearest role zone's center or null if there is no such role zone
      */
-    public Integer getDistanceToNextRoleZone(Position pos) {
-        return this.roleZones.getClosest(pos).position().distanceTo(pos);
-    }
-
-    public Integer getDistanceToNextZone(String type, Position pos) {
+    public Integer getDistanceToNextZone(ZoneType type, Position pos) {
         return switch(type) {
-            case "goal" -> this.goalZones.getClosest(pos).position().distanceTo(pos);
-            case "role" -> this.roleZones.getClosest(pos).position().distanceTo(pos);
-            default -> null;
+            case GOAL -> this.goalZones.getClosest(pos).position().distanceTo(pos);
+            case ROLE -> this.roleZones.getClosest(pos).position().distanceTo(pos);
         };
     }
 
@@ -267,7 +259,7 @@ public class Grid {
         if (a instanceof Attachable) ((Attachable) a).detachAll();
         var things = thingsMap.get(a.getPosition());
         if (things != null) things.remove(a);
-        if (a instanceof Obstacle o) obstacles.remove(o);
+        if (a instanceof Obstacle) obstaclePositions.remove(a.getPosition());
     }
 
     /**
@@ -292,7 +284,7 @@ public class Grid {
 
     private void move(Set<Attachable> things, Map<Attachable, Position> newPositions) {
         things.forEach(t -> thingsMap.getOrDefault(t.getPosition(), Collections.emptySet()).remove(t));
-        for (Positionable thing : things) {
+        for (Attachable thing : things) {
             var newPos = newPositions.get(thing);
             thing.setPosition(newPos);
             insertThing(thing);
@@ -494,15 +486,36 @@ public class Grid {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
     }
 
-
     public boolean removeObstacle(Position position) {
-        var things = thingsMap.get(position);
-        var obstacle = things.stream().filter(thing -> thing instanceof Obstacle).findAny();
+        var posThings = thingsMap.get(position);
+        var obstacle = posThings.stream().filter(thing -> thing instanceof Obstacle).findAny();
         if (obstacle.isPresent()) {
-            things.remove(obstacle);
-            obstacles.remove(obstacle);
+            posThings.remove(obstacle.get());
+            obstaclePositions.remove(position);
             return true;
         }
         return false;
+    }
+
+    /**
+     * Moves the goal zone (a random one if multiple zones overlap) at the current position to a random location
+     * according to moveProbability.
+     * @param position the position at which to look for a goal zone
+     */
+    public void moveGoalZone(Position position) {
+        if (RNG.nextDouble() > this.moveProbability) return;
+
+        var possibleZone = goalZones.findOneZoneAt(position);
+        if (possibleZone.isEmpty()) return;
+
+        var zone = possibleZone.get();
+        var newPos = zone.position();
+        while (goalZones.contains(newPos)) {
+            newPos = getRandomPosition();
+        }
+
+        goalZones.remove(zone.position());
+        addZone(ZoneType.GOAL, newPos, zone.radius());
+        Log.log(Log.Level.NORMAL, "Goal moved from " + zone.position() + " to " + newPos);
     }
 }

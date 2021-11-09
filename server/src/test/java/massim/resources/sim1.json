@@ -9,8 +9,11 @@
 
   "clearSteps" : 3,
   "clearEnergyCost" : 30,
-  "disableDuration" : 4,
+  "deactivatedDuration" : 10,
   "maxEnergy" : 300,
+  "refreshEnergy" : 50,
+  "stepRecharge" : 1,
+  "clearDamage" : [32, 16, 8, 4, 2, 1],
   "attachLimit" : 10,
 
   "grid" : {
@@ -21,7 +24,8 @@
     ],
     "goals": {
       "number" : 3,
-      "size" : [1,2]
+      "size" : [1,2],
+      "moveProbability": 0.1
     },
     "roleZones" : {
       "number" : 5,

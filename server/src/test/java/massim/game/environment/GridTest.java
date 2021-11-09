@@ -21,7 +21,7 @@ public class GridTest {
                 .put("height", 70)
                 .put("width", 70)
                 .put("instructions", new JSONArray("[[\"cave\", 0.45, 9, 5, 4]]"))
-                .put("goals", new JSONObject("{\"number\" : 3,\"size\" : [1,2]}"))
+                .put("goals", new JSONObject("{\"number\" : 3,\"size\" : [1,2],\"moveProbability\" : 0}"))
                 .put("roleZones", new JSONObject("{\"number\" : 3,\"size\" : [1,2]}"));
     }
 
