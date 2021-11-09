@@ -551,7 +551,7 @@ class GameState {
             targetEntity.get().decreaseEnergy(damage);
             addEventPercept(targetEntity.get(), new JSONObject()
                     .put("type", "hit")
-                    .put("origin", entity.getPosition().toJSON())
+                    .put("origin", entity.getPosition().relativeTo(targetEntity.get().getPosition()).toJSON())
                     .put("damage", damage)
             );
         }
