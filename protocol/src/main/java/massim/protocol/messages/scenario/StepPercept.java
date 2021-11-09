@@ -31,7 +31,8 @@ public class StepPercept extends RequestActionMessage {
 
     public StepPercept(int step, long score, Set<Thing> things,
                        Set<TaskInfo> taskInfo, String action, List<String> lastActionParams, String result,
-                       Set<Position> attachedThings, JSONArray stepEvents, String role) {
+                       Set<Position> attachedThings, JSONArray stepEvents, String role, int energy,
+                       boolean deactivated) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -42,6 +43,8 @@ public class StepPercept extends RequestActionMessage {
         this.attachedThings = attachedThings;
         this.stepEvents = stepEvents;
         this.role = role;
+        this.energy = energy;
+        this.deactivated = deactivated;
     }
 
     @Override
