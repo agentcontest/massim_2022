@@ -546,7 +546,11 @@ class GameState {
         if (targetEntity.isPresent()) {
             var damage = getClearDamage(distance);
             targetEntity.get().decreaseEnergy(damage);
-
+            addEventPercept(targetEntity.get(), new JSONObject()
+                    .put("type", "hit")
+                    .put("origin", entity.getPosition().toJSON())
+                    .put("damage", damage)
+            );
         }
 
         if (removed > 0 || targetEntity.isPresent())
@@ -821,7 +825,7 @@ class GameState {
         if (optDispenser.isEmpty()) return FAILED_TARGET;
 
         var distance = optDispenser.get().getPosition().distanceTo(entity.getPosition());
-        this.addAdditionalPercept(entity, new JSONObject()
+        this.addEventPercept(entity, new JSONObject()
                 .put("type", "surveyed")
                 .put("target", "dispenser")
                 .put("distance", distance)
@@ -832,7 +836,7 @@ class GameState {
     public String handleSurveyZoneAction(Entity entity, ZoneType zoneType) {
         var distance = grid.getDistanceToNextZone(zoneType, entity.getPosition());
         if (distance == null) return FAILED_TARGET;
-        this.addAdditionalPercept(entity, new JSONObject()
+        this.addEventPercept(entity, new JSONObject()
                 .put("type", "surveyed")
                 .put("target", zoneType.toString())
                 .put("distance", distance)
@@ -843,7 +847,7 @@ class GameState {
     public String handleSurveyTargetAction(Entity entity, Entity targetEntity) {
         var distance = entity.getPosition().distanceTo(targetEntity.getPosition());
         if (distance > entity.getVision()) return FAILED_LOCATION;
-        this.addAdditionalPercept(entity, new JSONObject()
+        this.addEventPercept(entity, new JSONObject()
                 .put("type", "surveyed")
                 .put("target", "agent")
                 .put("name", targetEntity.getAgentName())
@@ -866,7 +870,7 @@ class GameState {
      * Adds a percept for the current step that cannot be determined at perception time.
      * These percepts survive until the next time percepts are sent out in prepareStep()
      */
-    private void addAdditionalPercept(Entity entity, JSONObject percept) {
+    private void addEventPercept(Entity entity, JSONObject percept) {
         stepEvents.computeIfAbsent(entity.getAgentName(), k -> new JSONArray())
                 .put(percept);
     }
