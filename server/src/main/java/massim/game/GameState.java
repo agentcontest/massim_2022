@@ -343,36 +343,38 @@ class GameState {
 
     Map<String, RequestActionMessage> getStepPercepts(){
         Map<String, RequestActionMessage> result = new HashMap<>();
-        var allTasks = tasks.values().stream()
+        var activeTasks = tasks.values().stream()
                 .filter(t -> !t.isCompleted())
                 .map(Task::toPercept)
                 .collect(Collectors.toSet());
-        for (Entity entity : entityToAgent.keySet()) {
+        for (var entity : entityToAgent.keySet()) {
             var pos = entity.getPosition();
             var visibleThings = new HashSet<Thing>();
-            Set<Position> attachedThings = new HashSet<>();
-            for (Position currentPos: pos.spanArea(entity.getVision())){
-                getThingsAt(currentPos).forEach(go -> {
-                    visibleThings.add(go.toPercept(pos));
-                    if (go != entity && go instanceof Attachable && ((Attachable)go).isAttachedToAnotherEntity()){
-                        attachedThings.add(go.getPosition().relativeTo(pos));
+            var attachedThings = new HashSet<Position>();
+            for (var currentPos: pos.spanArea(entity.getVision())){
+                for (var thing : this.getThingsAt(currentPos)) {
+                    visibleThings.add(thing.toPercept(pos));
+                    if (thing != entity && thing instanceof Attachable a && a.isAttachedToAnotherEntity()){
+                        attachedThings.add(thing.getPosition().relativeTo(pos));
                     }
-                });
+                }
                 var d = dispensers.get(currentPos);
                 if (d != null) visibleThings.add(d.toPercept(pos));
             }
-            var percept = new StepPercept(step,
+            result.put(entity.getAgentName(), new StepPercept(
+                    step,
                     teams.get(entity.getTeamName()).getScore(),
-                    visibleThings, allTasks,
-                    entity.getLastAction(), entity.getLastActionParams(),
-                    entity.getLastActionResult(), attachedThings,
+                    visibleThings,
+                    activeTasks,
+                    entity.getLastAction(),
+                    entity.getLastActionParams(),
+                    entity.getLastActionResult(),
+                    attachedThings,
                     stepEvents.get(entity.getAgentName()),
                     entity.getRole().name(),
                     entity.getEnergy(),
-                    entity.isDeactivated());
-            result.put(entity.getAgentName(), percept);
+                    entity.isDeactivated()));
         }
-
         return result;
     }
 
