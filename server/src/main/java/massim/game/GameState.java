@@ -160,7 +160,7 @@ public class GameState {
 
     private Role parseRoles(JSONObject config) {
         Role defaultRole = null;
-        JSONArray rolesData = config.getJSONArray("roles");
+        var rolesData = config.getJSONArray("roles");
         for (int i = 0; i < rolesData.length(); i++) {
             var roleData = rolesData.getJSONObject(i);
             var role = new Role(
