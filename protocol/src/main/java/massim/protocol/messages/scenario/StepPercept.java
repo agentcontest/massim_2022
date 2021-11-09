@@ -21,6 +21,7 @@ public class StepPercept extends RequestActionMessage {
     public Set<Position> attachedThings = new HashSet<>();
     public int energy;
     public boolean deactivated;
+    public String role;
     public JSONArray stepEvents;
 
     public StepPercept(JSONObject content) {
@@ -30,7 +31,7 @@ public class StepPercept extends RequestActionMessage {
 
     public StepPercept(int step, long score, Set<Thing> things, Map<String, Set<Position>> terrain,
                        Set<TaskInfo> taskInfo, String action, List<String> lastActionParams, String result,
-                       Set<Position> attachedThings, JSONArray stepEvents) {
+                       Set<Position> attachedThings, JSONArray stepEvents, String role) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -41,6 +42,7 @@ public class StepPercept extends RequestActionMessage {
         this.lastActionParams.addAll(lastActionParams);
         this.attachedThings = attachedThings;
         this.stepEvents = stepEvents;
+        this.role = role;
     }
 
     @Override
@@ -77,6 +79,8 @@ public class StepPercept extends RequestActionMessage {
         percept.put("attached", attached);
 
         percept.put("events", stepEvents != null? stepEvents : new JSONArray());
+
+        percept.put("role", this.role);
 
         return percept;
     }
@@ -117,5 +121,7 @@ public class StepPercept extends RequestActionMessage {
 
         var stepEvents = percept.optJSONArray("events");
         this.stepEvents = stepEvents != null? stepEvents : new JSONArray();
+
+        this.role = percept.getString("role");
     }
 }

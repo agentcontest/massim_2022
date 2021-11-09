@@ -367,7 +367,8 @@ class GameState {
                     visibleThings, visibleTerrain, allTasks,
                     entity.getLastAction(), entity.getLastActionParams(),
                     entity.getLastActionResult(), attachedThings,
-                    stepEvents.get(entity.getAgentName()));
+                    stepEvents.get(entity.getAgentName()),
+                    entity.getRole().name());
             percept.energy = entity.getEnergy();
             percept.deactivated = entity.isDeactivated();
             result.put(entity.getAgentName(), percept);
