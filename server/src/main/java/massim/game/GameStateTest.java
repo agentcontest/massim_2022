@@ -88,6 +88,11 @@ public class GameStateTest {
                                 .put("speed", new JSONArray(List.of(1, 0)))
                         )
                 )
+                .put("regulation", new JSONObject()
+                        .put("simultaneous", 0)
+                        .put("chance", 0)
+                        .put("subjects", new JSONArray())
+                )
                 ;
 
         var team = new TeamConfig("A");
