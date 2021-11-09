@@ -27,7 +27,7 @@ There also are (potentially unstable) [development snapshots](https://github.com
 Building MASSim
 ---------------
 
-The build requires Maven and OpenJDK 13.
+The build requires Maven and some JDK >= 17.
 
 Run `mvn package` in the main directory. Maven should automatically
 fetch all necessary dependencies.
