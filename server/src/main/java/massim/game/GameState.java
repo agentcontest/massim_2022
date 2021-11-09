@@ -323,7 +323,7 @@ class GameState {
         return this.getStepPerceptsAndCleanUp();
     }
 
-    private Map<String, RequestActionMessage> getStepPerceptsAndCleanUp() {
+    Map<String, RequestActionMessage> getStepPerceptsAndCleanUp() {
         var result = this.getStepPercepts();
         this.stepEvents.clear();
         return result;
@@ -369,7 +369,7 @@ class GameState {
                     entity.getLastActionResult(), attachedThings,
                     stepEvents.get(entity.getAgentName()));
             percept.energy = entity.getEnergy();
-            percept.disabled = entity.isDeactivated();
+            percept.deactivated = entity.isDeactivated();
             result.put(entity.getAgentName(), percept);
         }
 

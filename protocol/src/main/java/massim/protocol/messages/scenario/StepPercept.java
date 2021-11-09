@@ -20,7 +20,7 @@ public class StepPercept extends RequestActionMessage {
     public List<String> lastActionParams = new ArrayList<>();
     public Set<Position> attachedThings = new HashSet<>();
     public int energy;
-    public boolean disabled;
+    public boolean deactivated;
     public JSONArray stepEvents;
 
     public StepPercept(JSONObject content) {
@@ -54,7 +54,7 @@ public class StepPercept extends RequestActionMessage {
         percept.put("tasks", jsonTasks);
         percept.put("terrain", jsonTerrain);
         percept.put("energy", energy);
-        percept.put("disabled", disabled);
+        percept.put("deactivated", deactivated);
         things.forEach(t -> jsonThings.put(t.toJSON()));
         taskInfo.forEach(t -> jsonTasks.put(t.toJSON()));
         terrain.forEach((t, positions) -> {
@@ -113,7 +113,7 @@ public class StepPercept extends RequestActionMessage {
         }
 
         energy = percept.getInt("energy");
-        disabled = percept.getBoolean("disabled");
+        deactivated = percept.getBoolean("deactivated");
 
         var stepEvents = percept.optJSONArray("events");
         this.stepEvents = stepEvents != null? stepEvents : new JSONArray();

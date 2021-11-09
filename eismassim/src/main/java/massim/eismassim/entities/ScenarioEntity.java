@@ -92,7 +92,7 @@ public class ScenarioEntity extends ConnectedEntity {
                 new Percept("attached", new Numeral(pos.x), new Numeral(pos.y))));
 
         ret.add(new Percept("energy", new Numeral(percept.energy)));
-        ret.add(new Percept("disabled", new Identifier(percept.disabled? "true" : "false")));
+        ret.add(new Percept("deactivated", new Identifier(percept.deactivated? "true" : "false")));
 
         return ret;
     }
