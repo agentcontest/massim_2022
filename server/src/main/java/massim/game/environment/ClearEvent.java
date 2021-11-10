@@ -1,28 +1,13 @@
 package massim.game.environment;
 
 import massim.protocol.data.Position;
+import org.json.JSONObject;
 
-public class ClearEvent {
+public record ClearEvent(Position position, int step, int radius) {
 
-    private Position position;
-    private int step;
-    private int radius;
-
-    public ClearEvent(Position position, int step, int radius) {
-        this.position = position;
-        this.step = step;
-        this.radius = radius;
-    }
-
-    public Position getPosition() {
-        return position;
-    }
-
-    public int getStep() {
-        return step;
-    }
-
-    public int getRadius() {
-        return radius;
+    public JSONObject toJSON() {
+        return new JSONObject()
+                .put("pos", this.position.toJSON())
+                .put("r", this.radius);
     }
 }

@@ -2,6 +2,7 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.*;
+import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneType;
 import massim.game.norms.Norm;
 import massim.game.norms.Officer;
@@ -321,14 +322,14 @@ public class GameState {
         }
         var processedEvents = new HashSet<ClearEvent>();
         for (var event: clearEvents) {
-            if (event.getStep() == step) {
+            if (event.step() == step) {
                 processEvent(event);
                 processedEvents.add(event);
             }
             else {
-                var type = event.getStep() - step <= 2? Marker.Type.CLEAR_IMMEDIATE : Marker.Type.CLEAR;
-                var clearArea = event.getPosition().spanArea(event.getRadius());
-                var clearPerimeter = event.getPosition().spanArea(event.getRadius() + eventCreatePerimeter);
+                var type = event.step() - step <= 2? Marker.Type.CLEAR_IMMEDIATE : Marker.Type.CLEAR;
+                var clearArea = event.position().spanArea(event.radius());
+                var clearPerimeter = event.position().spanArea(event.radius() + eventCreatePerimeter);
                 clearPerimeter.removeAll(clearArea);
                 for (Position pos: clearArea) grid.createMarker(pos, type);
                 for (Position pos: clearPerimeter) grid.createMarker(pos, Marker.Type.CLEAR_PERIMETER);
@@ -359,11 +360,11 @@ public class GameState {
     }
 
     private void processEvent(ClearEvent event) {
-        var removed = clearArea(event.getPosition(), event.getRadius(), 1000, true);
+        var removed = clearArea(event.position(), event.radius(), 1000, true);
         var distributeNew = RNG.betweenClosed(eventCreateBounds) + removed;
 
         for (var i = 0; i < distributeNew; i++) {
-            var pos = grid.findRandomFreePosition(event.getPosition(),eventCreatePerimeter + event.getRadius());
+            var pos = grid.findRandomFreePosition(event.position(),eventCreatePerimeter + event.radius());
             if(pos != null && dispensers.get(pos) == null) {
                 grid.addObstacle(pos);
             }
@@ -757,94 +758,84 @@ public class GameState {
         snapshot.put("norms", normArr);
         JSONArray punishmentArr = new JSONArray();
         snapshot.put("violate", punishmentArr);
-        JSONArray cells = new JSONArray();
-        snapshot.put("cells", cells);
-        JSONArray clear = new JSONArray();
-        snapshot.put("clear", clear);
-        JSONObject scores = new JSONObject();
-        snapshot.put("scores", scores);
-        grid.getObstaclePositions(); // TODO
-        grid.getZones(ZoneType.GOAL); // TODO (zones may overlap)
-        grid.getZones(ZoneType.ROLE); // TODO (zones may overlap)
-//        for (int y = 0; y < grid.getDimY(); y++) {
-//            JSONArray row = new JSONArray();
-//            for (int x = 0; x < grid.getDimX(); x++) {
-//                row.put(grid.getTerrain(Position.of(x, y)).id);
-//            }
-//            cells.put(row);
-//        }
+
         for (GameObject o : gameObjects.values()) {
             JSONObject obj = new JSONObject();
-            if (o instanceof Positionable) {
-                obj.put("x", ((Positionable) o).getPosition().x);
-                obj.put("y", ((Positionable) o).getPosition().y);
-            }
-            if (o instanceof Attachable) {
-                JSONArray arr = new JSONArray();
-                ((Attachable) o).collectAllAttachments().stream().filter(a -> a != o).forEach(a -> {
-                    JSONObject pos = new JSONObject();
-                    pos.put("x", a.getPosition().x);
-                    pos.put("y", a.getPosition().y);
-                    arr.put(pos);
-                });
-                if (!arr.isEmpty()) obj.put("attached", arr);
+            if (o instanceof Positionable positionable)
+                obj.put("pos", positionable.getPosition().toJSON());
+            if (o instanceof Attachable attachable) {
+                var positions = new JSONArray();
+                attachable.collectAllAttachments().stream().filter(a -> a != o).forEach(a ->
+                        positions.put(a.getPosition().toJSON()));
+                if (!positions.isEmpty()) obj.put("attached", positions);
             }
             if (o instanceof Entity e) {
-                obj.put("id", o.getID());
-                obj.put("name", e.getAgentName());
-                obj.put("team", e.getTeamName());
-                obj.put("role", e.getRole().name());
-                obj.put("energy", e.getEnergy());
-                obj.put("vision", e.getVision());
-                obj.put("action", e.getLastAction());
-                obj.put("actionParams", e.getLastActionParams());
-                obj.put("actionResult", e.getLastActionResult());
-                if (e.isDeactivated()) obj.put("deactivated", true);
+                obj.put("id", e.getID())
+                        .put("name", e.getAgentName())
+                        .put("team", e.getTeamName())
+                        .put("role", e.getRole().name())
+                        .put("energy", e.getEnergy())
+                        .put("vision", e.getVision())
+                        .put("action", e.getLastAction())
+                        .put("actionParams", e.getLastActionParams())
+                        .put("actionResult", e.getLastActionResult())
+                        .put("deactivated", e.isDeactivated())
+                        .put("events", this.stepEvents.get(e.getAgentName()));
                 entities.put(obj);
-            } else if (o instanceof Block) {
-                obj.put("type", ((Block) o).getBlockType());
+            } else if (o instanceof Block block) {
+                obj.put("type", block.getBlockType());
                 blocks.put(obj);
-            } else if (o instanceof Dispenser) {
-                obj.put("id", o.getID());
-                obj.put("type", ((Dispenser) o).getBlockType());
+            } else if (o instanceof Dispenser dispenser) {
+                obj.put("id", dispenser.getID())
+                   .put("type", dispenser.getBlockType());
                 dispensers.put(obj);
             }
         }
-        for (ClearEvent e : clearEvents) {
-            JSONObject event = new JSONObject();
-            event.put("x", e.getPosition().x);
-            event.put("y", e.getPosition().y);
-            event.put("radius", e.getRadius());
-            clear.put(event);
-        }
-        tasks.values().stream().filter(t -> !t.isCompleted() && step <= t.getDeadline()).sorted(Comparator.comparing(Task::getDeadline)).forEach(t -> {
-            JSONObject task  = new JSONObject();
-            task.put("name", t.getName());
-            task.put("deadline", t.getDeadline());
-            task.put("reward", t.getReward());
-            JSONArray requirementsArr = new JSONArray();
-            task.put("requirements", requirementsArr);
-            t.getRequirements().forEach((pos, type) -> {
-                JSONObject requirement = new JSONObject();
-                requirement.put("x", pos.x);
-                requirement.put("y", pos.y);
-                requirement.put("type", type);
-                requirementsArr.put(requirement);
-            });
-            taskArr.put(task);
+
+        this.tasks.values().stream()
+                .filter(t -> !t.isCompleted())
+                .filter(t -> step <= t.getDeadline())
+                .sorted(Comparator.comparing(Task::getDeadline))
+                .forEach(t -> {
+                                var task  = new JSONObject()
+                                        .put("name", t.getName())
+                                        .put("deadline", t.getDeadline())
+                                        .put("reward", t.getReward());
+                                var requirementsArr = new JSONArray();
+                                task.put("requirements", requirementsArr);
+                                t.getRequirements().forEach((pos, type) -> {
+                                    var requirement = new JSONObject()
+                                            .put("pos", pos.toJSON())
+                                            .put("type", type);
+                                    requirementsArr.put(requirement);
+                                });
+                                taskArr.put(task);
         });
+
+        snapshot.put("goalZones", new JSONArray(grid.getZones(ZoneType.GOAL).stream()
+                .map(Zone::toJSON).collect(Collectors.toList())));
+        snapshot.put("roleZones", new JSONArray(grid.getZones(ZoneType.ROLE).stream()
+                .map(Zone::toJSON).collect(Collectors.toList())));
+        snapshot.put("clear", new JSONArray(clearEvents.stream()
+                .map(ClearEvent::toJSON).collect(Collectors.toList())));
+
         officer.getApprovedNorms(this.step)
                 .forEach(n -> normArr.put(n.toJSON()));
         officer.getArchive(this.step).forEach(
             r -> {
-                JSONObject record  = new JSONObject();
-                record.put("norm", r.norm());
-                record.put("who", this.entityToAgent.get(r.entity()));
+                var record  = new JSONObject()
+                        .put("norm", r.norm())
+                        .put("who", this.entityToAgent.get(r.entity()));
                 punishmentArr.put(record);
             }
         );
-        teams.values().forEach(t -> scores.put(t.getName(), t.getScore()));
+
+        snapshot.put("scores", teams.values().stream()
+                .map(t -> new JSONArray().put(t.getName()).put(t.getScore()))
+                .collect(Collectors.toList()));
+
         snapshot.put("events", logEvents);
+
         return snapshot;
     }
 
