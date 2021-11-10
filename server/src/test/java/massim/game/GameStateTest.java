@@ -52,8 +52,9 @@ public class GameStateTest {
                 .put("dispensers", new JSONArray().put(5).put(10))
                 .put("tasks", new JSONObject()
                         .put("size", new JSONArray().put(2).put(4))
-                        .put("duration", new JSONArray().put(100).put(200))
-                        .put("probability", 0.05)
+                        .put("maxDuration", new JSONArray().put(100).put(200))
+                        .put("iterations", new JSONArray().put(5).put(10))
+                        .put("concurrent", 2)
                 )
                 .put("events", new JSONObject()
                         .put("chance", 15)
@@ -132,7 +133,7 @@ public class GameStateTest {
         String blockType = state.getBlockTypes().iterator().next();
         assert state.createBlock(Position.of(15,16), blockType) != null;
         assert state.createBlock(Position.of(14,16), blockType) != null;
-        assert state.createTask("testTask1", 10,
+        assert state.createTask("testTask1", 10, 1,
                 Map.of(Position.of(0, 1), blockType, Position.of(-1, 1), blockType)) != null;
         assert state.attach(Position.of(15,15), Position.of(15,16));
         assert state.attach(Position.of(15,16), Position.of(14,16));

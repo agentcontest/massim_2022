@@ -40,10 +40,9 @@
 
     "tasks" : {
       "size" : [1, 4],
-      "duration" : [100, 200],
-      "probability" : 0.05,
-      "rewardDecay" : [1, 2],
-      "lowerRewardLimit" : 10
+      "concurrent" : 2,
+      "iterations" : [5, 10],
+      "maxDuration" : [100, 200]
     },
 
     "events" : {

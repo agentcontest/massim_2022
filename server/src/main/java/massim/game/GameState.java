@@ -57,9 +57,10 @@ public class GameState {
 
     // config parameters
     private final int randomFail;
-    private final double pNewTask;
-    private final Bounds taskDurationBounds;
+    private final Bounds taskMaxDuration;
     private final Bounds taskSizeBounds;
+    private final Bounds taskIterations;
+    private final int concurrentTasks;
     private final Bounds eventRadiusBounds;
     private final Bounds eventCreateBounds;
     private final int eventChance;
@@ -90,9 +91,10 @@ public class GameState {
         clearDamage = JSONUtil.getIntArray(config, "clearDamage");
 
         var taskConfig = config.getJSONObject("tasks");
-        this.taskDurationBounds = ConfigUtil.getBounds(taskConfig, "duration");
+        this.taskMaxDuration = ConfigUtil.getBounds(taskConfig, "maxDuration");
+        this.concurrentTasks = ConfigUtil.getInt(taskConfig, "concurrent");
+        this.taskIterations = ConfigUtil.getBounds(taskConfig, "iterations");
         this.taskSizeBounds = ConfigUtil.getBounds(taskConfig, "size");
-        this.pNewTask = ConfigUtil.getDouble(taskConfig, "probability");
 
         var eventConfig = config.getJSONObject("events");
         this.eventChance = ConfigUtil.getInt(eventConfig, "chance");
@@ -244,7 +246,7 @@ public class GameState {
                             requireMap.put(Position.of(bx, by), blockType);
                         }
                     });
-                    createTask(name, duration, requireMap);
+                    createTask(name, duration, 1, requireMap);
                 }
                 break;
 
@@ -307,10 +309,7 @@ public class GameState {
         // handle norms before everything else
         officer.regulateNorms(step, agentToEntity.values());
 
-        //handle tasks
-        if (RNG.nextDouble() < pNewTask) {
-            createRandomTask(RNG.betweenClosed(taskDurationBounds), RNG.betweenClosed(taskSizeBounds));
-        }
+        createNewTasks();
 
         //handle entities
         agentToEntity.values().forEach(Entity::preStep);
@@ -341,6 +340,16 @@ public class GameState {
         officer.createNorms(step, this);
 
         return this.getStepPerceptsAndCleanUp();
+    }
+
+    private void createNewTasks() {
+        var activeTasks = tasks.values().stream()
+                .filter(t -> !t.isCompleted())
+                .filter(t -> t.getDeadline() <= step)
+                .count();
+        var tasksMissing = this.concurrentTasks - activeTasks;
+        for (var i = 0; i < tasksMissing; i++)
+            createRandomTask();
     }
 
     Map<String, RequestActionMessage> getStepPerceptsAndCleanUp() {
@@ -547,7 +556,7 @@ public class GameState {
             removeObjectFromGame(a);
         });
         teams.get(e.getTeamName()).addScore(task.getReward());
-        task.complete();
+        task.completeOnce();
 
         this.grid.moveGoalZone(e.getPosition());
 
@@ -626,12 +635,15 @@ public class GameState {
         return removed;
     }
 
-    void createRandomTask(int duration, int size) {
+    void createRandomTask() {
+        int duration = RNG.betweenClosed(taskMaxDuration);
+        int size = RNG.betweenClosed(taskSizeBounds);
+        int iterations = RNG.betweenClosed(taskIterations);
         if (size < 1) return;
         var name = "task" + tasks.values().size();
         var requirements = new HashMap<Position, String>();
         var blockList = new ArrayList<>(blockTypes);
-        Position lastPosition = Position.of(0, 1);
+        var lastPosition = Position.of(0, 1);
         requirements.put(lastPosition, blockList.get(RNG.nextInt(blockList.size())));
         while (requirements.size() < size) {
             double direction = RNG.nextDouble();
@@ -643,12 +655,12 @@ public class GameState {
                 lastPosition = lastPosition.south();
             requirements.put(lastPosition, blockList.get(RNG.nextInt(blockTypes.size())));
         }
-        createTask(name, duration, requirements);
+        createTask(name, duration, iterations, requirements);
     }
 
-    Task createTask(String name, int duration, Map<Position, String> requirements) {
+    Task createTask(String name, int duration, int iterations, Map<Position, String> requirements) {
         if (requirements.size() == 0) return null;
-        Task t = new Task(name, step + duration, requirements);
+        Task t = new Task(name, step + duration, iterations, requirements);
         tasks.put(t.getName(), t);
         return t;
     }

@@ -38,12 +38,9 @@
 
   "tasks" : {
     "size" : [1, 4],
-    "duration" : [100, 200],
-    "probability" : 0.05,
-    "taskboards" : 3,
-    "rewardDecay" : [1, 2],
-    "lowerRewardLimit" : 10,
-    "distanceToTaskboards" : 8
+    "maxDuration" : [100, 200],
+    "iterations" : [5, 10],
+    "concurrent" : 2
   },
 
   "events" : {

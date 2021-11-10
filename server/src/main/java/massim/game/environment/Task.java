@@ -11,17 +11,19 @@ import java.util.stream.Collectors;
 
 public class Task {
 
-    private String name;
-    private Map<Position, String> requirements;
-    private int deadline;
-    private boolean completed = false;
-    private int reward;
+    private final String name;
+    private final Map<Position, String> requirements;
+    private final int deadline;
+    private int completed = 0;
+    private final int reward;
+    private final int iterations;
 
-    public Task(String name, int deadline, Map<Position, String> requirements) {
+    public Task(String name, int deadline, int iterations, Map<Position, String> requirements) {
         this.name = name;
         this.deadline = deadline;
         this.requirements = requirements;
         this.reward = (int) (10 * Math.pow(requirements.size(), 2));
+        this.iterations = iterations;
     }
 
     public String getName() {
@@ -33,11 +35,11 @@ public class Task {
     }
 
     public boolean isCompleted() {
-        return completed;
+        return completed >= iterations;
     }
 
-    public void complete() {
-        completed = true;
+    public void completeOnce() {
+        completed++;
     }
 
     public Map<Position, String> getRequirements() {
