@@ -92,6 +92,22 @@ public class ScenarioEntity extends ConnectedEntity {
         ret.add(new Percept("deactivated", new Identifier(percept.deactivated? "true" : "false")));
         ret.add(new Percept("role", new Identifier(percept.role)));
 
+        percept.violate.forEach(violation ->
+                ret.add(new Percept("violation", new Identifier(violation)))
+        );
+
+        percept.normsInfo.forEach(norm -> {
+                    var requirements = new ParameterList();
+                    norm.requirements.forEach(req -> {
+                        var subject = new ParameterList(new Identifier(req.type.toString()), new Identifier(req.name),
+                                new Numeral(req.quantity), new Identifier(req.details));
+                        requirements.add(subject);
+                    });
+                    ret.add(new Percept("norm", new Identifier(norm.name), new Numeral(norm.start),
+                            new Numeral(norm.until), new Numeral(norm.punishment), requirements));
+                }
+        );
+
         return ret;
     }
 

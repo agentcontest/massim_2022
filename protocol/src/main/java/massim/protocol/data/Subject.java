@@ -3,7 +3,18 @@ package massim.protocol.data;
 import org.json.JSONObject;
 
 public class Subject {
-    public enum Type{ BLOCK, ROLE }
+    public enum Type{
+        BLOCK("block"),
+        ROLE("role");
+        private String name;
+        Type(String name){
+            this.name = name;
+        }
+        @Override
+        public String toString() {
+            return this.name;
+        }
+    }
 
     public Type type;
     public String name;
