@@ -10,7 +10,8 @@ public class Obstacle extends Attachable{
     }
 
     @Override
-    public Thing toPercept(Position relativeTo) {
-        return new Thing(getPosition().x, getPosition().y, Thing.TYPE_OBSTACLE, "");
+    public Thing toPercept(Position entityPosition) {
+        var relativePosition = getPosition().relativeTo(entityPosition);
+        return new Thing(relativePosition.x, relativePosition.y, Thing.TYPE_OBSTACLE, "");
     }
 }
