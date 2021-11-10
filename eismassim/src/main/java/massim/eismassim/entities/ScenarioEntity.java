@@ -100,11 +100,13 @@ public class ScenarioEntity extends ConnectedEntity {
                     var requirements = new ParameterList();
                     norm.requirements.forEach(req -> {
                         var subject = new ParameterList(new Identifier(req.type.toString()), new Identifier(req.name),
-                                new Numeral(req.quantity), new Identifier(req.details));
+                                new Numeral(req.quantity));
+                        if (req.details != null && !req.details.equals(""))
+                            subject.add(new Identifier(req.details));
                         requirements.add(subject);
                     });
                     ret.add(new Percept("norm", new Identifier(norm.name), new Numeral(norm.start),
-                            new Numeral(norm.until), new Numeral(norm.punishment), requirements));
+                            new Numeral(norm.until), requirements, new Numeral(norm.punishment)));
                 }
         );
 
