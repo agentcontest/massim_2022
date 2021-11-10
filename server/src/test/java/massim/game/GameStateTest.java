@@ -4,7 +4,6 @@ import massim.config.TeamConfig;
 import massim.game.environment.Block;
 import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
-import massim.protocol.data.Thing;
 import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.StepPercept;
 import massim.util.RNG;
@@ -22,10 +21,12 @@ public class GameStateTest {
     public void setUp() {
         RNG.initialize(17);
 
+        var agents = 2;
+
         JSONObject config = new JSONObject()
                 .put("steps", 500)
                 .put("randomFail", 1)
-                .put("entities", new JSONObject().put("standard", 10))
+                .put("entities", new JSONObject().put("standard", agents))
                 .put("clusterBounds", new JSONArray().put(1).put(3))
                 .put("clearEnergyCost", 2)
                 .put("clearDamage", new JSONArray("[32, 16, 8, 4, 2, 1]"))
@@ -49,7 +50,7 @@ public class GameStateTest {
                         )
                 )
                 .put("blockTypes", new JSONArray().put(3).put(3))
-                .put("dispensers", new JSONArray().put(5).put(10))
+                .put("dispensers", new JSONArray().put(0).put(0))
                 .put("tasks", new JSONObject()
                         .put("size", new JSONArray().put(2).put(4))
                         .put("maxDuration", new JSONArray().put(100).put(200))
@@ -93,12 +94,17 @@ public class GameStateTest {
                         .put("simultaneous", 0)
                         .put("chance", 0)
                         .put("subjects", new JSONArray())
-                )
-                ;
+                );
 
-        var team = new TeamConfig("A");
-        for (var i = 1; i <= 10; i++) team.addAgent("A" + i, "1");
-        state = new GameState(config, Set.of(team));
+        var teams = new HashSet<TeamConfig>();
+        List.of("A", "B").forEach(teamName -> {
+            var team = new TeamConfig(teamName);
+            for (var i = 1; i <= agents; i++)
+                team.addAgent(teamName + i, "1");
+            teams.add(team);
+        });
+
+        state = new GameState(config, teams);
     }
 
     @org.junit.Test
@@ -322,7 +328,21 @@ public class GameStateTest {
         for (var b: blocks) assert b.getPosition().equals(positions.get(b));
     }
 
-    private static boolean containsThing(Collection<Thing> things, String type, Position pos) {
-        return things.stream().anyMatch(t -> t.type.equals(type) && t.x == pos.x && t.y == pos.y);
+    private void moveAgentsToStandardPositions() {
+        state.teleport("A1", Position.of(0, 0));
+        state.teleport("A2", Position.of(1, 0));
+        state.teleport("B1", Position.of(2, 0));
+        state.teleport("B1", Position.of(3, 0));
+    }
+
+    @org.junit.Test
+    public void snapshotComplete() {
+        this.moveAgentsToStandardPositions();
+        var grid = state.getGrid();
+        grid.addObstacle(Position.of(17,17));
+
+        var snapshot = state.takeSnapshot();
+        var entities = snapshot.getJSONArray("entities");
+        assert entities.length() == 4;
     }
 }
