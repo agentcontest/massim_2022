@@ -63,13 +63,13 @@ public class GridTest {
         }
         System.out.println(" ");
     }
-    private void printGridAgents(Grid grid){
-        for (int x=0; x < grid.getDimX(); x++){
-            System.out.println(" ");
-            for (int y=0; y < grid.getDimY(); y++){
-                System.out.print(" "+String.format("%1$5s",grid.getThings(new Position(x, y)).toString()));
-            }
-        }
-        System.out.println(" ");
-    }
+//    private void printGridAgents(Grid grid){
+//        for (int x=0; x < grid.getDimX(); x++){
+//            System.out.println(" ");
+//            for (int y=0; y < grid.getDimY(); y++){
+//                System.out.print(" "+String.format("%1$5s",grid.getThings(new Position(x, y)).toString()));
+//            }
+//        }
+//        System.out.println(" ");
+//    }
 }

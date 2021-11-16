@@ -2,6 +2,7 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.*;
+import massim.game.environment.positionable.*;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneType;
 import massim.game.norms.Norm;
@@ -37,22 +38,15 @@ import static massim.protocol.messages.scenario.ActionResults.*;
  */
 public class GameState {
 
-    private final Map<String, Team> teams = new HashMap<>();
-    private final Map<String, Entity> agentToEntity = new HashMap<>();
-    private final Map<Entity, String> entityToAgent = new HashMap<>();
-
     private int step = -1;
     private final int teamSize;
 
     // static env. things
     private final Grid grid;
-    private final Map<Position, Dispenser> dispensers = new HashMap<>();
-    private final Set<String> blockTypes = new TreeSet<>();
-    private final Map<String, Role> roles = new HashMap<>();
+    private final Map<String, Team> teams = new HashMap<>();
     private final Officer officer;
 
     // dynamic env. things
-    private final Map<Integer, GameObject> gameObjects = new HashMap<>();
     private final Map<String, Task> tasks = new HashMap<>();
     private final Set<ClearEvent> clearEvents = new HashSet<>();
 
@@ -71,21 +65,25 @@ public class GameState {
 
     private final Map<String, JSONArray> stepEvents = new HashMap<>();
 
-    private JSONArray logEvents = new JSONArray();
+    private final JSONArray logEvents = new JSONArray();
 
     GameState(JSONObject config, Set<TeamConfig> matchTeams) {
         this.randomFail = ConfigUtil.getInt(config, "randomFail");
         int attachLimit = ConfigUtil.getInt(config, "attachLimit");
         var clusterSizes = ConfigUtil.getBounds(config, "clusterBounds");
 
+        this.grid = new Grid(config.getJSONObject("grid"), attachLimit);
+
         Entity.clearEnergyCost = ConfigUtil.getInt(config, "clearEnergyCost");
         Entity.deactivatedDuration = ConfigUtil.getInt(config, "deactivatedDuration");
         Entity.maxEnergy = ConfigUtil.getInt(config, "maxEnergy");
+        Entity.refreshEnergy = ConfigUtil.getInt(config, "refreshEnergy");
         Entity.stepRecharge = ConfigUtil.getInt(config, "stepRecharge");
 
         var blockTypeBounds = ConfigUtil.getBounds(config, "blockTypes");
         var numberOfBlockTypes = RNG.betweenClosed(blockTypeBounds.lower(), blockTypeBounds.upper());
-        for (int i = 0; i < numberOfBlockTypes; i++) blockTypes.add("b" + i);
+        for (int i = 0; i < numberOfBlockTypes; i++)
+            this.grid.blocks().addType("b" + i);
 
         var dispenserBounds = ConfigUtil.getBounds(config, "dispensers");
 
@@ -104,11 +102,7 @@ public class GameState {
         this.eventCreateBounds = ConfigUtil.getBounds(eventConfig, "create");
         this.eventCreatePerimeter = ConfigUtil.getInt(eventConfig, "perimeter");
 
-        // create teams
         matchTeams.forEach(team -> teams.put(team.getName(), new Team(team.getName())));
-
-        // create grid environment
-        grid = new Grid(config.getJSONObject("grid"), attachLimit);
 
         var defaultRole = parseRoles(config);
 
@@ -125,7 +119,7 @@ public class GameState {
                 for (Position p : cluster) {
                     int index = agentsRange.remove(RNG.nextInt(agentsRange.size()));
                     for (TeamConfig team: matchTeams) {
-                        createEntity(p, team.getAgentNames().get(index), team.getName(), defaultRole);
+                        this.grid.entities().create(p, team.getAgentNames().get(index), team.getName(), defaultRole);
                     }
                     agentCounter++;
                     if (agentCounter == numberOfAgents) break;
@@ -135,7 +129,7 @@ public class GameState {
         teamSize = agentCounter;
 
         // create env. things
-        for (var block : blockTypes) {
+        for (var block : this.grid.blocks().getTypes()) {
             var numberOfDispensers = RNG.betweenClosed(dispenserBounds);
             for (var i = 0; i < numberOfDispensers; i++) {
                 createDispenser(grid.findRandomFreePosition(), block);
@@ -172,7 +166,7 @@ public class GameState {
                     JSONUtil.arrayToStringSet(roleData.getJSONArray("actions")),
                     JSONUtil.arrayToIntArray(roleData.getJSONArray("speed"))
                     );
-            this.roles.put(role.name(), role);
+            this.grid.entities().addRole(role);
             Log.log(Log.Level.NORMAL, "Role " + role.name() + " added.");
             if (i == 0) {
                 defaultRole = role;
@@ -183,14 +177,6 @@ public class GameState {
 
     Map<String, Team> getTeams() {
         return this.teams;
-    }
-
-    public Set<String> getBlockTypes() {
-        return this.blockTypes;
-    }
-
-    public Map<String, Role> getRoles() {
-        return roles;
     }
 
     public Officer getOfficer() {
@@ -205,7 +191,7 @@ public class GameState {
                 if (command.length != 4) break;
                 var x = Util.tryParseInt(command[1]);
                 var y = Util.tryParseInt(command[2]);
-                var entity = agentToEntity.get(command[3]);
+                var entity = this.grid.entities().getByName(command[3]);
 
                 if (entity == null || x == null || y == null) break;
                 Log.log(Log.Level.NORMAL, "Setup: Try to move " + command[3] + " to (" + x +", " + y + ")");
@@ -220,7 +206,7 @@ public class GameState {
                 switch (command[3]) {
                     case "block":
                         var blockType = command[4];
-                        createBlock(Position.of(x, y), blockType);
+                        this.grid.blocks().create(Position.of(x, y), blockType);
                         break;
                     case "dispenser":
                         blockType = command[4];
@@ -258,8 +244,8 @@ public class GameState {
                 var x2 = Util.tryParseInt(command[3]);
                 var y2 = Util.tryParseInt(command[4]);
                 if (x1 == null || x2 == null || y1 == null || y2 == null) break;
-                Attachable a1 = getUniqueAttachable(Position.of(x1, y1));
-                Attachable a2 = getUniqueAttachable(Position.of(x2, y2));
+                Attachable a1 = this.grid.getUniqueAttachable(Position.of(x1, y1));
+                Attachable a2 = this.grid.getUniqueAttachable(Position.of(x2, y2));
                 if (a1 == null || a2 == null) break;
                 grid.attach(a1, a2);
                 break;
@@ -270,7 +256,7 @@ public class GameState {
                 y = Util.tryParseInt(command[2]);
                 var type = command[3];
                 if (x == null || y == null || type.isEmpty()) break;
-                if (type.equalsIgnoreCase("obstacle")) grid.addObstacle(Position.of(x, y));
+                if (type.equalsIgnoreCase("obstacle")) grid.obstacles().create(Position.of(x, y));
                 else if (type.equalsIgnoreCase("goal")) grid.addZone(ZoneType.GOAL, Position.of(x, y), 1);
                 break;
 
@@ -287,15 +273,11 @@ public class GameState {
         return grid;
     }
 
-    Entity getEntityByName(String agentName) {
-        return agentToEntity.get(agentName);
-    }
-
     Map<String, SimStartMessage> getInitialPercepts(int steps) {
         Map<String, SimStartMessage> result = new HashMap<>();
-        for (Entity e: entityToAgent.keySet()) {
+        for (Entity e: this.grid.entities().getAll()) {
             result.put(e.getAgentName(),
-                    new InitialPercept(e.getAgentName(), e.getTeamName(), teamSize, steps, roles.values()));
+                    new InitialPercept(e.getAgentName(), e.getTeamName(), teamSize, steps, this.grid.entities().getRoles()));
         }
         return result;
     }
@@ -303,27 +285,25 @@ public class GameState {
     Map<String, RequestActionMessage> prepareStep(int step) {
         this.step = step;
 
-        logEvents = new JSONArray();
-
-        grid.deleteMarkers();
+        this.logEvents.clear();
+        this.grid.deleteMarkers();
 
         // handle norms before everything else
-        officer.regulateNorms(step, agentToEntity.values());
+        this.officer.regulateNorms(step, this.grid.entities().getAll());
 
-        createNewTasks();
+        this.createNewTasks();
 
-        //handle entities
-        agentToEntity.values().forEach(Entity::preStep);
+        this.grid.entities().getAll().forEach(Entity::preStep);
 
         //handle (map) events
         if (RNG.nextInt(100) < eventChance) {
-            clearEvents.add(new ClearEvent(grid.getRandomPosition(), step + eventWarning,
+            this.clearEvents.add(new ClearEvent(grid.getRandomPosition(), step + eventWarning,
                     RNG.betweenClosed(eventRadiusBounds)));
         }
         var processedEvents = new HashSet<ClearEvent>();
         for (var event: clearEvents) {
             if (event.step() == step) {
-                processEvent(event);
+                this.processEvent(event);
                 processedEvents.add(event);
             }
             else {
@@ -331,14 +311,14 @@ public class GameState {
                 var clearArea = event.position().spanArea(event.radius());
                 var clearPerimeter = event.position().spanArea(event.radius() + eventCreatePerimeter);
                 clearPerimeter.removeAll(clearArea);
-                for (Position pos: clearArea) grid.createMarker(pos, type);
-                for (Position pos: clearPerimeter) grid.createMarker(pos, Marker.Type.CLEAR_PERIMETER);
+                for (Position pos: clearArea) grid.markers().create(pos, type);
+                for (Position pos: clearPerimeter) grid.markers().create(pos, Marker.Type.CLEAR_PERIMETER);
             }
         }
-        clearEvents.removeAll(processedEvents);
+        this.clearEvents.removeAll(processedEvents);
 
         // wait for the environment to get updated, then create norms
-        officer.createNorms(step, this);
+        this.officer.createNorms(step, this);
 
         return this.getStepPerceptsAndCleanUp();
     }
@@ -350,7 +330,7 @@ public class GameState {
                 .count();
         var tasksMissing = this.concurrentTasks - activeTasks;
         for (var i = 0; i < tasksMissing; i++)
-            createRandomTask();
+            this.createRandomTask();
     }
 
     Map<String, RequestActionMessage> getStepPerceptsAndCleanUp() {
@@ -365,8 +345,8 @@ public class GameState {
 
         for (var i = 0; i < distributeNew; i++) {
             var pos = grid.findRandomFreePosition(event.position(),eventCreatePerimeter + event.radius());
-            if(pos != null && dispensers.get(pos) == null) {
-                grid.addObstacle(pos);
+            if(pos != null && !this.grid.dispensers().isTaken(pos)) {
+                this.grid.obstacles().create(pos);
             }
         }
     }
@@ -382,19 +362,18 @@ public class GameState {
                 .map(Norm::toPercept)
                 .collect(Collectors.toSet());
         List<Record> records = officer.getArchive(this.step);
-        for (var entity : entityToAgent.keySet()) {
+
+        for (var entity : this.grid.entities().getAll()) {
             var pos = entity.getPosition();
             var visibleThings = new HashSet<Thing>();
             var attachedThings = new HashSet<Position>();
             for (var currentPos: pos.spanArea(entity.getVision())){
-                for (var thing : this.getThingsAt(currentPos)) {
+                for (var thing : this.grid.getEverythingAt(currentPos)) {
                     visibleThings.add(thing.toPercept(pos));
                     if (thing != entity && thing instanceof Attachable a && a.isAttachedToAnotherEntity()){
                         attachedThings.add(thing.getPosition().relativeTo(pos));
                     }
                 }
-                var d = dispensers.get(currentPos);
-                if (d != null) visibleThings.add(d.toPercept(pos));
             }
             List<String> punishment = records.stream()
                                                 .filter(p -> p.entity().getAgentName().equals(entity.getAgentName()))
@@ -427,7 +406,7 @@ public class GameState {
         for (int i = 0; i < teamsSorted.size(); i++) {
             rankings.put(teamsSorted.get(i), i + 1);
         }
-        for (Entity e: entityToAgent.keySet()) {
+        for (Entity e: this.grid.entities().getAll()) {
             var team = teams.get(e.getTeamName());
             result.put(e.getAgentName(), new SimEndMessage(team.getScore(), rankings.get(team)));
         }
@@ -468,7 +447,7 @@ public class GameState {
 
     String handleAttachAction(Entity entity, String direction) {
         Position target = entity.getPosition().moved(direction, 1);
-        Attachable a = getUniqueAttachable(target);
+        Attachable a = this.grid.getUniqueAttachable(target);
         if (a == null) return ActionResults.FAILED_TARGET;
         if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a)) {
             return ActionResults.FAILED_TARGET;
@@ -481,7 +460,7 @@ public class GameState {
 
     String handleDetachAction(Entity entity, String direction) {
         Position target = entity.getPosition().moved(direction, 1);
-        Attachable a = getUniqueAttachable(target);
+        var a = this.grid.getUniqueAttachable(target);
         if (a == null) return ActionResults.FAILED_TARGET;
         if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a)) {
             return ActionResults.FAILED_TARGET;
@@ -493,8 +472,8 @@ public class GameState {
     }
 
     String handleDisconnectAction(Entity entity, Position attPos1, Position attPos2) {
-        var attachable1 = getUniqueAttachable(attPos1.translate(entity.getPosition()));
-        var attachable2 = getUniqueAttachable(attPos2.translate(entity.getPosition()));
+        var attachable1 = this.grid.getUniqueAttachable(attPos1.translate(entity.getPosition()));
+        var attachable2 = this.grid.getUniqueAttachable(attPos2.translate(entity.getPosition()));
         if (attachable1 == null || attachable2 == null) return ActionResults.FAILED_TARGET;
         var allAttachments = entity.collectAllAttachments();
         if (!allAttachments.contains(attachable1) || !allAttachments.contains(attachable2))
@@ -504,8 +483,8 @@ public class GameState {
     }
 
     String handleConnectAction(Entity entity, Position blockPos, Entity partnerEntity, Position partnerBlockPos) {
-        Attachable block1 = getUniqueAttachable(blockPos.translate(entity.getPosition()));
-        Attachable block2 = getUniqueAttachable(partnerBlockPos.translate(partnerEntity.getPosition()));
+        Attachable block1 = this.grid.getUniqueAttachable(blockPos.translate(entity.getPosition()));
+        Attachable block2 = this.grid.getUniqueAttachable(partnerBlockPos.translate(partnerEntity.getPosition()));
 
         if(!(block1 instanceof Block) || !(block2 instanceof Block)) return ActionResults.FAILED_TARGET;
 
@@ -526,10 +505,10 @@ public class GameState {
 
     String handleRequestAction(Entity entity, String direction) {
         var requestPosition = entity.getPosition().moved(direction, 1);
-        var dispenser = dispensers.get(requestPosition);
+        var dispenser = this.grid.dispensers().lookup(requestPosition);
         if (dispenser == null) return ActionResults.FAILED_TARGET;
-        if (!grid.isUnblocked(requestPosition)) return ActionResults.FAILED_BLOCKED;
-        createBlock(requestPosition, dispenser.getBlockType());
+        if (grid.isBlocked(requestPosition)) return ActionResults.FAILED_BLOCKED;
+        this.grid.blocks().create(requestPosition, dispenser.getBlockType());
         return ActionResults.SUCCESS;
     }
 
@@ -538,13 +517,13 @@ public class GameState {
         if (task == null || task.isCompleted() || step > task.getDeadline())
             return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
-        if (!grid.isInZone(ZoneType.GOAL, ePos)) return ActionResults.FAILED;
+        if (grid.isNotInZone(ZoneType.GOAL, ePos)) return ActionResults.FAILED;
         Set<Attachable> attachedBlocks = e.collectAllAttachments();
         for (Map.Entry<Position, String> entry : task.getRequirements().entrySet()) {
             var pos = entry.getKey();
             var reqType = entry.getValue();
             var checkPos = Position.wrapped(pos.x + ePos.x, pos.y + ePos.y);
-            var actualBlock = getUniqueAttachable(checkPos);
+            var actualBlock = this.grid.getUniqueAttachable(checkPos);
             if (actualBlock instanceof Block
                 && ((Block) actualBlock).getBlockType().equals(reqType)
                 && attachedBlocks.contains(actualBlock)) {
@@ -553,8 +532,8 @@ public class GameState {
             return ActionResults.FAILED;
         }
         task.getRequirements().keySet().forEach(pos -> {
-            Attachable a = getUniqueAttachable(pos.translate(e.getPosition()));
-            removeObjectFromGame(a);
+            Attachable a = this.grid.getUniqueAttachable(pos.translate(e.getPosition()));
+            a.destroy();
         });
         teams.get(e.getTeamName()).addScore(task.getReward());
         task.completeOnce();
@@ -565,7 +544,7 @@ public class GameState {
         result.put("type", "task completed");
         result.put("task", task.getName());
         result.put("team", e.getTeamName());
-        if (logEvents != null) logEvents.put(result);
+        logEvents.put(result);
 
         return ActionResults.SUCCESS;
     }
@@ -576,30 +555,29 @@ public class GameState {
      * @return action result
      */
     String handleClearAction(Entity entity, Position xy) {
-        var target = xy.translate(entity.getPosition());
-        var distance = entity.getPosition().distanceTo(target);
+        var targetPosition = xy.translate(entity.getPosition());
+        var distance = entity.getPosition().distanceTo(targetPosition);
         if (distance > entity.getVision()) return FAILED_LOCATION;
         if (entity.getEnergy() < Entity.clearEnergyCost) return FAILED_RESOURCES;
 
         entity.consumeClearEnergy();
 
-        var removed = clearArea(target, 0, 0, false);
+        var removed = this.clearArea(targetPosition, 0, 0, false);
 
-        var targetEntity = getThingsAt(target).stream()
-                .filter(Entity.class::isInstance)
-                .map(Entity.class::cast)
-                .findAny();
-        if (targetEntity.isPresent()) {
-            var damage = getClearDamage(distance);
-            targetEntity.get().decreaseEnergy(damage);
-            addEventPercept(targetEntity.get(), new JSONObject()
-                    .put("type", "hit")
-                    .put("origin", entity.getPosition().relativeTo(targetEntity.get().getPosition()).toJSON())
-                    .put("damage", damage)
-            );
+        var targetEntities = new ArrayList<>(this.grid.entities().lookup(targetPosition));
+        if (!targetEntities.isEmpty()) {
+            var damage = this.getClearDamage(distance);
+            for (Entity targetEntity : targetEntities) {
+                targetEntity.decreaseEnergy(damage);
+                addEventPercept(targetEntity, new JSONObject()
+                        .put("type", "hit")
+                        .put("origin", entity.getPosition().relativeTo(targetEntity.getPosition()).toJSON())
+                        .put("damage", damage)
+                );
+            }
         }
 
-        if (removed > 0 || targetEntity.isPresent())
+        if (removed > 0 || !targetEntities.isEmpty())
             return SUCCESS;
         else
             return FAILED_TARGET;
@@ -614,22 +592,13 @@ public class GameState {
     int clearArea(Position center, int radius, int damage, boolean destroyAttachments) {
         var removed = 0;
         for (var position : center.spanArea(radius)) {
-            for (var go : getThingsAt(position)) {
-                if (go instanceof Entity) {
-                    ((Entity)go).decreaseEnergy(damage);
-                }
-                if (go instanceof Block block) {
-                    if (destroyAttachments || !block.isAttachedToAnotherEntity()) {
-                        removed++;
-                        grid.destroyThing(go);
-                        gameObjects.remove(go.getID());
-                    }
-                } else if (go instanceof Obstacle obs) {
-                    if (destroyAttachments || !obs.isAttachedToAnotherEntity()) {
-                        removed++;
-                        grid.destroyThing(go);
-                        gameObjects.remove(go.getID());
-                    }
+            for (Entity entity : this.grid.entities().lookup(position))
+                entity.decreaseEnergy(damage);
+
+            for (Attachable attachable : this.grid.getThingsDestroyedByClear(position)) {
+                if (destroyAttachments || !attachable.isAttachedToAnotherEntity()) {
+                    attachable.destroy();
+                    removed++;
                 }
             }
         }
@@ -643,9 +612,9 @@ public class GameState {
         if (size < 1) return;
         var name = "task" + tasks.values().size();
         var requirements = new HashMap<Position, String>();
-        var blockList = new ArrayList<>(blockTypes);
+        var typeList = new ArrayList<>(this.grid.blocks().getTypes());
         var lastPosition = Position.of(0, 1);
-        requirements.put(lastPosition, blockList.get(RNG.nextInt(blockList.size())));
+        requirements.put(lastPosition, typeList.get(RNG.nextInt(typeList.size())));
         while (requirements.size() < size) {
             double direction = RNG.nextDouble();
             if (direction <= .3)
@@ -654,9 +623,9 @@ public class GameState {
                 lastPosition = lastPosition.east();
             else
                 lastPosition = lastPosition.south();
-            requirements.put(lastPosition, blockList.get(RNG.nextInt(blockTypes.size())));
+            requirements.put(lastPosition, typeList.get(RNG.nextInt(typeList.size())));
         }
-        createTask(name, duration, iterations, requirements);
+        this.createTask(name, duration, iterations, requirements);
     }
 
     Task createTask(String name, int duration, int iterations, Map<Position, String> requirements) {
@@ -666,58 +635,13 @@ public class GameState {
         return t;
     }
 
-    private void removeObjectFromGame(GameObject go){
-        if (go == null) return;
-        if (go instanceof Positionable) grid.destroyThing((Positionable) go);
-        gameObjects.remove(go.getID());
-    }
-
-    private Entity createEntity(Position xy, String name, String teamName, Role role) {
-        Entity e = grid.createEntity(xy, name, teamName, role);
-        registerGameObject(e);
-        agentToEntity.put(name, e);
-        entityToAgent.put(e, name);
-        return e;
-    }
-
-    Block createBlock(Position xy, String blockType) {
-        if (!blockTypes.contains(blockType)) return null;
-        Block b = grid.createBlock(xy, blockType);
-        registerGameObject(b);
-        return b;
-    }
-
     boolean createDispenser(Position xy, String blockType) {
-        if (!blockTypes.contains(blockType)) return false;
+        if (!this.grid.blocks().typeExists(blockType)) return false;
         if (!grid.isUnblocked(xy)) return false;
-        if (dispensers.get(xy) != null) return false;
-        Dispenser d = new Dispenser(xy, blockType);
-        registerGameObject(d);
-        dispensers.put(xy, d);
+        if (this.grid.dispensers().lookup(xy) != null) return false;
+        var d = this.grid.dispensers().create(xy, blockType);
         Log.log(Log.Level.NORMAL, "Created " + d);
         return true;
-    }
-
-    private void registerGameObject(GameObject o) {
-        if (o == null) return;
-        this.gameObjects.put(o.getID(), o);
-    }
-
-    private Attachable getUniqueAttachable(Position pos) {
-        var attachables = getAttachables(pos);
-        if (attachables.size() != 1) return null;
-        return attachables.iterator().next();
-    }
-
-    private Set<Attachable> getAttachables(Position position) {
-        return getThingsAt(position).stream()
-                .filter(go -> go instanceof Attachable)
-                .map(go -> (Attachable)go)
-                .collect(Collectors.toSet());
-    }
-
-    Set<Positionable> getThingsAt(Position pos) {
-        return grid.getThings(pos);
     }
 
     private boolean attachedToOpponent(Attachable a, Entity entity) {
@@ -733,7 +657,7 @@ public class GameState {
         snapshot.put("step", step);
         JSONArray entityArr = new JSONArray();
         snapshot.put("entities", entityArr);
-        for (Entity o : agentToEntity.values()) {
+        for (Entity o : this.grid.entities().getAll()) {
             JSONObject obj = new JSONObject();
             obj.put("name", o.getAgentName());
             obj.put("team", o.getTeamName());
@@ -750,6 +674,8 @@ public class GameState {
         snapshot.put("entities", entities);
         JSONArray blocks = new JSONArray();
         snapshot.put("blocks", blocks);
+        JSONArray obstacles = new JSONArray();
+        snapshot.put("obstacles", obstacles);
         JSONArray dispensers = new JSONArray();
         snapshot.put("dispensers", dispensers);
         JSONArray taskArr = new JSONArray();
@@ -759,58 +685,25 @@ public class GameState {
         JSONArray punishmentArr = new JSONArray();
         snapshot.put("violate", punishmentArr);
 
-        for (GameObject o : gameObjects.values()) {
-            JSONObject obj = new JSONObject();
-            if (o instanceof Positionable positionable)
-                obj.put("pos", positionable.getPosition().toJSON());
-            if (o instanceof Attachable attachable) {
-                var positions = new JSONArray();
-                attachable.collectAllAttachments().stream().filter(a -> a != o).forEach(a ->
-                        positions.put(a.getPosition().toJSON()));
-                if (!positions.isEmpty()) obj.put("attached", positions);
-            }
-            if (o instanceof Entity e) {
-                obj.put("id", e.getID())
-                        .put("name", e.getAgentName())
-                        .put("team", e.getTeamName())
-                        .put("role", e.getRole().name())
-                        .put("energy", e.getEnergy())
-                        .put("vision", e.getVision())
-                        .put("action", e.getLastAction())
-                        .put("actionParams", e.getLastActionParams())
-                        .put("actionResult", e.getLastActionResult())
-                        .put("deactivated", e.isDeactivated())
-                        .put("events", this.stepEvents.get(e.getAgentName()));
-                entities.put(obj);
-            } else if (o instanceof Block block) {
-                obj.put("type", block.getBlockType());
-                blocks.put(obj);
-            } else if (o instanceof Dispenser dispenser) {
-                obj.put("id", dispenser.getID())
-                   .put("type", dispenser.getBlockType());
-                dispensers.put(obj);
-            }
+        for (Entity entity : this.grid.entities().getAll()) {
+            entities.put(entity.toJSON()
+                               .put("events", this.stepEvents.get(entity.getAgentName())));
+        }
+        for (Block block : this.grid.blocks().getAll()) {
+            blocks.put(block.toJSON());
+        }
+        for (Dispenser dispenser : this.grid.dispensers().getAll()) {
+            dispensers.put(dispenser.toJSON());
+        }
+        for (Obstacle obstacle : this.grid.obstacles().getAll()) {
+            obstacles.put(obstacle.toJSON());
         }
 
         this.tasks.values().stream()
                 .filter(t -> !t.isCompleted())
                 .filter(t -> step <= t.getDeadline())
                 .sorted(Comparator.comparing(Task::getDeadline))
-                .forEach(t -> {
-                                var task  = new JSONObject()
-                                        .put("name", t.getName())
-                                        .put("deadline", t.getDeadline())
-                                        .put("reward", t.getReward());
-                                var requirementsArr = new JSONArray();
-                                task.put("requirements", requirementsArr);
-                                t.getRequirements().forEach((pos, type) -> {
-                                    var requirement = new JSONObject()
-                                            .put("pos", pos.toJSON())
-                                            .put("type", type);
-                                    requirementsArr.put(requirement);
-                                });
-                                taskArr.put(task);
-        });
+                .forEach(t -> taskArr.put(t.toJSON()));
 
         snapshot.put("goalZones", new JSONArray(grid.getZones(ZoneType.GOAL).stream()
                 .map(Zone::toJSON).collect(Collectors.toList())));
@@ -825,7 +718,7 @@ public class GameState {
             r -> {
                 var record  = new JSONObject()
                         .put("norm", r.norm())
-                        .put("who", this.entityToAgent.get(r.entity()));
+                        .put("who", r.entity().getAgentName());
                 punishmentArr.put(record);
             }
         );
@@ -850,7 +743,7 @@ public class GameState {
     }
 
     boolean teleport(String entityName, Position targetPos) {
-        Entity entity = getEntityByName(entityName);
+        Entity entity = this.grid.entities().getByName(entityName);
         if (entity == null || targetPos == null) return false;
         if (grid.isUnblocked(targetPos)) {
             grid.moveWithoutAttachments(entity, targetPos);
@@ -859,15 +752,15 @@ public class GameState {
         return false;
     }
 
-    boolean attach(Position p1, Position p2) {
-        Attachable a1 = getUniqueAttachable(p1);
-        Attachable a2 = getUniqueAttachable(p2);
-        if (a1 == null || a2 == null) return false;
-        return grid.attach(a1, a2);
-    }
+//    boolean attach(Position p1, Position p2) {
+//        Attachable a1 = this.grid.getUniqueAttachable(p1);
+//        Attachable a2 = this.grid.getUniqueAttachable(p2);
+//        if (a1 == null || a2 == null) return false;
+//        return grid.attach(a1, a2);
+//    }
 
     public String handleSurveyDispenserAction(Entity entity) {
-        var optDispenser = dispensers.values().stream().min(
+        var optDispenser = this.grid.dispensers().getAll().stream().min(
                 Comparator.comparing(d -> d.getPosition().distanceTo(entity.getPosition())));
         if (optDispenser.isEmpty()) return FAILED_TARGET;
 
@@ -906,9 +799,9 @@ public class GameState {
 
     public String handleAdoptAction(Entity entity, String roleName) {
         if (roleName == null) return FAILED_PARAMETER;
-        var role = this.roles.get(roleName);
+        var role = this.grid.entities().getRole(roleName);
         if (role == null) return FAILED_PARAMETER;
-        if (!grid.isInZone(ZoneType.ROLE, entity.getPosition())) return FAILED_LOCATION;
+        if (grid.isNotInZone(ZoneType.ROLE, entity.getPosition())) return FAILED_LOCATION;
         entity.setRole(role);
         return SUCCESS;
     }

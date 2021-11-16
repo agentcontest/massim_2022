@@ -78,7 +78,7 @@ public final class Position {
     }
 
     public Position translate(Position other) {
-        return translate(other.x, other.y);
+        return this.translate(other.x, other.y);
     }
 
     public Position relativeTo(Position origin) {

@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import massim.game.environment.positionable.Entity;
+import massim.protocol.data.Role;
+import massim.protocol.messages.scenario.ActionResults;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -52,10 +55,10 @@ public class NormsTest {
             JSONArray matches = config.getJSONArray("match");
             config = matches.getJSONObject(0);
             var teamA = new TeamConfig("A");
-            for (var i = 1; i <= 15; i++) 
+            for (var i = 1; i <= 3; i++)
                 teamA.addAgent("A" + i, "1");      
             var teamB = new TeamConfig("B");
-            for (var i = 1; i <= 15; i++) 
+            for (var i = 1; i <= 3; i++)
                 teamB.addAgent("B" + i, "1");        
             this.state = new GameState(config, Set.of(teamA, teamB));
         } catch (IOException e) {
@@ -68,24 +71,28 @@ public class NormsTest {
         JSONObject regulation = getJSONRegulation();
         JSONObject norm = getJSONNorm();
         norm.getJSONObject("optional").put("quantity", new JSONArray().put(1).put(1));
-        regulation.getJSONArray("subjects").put(norm);
+        regulation.put("subjects", new JSONArray().put(norm));
+        regulation.put("chance", 100);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
-        
-        Entity a1 = this.state.getEntityByName("A1");
+
+        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        state.teleport(a1.getAgentName(), Position.of(20, 20));
         int a1Energy = a1.getEnergy();
         Position pos = a1.getPosition();
 
         ArrayList<Entity> agents = new ArrayList<>();
         agents.add(a1);
 
-        this.state.createBlock(Position.of(pos.x+1, pos.y), "b1");
-        this.state.handleAttachAction(a1, "e");
+        assert officer.getActiveNorms(25).size() == 1;
+
+        assert this.state.getGrid().blocks().create(pos.east(), "b1") != null;
+        assert this.state.handleAttachAction(a1, "e").equals(ActionResults.SUCCESS);
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() == a1Energy;
 
-        this.state.createBlock(Position.of(pos.x, pos.y+1), "b1");
-        this.state.handleAttachAction(a1, "s");
+        assert this.state.getGrid().blocks().create(pos.south(), "b1") != null;
+        assert this.state.handleAttachAction(a1, "s").equals(ActionResults.SUCCESS);
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
 
@@ -102,16 +109,17 @@ public class NormsTest {
         JSONObject norm = getJSONNorm();
         norm.put("name", "RoleIndividual");
         regulation.getJSONArray("subjects").put(norm);
+        regulation.put("chance", 100);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
 
         String role = officer.getNorms().iterator().next().toPercept().requirements.get(0).name;
-        Set<String> roles = this.state.getRoles().keySet();
+        Set<String> roles = this.state.getGrid().entities().getRoles().stream().map(Role::name).collect(Collectors.toSet());
         List<String> available = roles.stream().filter(r -> !r.equals(role)).collect(Collectors.toList());
 
-        Entity a1 = this.state.getEntityByName("A1");    
+        Entity a1 = this.state.getGrid().entities().getByName("A1");
         int a1Energy = a1.getEnergy();
-        a1.setRole(this.state.getRoles().get(available.get(0)));
+        a1.setRole(this.state.getGrid().entities().getRole(available.get(0)));
 
         ArrayList<Entity> agents = new ArrayList<>();
         agents.add(a1);
@@ -119,7 +127,7 @@ public class NormsTest {
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() == a1Energy;
 
-        a1.setRole(this.state.getRoles().get(role));
+        a1.setRole(this.state.getGrid().entities().getRole(role));
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
     }
@@ -129,6 +137,7 @@ public class NormsTest {
         JSONObject regulation = getJSONRegulation();
         JSONObject norm = getJSONNorm();
         norm.put("name", "RoleTeam");
+        regulation.put("chance", 100);
         regulation.getJSONArray("subjects").put(norm);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
@@ -136,17 +145,17 @@ public class NormsTest {
         NormInfo normInfo = officer.getNorms().iterator().next().toPercept();
         String role = normInfo.requirements.get(0).name;
         // int qty =  normInfo.requirements.get(0).quantity;
-        Set<String> roles = this.state.getRoles().keySet();
-        List<String> available = roles.stream().filter(r -> !r.equals(role)).collect(Collectors.toList());
+        List<Role> roles = this.state.getGrid().entities().getRoles();
+        List<Role> available = roles.stream().filter(r -> !r.name().equals(role)).collect(Collectors.toList());
 
-        Entity a1 = this.state.getEntityByName("A1");   
-        a1.setRole(this.state.getRoles().get(role)); 
-        Entity a2 = this.state.getEntityByName("A2"); 
-        a2.setRole(this.state.getRoles().get(available.get(0))); 
-        Entity a3 = this.state.getEntityByName("A3"); 
-        a3.setRole(this.state.getRoles().get(available.get(0)));
-        Entity b1 = this.state.getEntityByName("B1"); 
-        b1.setRole(this.state.getRoles().get(role));
+        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        a1.setRole(this.state.getGrid().entities().getRole(role));
+        Entity a2 = this.state.getGrid().entities().getByName("A2");
+        a2.setRole(available.get(0));
+        Entity a3 = this.state.getGrid().entities().getByName("A3");
+        a3.setRole(available.get(0));
+        Entity b1 = this.state.getGrid().entities().getByName("B1");
+        b1.setRole(this.state.getGrid().entities().getRole(role));
         int a1Energy = a1.getEnergy();
         int a2Energy = a2.getEnergy();
         int a3Energy = a3.getEnergy();
@@ -164,7 +173,7 @@ public class NormsTest {
         assert a3.getEnergy() == a3Energy;
         assert b1.getEnergy() == b1Energy;
 
-        a2.setRole(this.state.getRoles().get(role));
+        a2.setRole(this.state.getGrid().entities().getRole(role));
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
         assert a2.getEnergy() < a2Energy;
@@ -181,6 +190,8 @@ public class NormsTest {
         JSONObject norm2 = getJSONNorm();
         norm2.put("name", "Carry");
         norm2.getJSONObject("optional").put("quantity", new JSONArray().put(1).put(1));
+
+        regulation.put("chance", 100);
 
         regulation.getJSONArray("subjects").put(norm1).put(norm2);
         Officer officer = new Officer(regulation);
@@ -207,18 +218,19 @@ public class NormsTest {
         JSONObject norm = getJSONNorm();
         norm.put("name", "RoleIndividual");
         regulation.getJSONArray("subjects").put(norm);
+        regulation.put("chance", 100);
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
 
         NormInfo normInfo = officer.getNorms().iterator().next().toPercept();
         String role = normInfo.requirements.get(0).name;
-        Set<String> roles = this.state.getRoles().keySet();
-        List<String> available = roles.stream().filter(r -> !r.equals(role)).collect(Collectors.toList());
+        List<Role> roles = this.state.getGrid().entities().getRoles();
+        List<Role> available = roles.stream().filter(r -> !r.name().equals(role)).collect(Collectors.toList());
 
-        Entity a1 = this.state.getEntityByName("A1");   
-        a1.setRole(this.state.getRoles().get(available.get(0))); 
-        Entity a2 = this.state.getEntityByName("A2"); 
-        a2.setRole(this.state.getRoles().get(available.get(0))); 
+        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        a1.setRole(available.get(0));
+        Entity a2 = this.state.getGrid().entities().getByName("A2");
+        a2.setRole(available.get(0));
 
         assert officer.getArchive(0).size() == 0;
         assert officer.getArchive(1).size() == 0;
@@ -233,13 +245,13 @@ public class NormsTest {
         assert officer.getArchive(25).size() == 0;
         assert officer.getArchive(26).size() == 0;
    
-        a1.setRole(this.state.getRoles().get(role)); 
+        a1.setRole(this.state.getGrid().entities().getRole(role));
         officer.regulateNorms(26, agents);
         assert officer.getArchive(25).size() == 0;
         assert officer.getArchive(26).size() == 1;
         assert officer.getArchive(27).size() == 0;
 
-        a2.setRole(this.state.getRoles().get(role)); 
+        a2.setRole(this.state.getGrid().entities().getRole(role));
         officer.regulateNorms(27, agents);
         assert officer.getArchive(26).size() == 1;
         assert officer.getArchive(27).size() == 2;
@@ -259,12 +271,13 @@ public class NormsTest {
             this.state.prepareStep(i);
         }
 
-        Entity a1 = this.state.getEntityByName("A1");
+        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        state.teleport(a1.getAgentName(), Position.of(25, 20));
         Position pos = a1.getPosition();
-        this.state.createBlock(Position.of(pos.x+1, pos.y), "b1");
-        this.state.handleAttachAction(a1, "e");
-        this.state.createBlock(Position.of(pos.x, pos.y+1), "b2");
-        this.state.handleAttachAction(a1, "s");
+        assert this.state.getGrid().blocks().create(Position.of(pos.x+1, pos.y), "b1") != null;
+        assert this.state.handleAttachAction(a1, "e").equals(ActionResults.SUCCESS);
+        assert this.state.getGrid().blocks().create(Position.of(pos.x, pos.y+1), "b2") != null;
+        assert this.state.handleAttachAction(a1, "s").equals(ActionResults.SUCCESS);
 
         JSONObject snapshot = this.state.takeSnapshot();
         JSONArray norms = snapshot.getJSONArray("norms");
@@ -285,7 +298,6 @@ public class NormsTest {
         String p1JSON = "{\"norm\": \"n1\",\"who\": \"A1\"}";
         JSONAssert.assertEquals(p1JSON, punishments.getJSONObject(0), true);
 
-        this.state.createBlock(Position.of(pos.x, pos.y+1), "b1");
         this.state.handleDetachAction(a1, "s");
         this.state.prepareStep(30);
 
@@ -311,12 +323,13 @@ public class NormsTest {
         JSONAssert.assertEquals(normJSON, norms.getJSONObject(0), false);
         JSONAssert.assertNotEquals(punishmentJSON, perceptA1, false);
 
-        Entity a1 = this.state.getEntityByName("A1");
+        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        assert state.teleport(a1.getAgentName(), Position.of(20, 20));
         Position pos = a1.getPosition();
-        this.state.createBlock(Position.of(pos.x+1, pos.y), "b1");
-        this.state.handleAttachAction(a1, "e");
-        this.state.createBlock(Position.of(pos.x, pos.y+1), "b2");
-        this.state.handleAttachAction(a1, "s");
+        assert this.state.getGrid().blocks().create(Position.of(pos.x+1, pos.y), "b1") != null;
+        assert this.state.handleAttachAction(a1, "e").equals(ActionResults.SUCCESS);
+        assert this.state.getGrid().blocks().create(Position.of(pos.x, pos.y+1), "b2") != null;
+        assert this.state.handleAttachAction(a1, "s").equals(ActionResults.SUCCESS);
 
         this.state.prepareStep(50);
         perceptA1 = new StepPercept(this.state.getStepPercepts().get("A1").toJson().getJSONObject("content")).makePercept();

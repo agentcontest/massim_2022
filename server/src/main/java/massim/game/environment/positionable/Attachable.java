@@ -1,7 +1,8 @@
-package massim.game.environment;
+package massim.game.environment.positionable;
 
-import massim.game.Entity;
 import massim.protocol.data.Position;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,18 +10,23 @@ import java.util.Set;
 
 public abstract class Attachable extends Positionable {
 
-    private Set<Attachable> attachments = new HashSet<>();
+    private final Set<Attachable> attachments = new HashSet<>();
 
-    public Attachable(Position position) {
-        super(position);
+    public Attachable(Position pos) {
+        super(pos);
     }
 
-    void attach(Attachable other) {
+    @Override
+    public void onDestroyed() {
+        this.detachAll();
+    }
+
+    public void attach(Attachable other) {
         attachments.add(other);
         other.requestAttachment(this);
     }
 
-    void detach(Attachable other) {
+    public void detach(Attachable other) {
         attachments.remove(other);
         other.requestDetachment(this);
     }
@@ -62,6 +68,17 @@ public abstract class Attachable extends Positionable {
     }
 
     public boolean isAttachedToAnotherEntity() {
-        return collectAllAttachments().stream().anyMatch(a -> a instanceof Entity && a != this);
+        return this.collectAllAttachments().stream().anyMatch(a -> a instanceof Entity && a != this);
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        var result = super.toJSON();
+        var positions = new JSONArray();
+        this.collectAllAttachments().forEach(a ->
+                positions.put(a.getPosition().toJSON()));
+        if (!positions.isEmpty())
+            result.put("attached", positions);
+        return result;
     }
 }

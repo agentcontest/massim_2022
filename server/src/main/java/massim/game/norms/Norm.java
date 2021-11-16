@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import massim.game.Entity;
+import massim.game.environment.positionable.Entity;
 import massim.game.GameState;
 import massim.protocol.data.NormInfo;
 import massim.protocol.data.Subject;

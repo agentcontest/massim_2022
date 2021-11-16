@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class GameObject {
 
-    private static AtomicInteger lastId = new AtomicInteger();
+    private static final AtomicInteger lastId = new AtomicInteger();
 
     private final int id = lastId.incrementAndGet();
 

@@ -1,16 +1,28 @@
-package massim.game.environment;
+package massim.game.environment.positionable;
 
+import massim.game.environment.positionable.observer.MultiHub;
+import massim.game.environment.positionable.observer.PositionObserver;
 import massim.protocol.data.Position;
 import massim.protocol.data.Thing;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple marker marking a position.
  */
 public class Marker extends Positionable {
 
-    private Type type;
+    private static List<PositionObserver> observers = new ArrayList<>();
 
-    public Marker(Position pos, Type type) {
+    public static void setObservers(List<PositionObserver> observers) {
+        Marker.observers = observers;
+    }
+
+
+    private final Type type;
+
+    Marker(Position pos, Type type) {
         super(pos);
         this.type = type;
     }
@@ -30,6 +42,9 @@ public class Marker extends Positionable {
         return "Marker("  + getPosition()+"," + type+")";
     }
 
+    @Override
+    protected void onDestroyed() {}
+
     public enum Type {
         CLEAR("clear"),
         CLEAR_PERIMETER("cp"),
@@ -40,5 +55,10 @@ public class Marker extends Positionable {
         Type(String name) {
             this.name = name;
         }
+    }
+
+    @Override
+    public List<PositionObserver> getObservers() {
+        return Marker.observers;
     }
 }

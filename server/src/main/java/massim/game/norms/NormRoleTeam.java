@@ -9,12 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import javax.xml.stream.events.EndElement;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import massim.game.Entity;
+import massim.game.environment.positionable.Entity;
 import massim.game.GameState;
 import massim.protocol.data.NormInfo;
 import massim.protocol.data.Subject;
@@ -28,7 +26,7 @@ public class NormRoleTeam extends Norm{
 
     @Override
     public void bill(GameState state, JSONObject info) {
-        String role = state.getRoles().keySet().iterator().next();
+        String role = state.getGrid().entities().getRoles().iterator().next().name(); // TODO
         this.prohibitedRoles.put(role, 1);
         this.level = NormInfo.Level.TEAM;
     }

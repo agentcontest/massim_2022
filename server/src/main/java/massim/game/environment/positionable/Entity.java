@@ -1,12 +1,14 @@
-package massim.game;
+package massim.game.environment.positionable;
 
-import massim.game.environment.Attachable;
+import massim.game.environment.positionable.observer.PositionObserver;
 import massim.protocol.data.Position;
 import massim.protocol.data.Role;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.ActionMessage;
 import massim.protocol.messages.scenario.ActionResults;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,11 +18,17 @@ import java.util.List;
  */
 public class Entity extends Attachable {
 
-    static int maxEnergy = 0;
-    static int clearEnergyCost = 0;
-    static int deactivatedDuration = 0;
-    static int stepRecharge = 0;
-    static int refreshEnergy = 0;
+    public static int maxEnergy = 0;
+    public static int clearEnergyCost = 0;
+    public static int deactivatedDuration = 0;
+    public static int stepRecharge = 0;
+    public static int refreshEnergy = 0;
+
+    private static List<PositionObserver> observers = new ArrayList<>();
+
+    public static void setObservers(List<PositionObserver> observers) {
+        Entity.observers = observers;
+    }
 
     private final String agentName;
     private final String teamName;
@@ -33,8 +41,8 @@ public class Entity extends Attachable {
     private int energy;
     private int deactivatedSteps = 0;
 
-    public Entity(Position xy, String agentName, String teamName, Role role) {
-        super(xy);
+    Entity(Position pos, String agentName, String teamName, Role role) {
+        super(pos);
         this.agentName = agentName;
         this.teamName = teamName;
         this.energy = maxEnergy;
@@ -50,7 +58,7 @@ public class Entity extends Attachable {
     /**
      * recharge or repair
      */
-    void preStep() {
+    public void preStep() {
         if (deactivatedSteps > 0 && --deactivatedSteps == 0)
             this.energy = Entity.refreshEnergy;
         else
@@ -61,7 +69,7 @@ public class Entity extends Attachable {
         return teamName;
     }
 
-    void setLastActionResult(String result) {
+    public void setLastActionResult(String result) {
         this.lastActionResult = result;
     }
 
@@ -69,32 +77,32 @@ public class Entity extends Attachable {
         return agentName;
     }
 
-    void setNewAction(ActionMessage action) {
+    public void setNewAction(ActionMessage action) {
         this.lastAction = action.getActionType();
         this.lastActionResult = ActionResults.UNPROCESSED;
         this.lastActionParams = action.getParams();
     }
 
-    String getLastAction() {
-        return lastAction;
+    public String getLastAction() {
+        return this.lastAction;
     }
 
-    List<String> getLastActionParams() {
+    public List<String> getLastActionParams() {
         return lastActionParams;
     }
 
-    String getLastActionResult() {
+    public String getLastActionResult() {
         return lastActionResult;
     }
 
-    int getVision() {
+    public int getVision() {
         return this.role.vision();
     }
 
     /**
      * @return the entity's speed considering current attachments
      */
-    int getCurrentSpeed() {
+    public int getCurrentSpeed() {
         return this.role.maxSpeed(collectAllAttachments().size() - 1);
     }
 
@@ -111,11 +119,11 @@ public class Entity extends Attachable {
         return energy;
     }
 
-    void consumeClearEnergy() {
+    public void consumeClearEnergy() {
         this.decreaseEnergy(Entity.clearEnergyCost);
     }
 
-    void decreaseEnergy(int amount) {
+    public void decreaseEnergy(int amount) {
         this.energy = Math.max(energy - amount, 0);
         if (this.energy <= 0) {
             this.deactivate();
@@ -134,7 +142,25 @@ public class Entity extends Attachable {
         this.role = role;
     }
 
-    boolean isActionAvailable(String action) {
+    public boolean isActionAvailable(String action) {
         return this.role.actions().contains(action);
+    }
+
+    @Override
+    public List<PositionObserver> getObservers() {
+        return Entity.observers;
+    }
+
+    public JSONObject toJSON() {
+        return super.toJSON()
+                .put("name", this.agentName)
+                .put("team", this.teamName)
+                .put("role", this.role.name())
+                .put("energy", this.energy)
+                .put("vision", this.getVision())
+                .put("action", this.lastAction)
+                .put("actionParams", this.lastActionParams)
+                .put("actionResult", this.lastActionResult)
+                .put("deactivated", this.isDeactivated());
     }
 }

@@ -11,13 +11,13 @@ import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import massim.game.Entity;
+import massim.game.environment.positionable.Entity;
 import massim.game.GameState;
 import massim.protocol.data.NormInfo;
 import massim.protocol.data.Subject;
 
 public class NormRoleIndividual extends Norm{
-    private Map<String, Integer> prohibitedRoles = new HashMap<>();
+    private final Map<String, Integer> prohibitedRoles = new HashMap<>();
 
     public NormRoleIndividual(){
         
@@ -25,7 +25,7 @@ public class NormRoleIndividual extends Norm{
 
     @Override
     public void bill(GameState state, JSONObject info) {
-        String role = state.getRoles().keySet().iterator().next();
+        String role = state.getGrid().entities().getRoles().iterator().next().name(); // TODO
         this.prohibitedRoles.put(role, 1);
         this.level = NormInfo.Level.INDIVIDUAL;
     }

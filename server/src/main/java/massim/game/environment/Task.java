@@ -3,6 +3,8 @@ package massim.game.environment;
 import massim.protocol.data.Position;
 import massim.protocol.data.TaskInfo;
 import massim.protocol.data.Thing;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -64,5 +66,20 @@ public class Task {
             reqs.add(new Thing(pos.x, pos.y, type, ""));
         });
         return new TaskInfo(name, deadline, getReward(), reqs);
+    }
+
+    public JSONObject toJSON() {
+        var jsonRequirements = new JSONArray();
+        var task  = new JSONObject()
+                .put("name", this.name)
+                .put("deadline", this.deadline)
+                .put("reward", this.reward)
+                .put("requirements", jsonRequirements);
+        this.requirements.forEach((pos, type) ->
+                jsonRequirements
+                        .put(new JSONObject()
+                        .put("pos", pos.toJSON())
+                        .put("type", type)));
+        return task;
     }
 }

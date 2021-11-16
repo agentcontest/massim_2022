@@ -1,7 +1,8 @@
 package massim.game;
 
 import massim.config.TeamConfig;
-import massim.game.environment.Positionable;
+import massim.game.environment.positionable.Entity;
+import massim.game.environment.positionable.Positionable;
 import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
 import massim.protocol.messages.ActionMessage;
@@ -14,6 +15,7 @@ import massim.util.Util;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,7 +83,7 @@ public class Simulation {
         }
 
         var blockTypes = new JSONArray();
-        for (var type: this.state.getBlockTypes()) {
+        for (var type: this.state.getGrid().blocks().getTypes()) {
             blockTypes.put(type);
         }
 
@@ -89,7 +91,7 @@ public class Simulation {
         world.put("sim", name);
         world.put("grid", grid);
         world.put("teams", teams);
-        world.put("blockTypes", this.state.getBlockTypes());
+        world.put("blockTypes", this.state.getGrid().blocks().getTypes());
         world.put("steps", steps);
         return world;
     }
@@ -100,7 +102,7 @@ public class Simulation {
      * Executes all actions in random order.
      */
     private void handleActions(Map<String, ActionMessage> actions) {
-        var entities = actions.keySet().stream().map(ag -> state.getEntityByName(ag)).collect(Collectors.toList());
+        var entities = new ArrayList<>(state.getGrid().entities().getAll());
         RNG.shuffle(entities);
         for (Entity entity : entities) {
             var action = actions.get(entity.getAgentName());
@@ -117,14 +119,23 @@ public class Simulation {
                 Collectors.toMap(Positionable::getPosition, e -> e));
 
         for (Entity entity : entities) {
-            if (!entity.getLastActionResult().equals(UNPROCESSED)) continue;
-            var params = entity.getLastActionParams();
-            var action = entity.getLastAction();
-
-            if (!entity.isActionAvailable(action)) {
+            var actionMessage = actions.get(entity.getAgentName());
+            entity.setNewAction(actionMessage);
+            if (entity.isDeactivated()) {
+                entity.setLastActionResult(FAILED_STATUS);
+                continue;
+            }
+            else if (RNG.nextInt(100) < state.getRandomFail()) {
+                entity.setLastActionResult(FAILED_RANDOM);
+                continue;
+            }
+            else if (!entity.isActionAvailable(actionMessage.getActionType())) {
                 entity.setLastActionResult(FAILED_ROLE);
                 continue;
             }
+
+            var action = entity.getLastAction();
+            var params = entity.getLastActionParams();
 
             switch(action) {
                 case NO_ACTION, SKIP -> entity.setLastActionResult(SUCCESS);
@@ -160,7 +171,7 @@ public class Simulation {
 
                 case CONNECT -> {
                     var partnerEntityName = getStringParam(params, 0);
-                    var partnerEntity = state.getEntityByName(partnerEntityName);
+                    var partnerEntity = state.getGrid().entities().getByName(partnerEntityName);
                     var x = getIntParam(params, 1);
                     var y = getIntParam(params, 2);
                     if (partnerEntity == null || x == null || y == null) {

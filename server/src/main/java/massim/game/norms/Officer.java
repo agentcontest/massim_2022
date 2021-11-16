@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import massim.game.Entity;
+import massim.game.environment.positionable.Entity;
 import massim.game.GameState;
 import massim.util.Log;
 import massim.util.RNG;

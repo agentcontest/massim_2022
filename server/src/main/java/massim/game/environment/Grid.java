@@ -1,7 +1,7 @@
 package massim.game.environment;
 
-import massim.game.Entity;
-import massim.protocol.data.Role;
+import massim.game.environment.positionable.Entity;
+import massim.game.environment.positionable.*;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneList;
 import massim.game.environment.zones.ZoneType;
@@ -30,19 +30,28 @@ public class Grid {
     private final int attachLimit;
     private final double moveProbability;
 
-    private final Map<Position, Set<Positionable>> thingsMap;
-    private final List<Marker> markers = new ArrayList<>();
-    private final Set<Position> obstaclePositions = new HashSet<>();
+    private final AttachableHub attachables = new AttachableHub();
+    private final EntityHub entities = new EntityHub();
+    private final BlockHub blocks = new BlockHub();
+    private final ObstacleHub obstacles = new ObstacleHub();
+    private final MarkerHub markers = new MarkerHub();
+    private final DispenserHub dispensers = new DispenserHub();
 
     private final ZoneList goalZones = new ZoneList();
     private final ZoneList roleZones = new ZoneList();
 
     public Grid(JSONObject gridConf, int attachLimit) {
+
+        Entity.setObservers(List.of(attachables, entities));
+        Block.setObservers(List.of(attachables, blocks));
+        Obstacle.setObservers(List.of(attachables, obstacles));
+        Marker.setObservers(List.of(markers));
+        Dispenser.setObservers(List.of(dispensers));
+
         this.attachLimit = attachLimit;
         this.dimX = gridConf.getInt("width");
         this.dimY = gridConf.getInt("height");
         Position.setGridDimensions(dimX, dimY);
-        this.thingsMap = new HashMap<>();
 
         // terrain from bitmap
         String mapFilePath = gridConf.optString("file");
@@ -55,7 +64,7 @@ public class Grid {
                     var height = Math.min(dimY, img.getHeight());
                     for (int x = 0; x < width; x++) { for (int y = 0; y < height; y++) {
                         switch(bitmapColors.getOrDefault(img.getRGB(x, y), "empty")) {
-                            case "obstacle" -> addObstacle(Position.of(x, y));
+                            case "obstacle" -> this.obstacles.create(Position.of(x, y));
                             case "goal" -> addZone(ZoneType.GOAL, Position.of(x, y), 1);
                             default -> Log.log(Log.Level.ERROR, "Unknown bitmap color: " + img.getRGB(x, y));
                         }
@@ -94,7 +103,7 @@ public class Grid {
                     var chanceAlive = instruction.getDouble(1);
                     for (int x = 0; x < dimX; x++) {
                         for (int y = 0; y < dimY; y++) {
-                            if (RNG.nextDouble() < chanceAlive) addObstacle(Position.of(x, y));
+                            if (RNG.nextDouble() < chanceAlive) this.obstacles.create(Position.of(x, y));
                         }
                     }
                     var iterations = instruction.getInt(2);
@@ -107,20 +116,7 @@ public class Grid {
             }
         }
         for (int y = 0; y < dimY; y++) for (int x = 0; x < dimX; x++)
-            if (obstacles[x][y]) addObstacle(Position.of(x, y));
-    }
-
-    public void addObstacle(Position pos) {
-        var o = new Obstacle(pos);
-        if (this.insertThing(o))
-            this.obstaclePositions.add(pos);
-    }
-
-    /**
-     * @return a copy of the set of all obstacles
-     */
-    public Set<Position> getObstaclePositions() {
-        return new HashSet<>(obstaclePositions);
+            if (obstacles[x][y]) this.obstacles.create(Position.of(x, y));
     }
 
     private void addZonesFromConfig(ZoneType type, JSONObject zoneConf) {
@@ -150,8 +146,8 @@ public class Grid {
         this.getZoneList(type).remove(pos);
     }
 
-    public boolean isInZone(ZoneType type, Position pos) {
-        return this.getZoneList(type).isInZone(pos);
+    public boolean isNotInZone(ZoneType type, Position pos) {
+        return !this.getZoneList(type).isInZone(pos);
     }
 
     public List<Zone> getZones(ZoneType type) {
@@ -241,54 +237,9 @@ public class Grid {
         return dimY;
     }
 
-    public Entity createEntity(Position xy, String agentName, String teamName, Role role) {
-        var e = new Entity(xy, agentName, teamName, role);
-        insertThing(e);
-        return e;
-    }
-
-    public Block createBlock(Position xy, String type) {
-        if(!isUnblocked(xy)) return null;
-        var b = new Block(xy, type);
-        insertThing(b);
-        return b;
-    }
-
-    public void destroyThing(Positionable a) {
-        if (a == null) return;
-        if (a instanceof Attachable) ((Attachable) a).detachAll();
-        var things = thingsMap.get(a.getPosition());
-        if (things != null) things.remove(a);
-        if (a instanceof Obstacle) obstaclePositions.remove(a.getPosition());
-    }
-
-    /**
-     * @return a copy of the set of things at the given position
-     */
-    public Set<Positionable> getThings(Position pos) {
-        return new HashSet<>(thingsMap.computeIfAbsent(pos, kPos -> new HashSet<>()));
-    }
-
-    private boolean insertThing(Positionable thing) {
-        if (outOfBounds(thing.getPosition())) return false;
-        thingsMap.computeIfAbsent(thing.getPosition(), pos -> new HashSet<>()).add(thing);
-        return true;
-    }
-
-    /**
-     * @return true if a position is out of the grid's bounds (it could be wrapped back in though).
-     */
-    public boolean outOfBounds(Position pos) {
-        return pos == null || pos.x < 0 || pos.y < 0 || pos.x >= dimX || pos.y >= dimY;
-    }
-
-    private void move(Set<Attachable> things, Map<Attachable, Position> newPositions) {
-        things.forEach(t -> thingsMap.getOrDefault(t.getPosition(), Collections.emptySet()).remove(t));
-        for (Attachable thing : things) {
-            var newPos = newPositions.get(thing);
-            thing.setPosition(newPos);
-            insertThing(thing);
-        }
+    private void moveMany(Set<Positionable> things, Map<Positionable, Position> newPositions) {
+        for (Positionable thing : things)
+            thing.moveTo(newPositions.get(thing));
     }
 
     /**
@@ -296,11 +247,8 @@ public class Grid {
      * Only works if target is free and attachable has nothing attached.
      */
     public void moveWithoutAttachments(Attachable a, Position pos) {
-        if(isUnblocked(pos) && a.getAttachments().isEmpty()) {
-            destroyThing(a);
-            a.setPosition(pos);
-            insertThing(a);
-        }
+        if(isUnblocked(pos) && a.getAttachments().isEmpty())
+            a.moveTo(pos);
     }
 
     public boolean attach(Attachable a1, Attachable a2) {
@@ -323,25 +271,14 @@ public class Grid {
         return true;
     }
 
-    public void print(){
-        var sb = new StringBuilder(dimX * dimY * 3 + dimY);
-        for (int row = 0; row < dimY; row++){
-            for (int col = 0; col < dimX; col++){
-                sb.append("[").append(getThings(Position.of(col, row)).size()).append("]");
-            }
-            sb.append("\n");
-        }
-        System.out.println(sb);
-    }
-
     /**
      * @return whether the movement succeeded
      */
     public boolean moveWithAttached(Attachable anchor, String direction, int distance) {
-        var things = new HashSet<Attachable>(anchor.collectAllAttachments());
+        var things = new HashSet<Positionable>(anchor.collectAllAttachments());
         var newPositions = canMove(things, direction, distance);
         if (newPositions == null) return false;
-        move(things, newPositions);
+        this.moveMany(things, newPositions);
         return true;
     }
 
@@ -349,9 +286,9 @@ public class Grid {
      * @return whether the rotation succeeded
      */
     public boolean rotateWithAttached(Attachable anchor, boolean clockwise) {
-        var newPositions = canRotate(anchor, clockwise);
+        var newPositions = this.canRotate(anchor, clockwise);
         if (newPositions == null) return false;
-        move(newPositions.keySet(), newPositions);
+        this.moveMany(newPositions.keySet(), newPositions);
         return true;
     }
 
@@ -360,11 +297,11 @@ public class Grid {
      * Intermediate positions (the "diagonals") are also checked for all attachments.
      * @return a map from the element and all attachments to their new positions after rotation or null if anything is blocked
      */
-    private Map<Attachable, Position> canRotate(Attachable anchor, boolean clockwise) {
-        var attachments = new HashSet<Attachable>(anchor.collectAllAttachments());
+    private Map<Positionable, Position> canRotate(Attachable anchor, boolean clockwise) {
+        var attachments = new HashSet<Positionable>(anchor.collectAllAttachments());
         if(attachments.stream().anyMatch(a -> a != anchor && a instanceof Entity)) return null;
-        var newPositions = new HashMap<Attachable, Position>();
-        for (Attachable a : attachments) {
+        var newPositions = new HashMap<Positionable, Position>();
+        for (var a : attachments) {
             var rotatedPos = a.getPosition().rotated90(anchor.getPosition(), clockwise);
             if(!isUnblocked(rotatedPos, attachments)) return null;
             newPositions.put(a, rotatedPos);
@@ -372,9 +309,9 @@ public class Grid {
         return newPositions;
     }
 
-    private Map<Attachable, Position> canMove(Set<Attachable> things, String direction, int distance) {
-        var newPositions = new HashMap<Attachable, Position>();
-        for (Attachable thing : things) {
+    private Map<Positionable, Position> canMove(Set<Positionable> things, String direction, int distance) {
+        var newPositions = new HashMap<Positionable, Position>();
+        for (var thing : things) {
             for (int i = 1; i <= distance; i++) {
                 var newPos = thing.getPosition().moved(direction, i);
                 if(!isUnblocked(newPos, things)) return null;
@@ -385,8 +322,8 @@ public class Grid {
     }
 
     public Position findRandomFreePosition() {
-        int x = RNG.nextInt(dimX);
-        int y = RNG.nextInt(dimY);
+        int x = RNG.nextInt(this.dimX);
+        int y = RNG.nextInt(this.dimY);
         final int startX = x;
         final int startY = y;
         while (isBlocked(Position.of(x,y))) {
@@ -465,36 +402,16 @@ public class Grid {
         return isUnblocked(xy, Collections.emptySet());
     }
 
-    private boolean isUnblocked(Position xy, Set<Attachable> excludedObjects) {
-        if (outOfBounds(xy)) xy = xy.wrapped();
-        return getThings(xy).stream().noneMatch(t -> t instanceof Attachable && !excludedObjects.contains(t));
-    }
-
-    public void createMarker(Position position, Marker.Type type) {
-        if (outOfBounds(position)) position = position.wrapped();
-        var marker = new Marker(position, type);
-        markers.add(marker);
-        insertThing(marker);
+    private boolean isUnblocked(Position xy, Set<Positionable> excludedObjects) {
+        return !this.attachables.isTaken(xy.wrapped(), excludedObjects);
     }
 
     public void deleteMarkers() {
-        markers.forEach(this::destroyThing);
         markers.clear();
     }
 
     public Position getRandomPosition() {
         return Position.of(RNG.nextInt(dimX), RNG.nextInt(dimY));
-    }
-
-    public boolean removeObstacle(Position position) {
-        var posThings = thingsMap.get(position);
-        var obstacle = posThings.stream().filter(thing -> thing instanceof Obstacle).findAny();
-        if (obstacle.isPresent()) {
-            posThings.remove(obstacle.get());
-            obstaclePositions.remove(position);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -514,8 +431,60 @@ public class Grid {
             newPos = getRandomPosition();
         }
 
-        goalZones.remove(zone.position());
-        addZone(ZoneType.GOAL, newPos, zone.radius());
+        this.removeZone(ZoneType.GOAL, zone.position());
+        this.addZone(ZoneType.GOAL, newPos, zone.radius());
         Log.log(Log.Level.NORMAL, "Goal moved from " + zone.position() + " to " + newPos);
+    }
+
+    public ObstacleHub obstacles() {
+        return this.obstacles;
+    }
+
+    public EntityHub entities() {
+        return this.entities;
+    }
+    public BlockHub blocks() {
+        return this.blocks;
+    }
+
+    public MarkerHub markers() {
+        return this.markers;
+    }
+
+    public DispenserHub dispensers() {
+        return this.dispensers;
+    }
+
+    public AttachableHub attachables() {
+        return this.attachables;
+    }
+
+    public Attachable getUniqueAttachable(Position pos) {
+        var things = attachables.lookup(pos);
+        if (things.size() != 1) {
+            Log.log(Log.Level.ERROR, "No unique attachable: " + things);
+            return null;
+        }
+        return things.iterator().next();
+    }
+
+    public Collection<Attachable> getThingsDestroyedByClear(Position pos) {
+        var result = new ArrayList<Attachable>();
+        var o = this.obstacles.lookup(pos);
+        if (o != null) result.add(o);
+        var b = this.blocks.lookup(pos);
+        if (b != null) result.add(b);
+        return result;
+    }
+
+    /**
+     * @return everything that can be found at the given position (entities, blocks, obstacles, markers, dispensers)
+     */
+    public List<Positionable> getEverythingAt(Position pos) {
+        var result = new ArrayList<Positionable>(this.attachables.lookup(pos));
+        result.addAll(markers.lookup(pos));
+        if (dispensers.isTaken(pos))
+            result.add(dispensers.lookup(pos));
+        return result;
     }
 }
