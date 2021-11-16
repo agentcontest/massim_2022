@@ -8,22 +8,15 @@ import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
 import massim.util.Log;
 import massim.util.RNG;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class Grid {
 
     public static final Set<String> DIRECTIONS = Set.of("n", "s", "e", "w");
     public static final Set<String> ROTATION_DIRECTIONS = Set.of("cw", "ccw");
-    private static final Map<Integer, String> bitmapColors =
-            Map.of(-16777216, "obstacle", -1, "empty", -65536, "goal");
+
 
     private final int dimX;
     private final int dimY;
@@ -53,70 +46,15 @@ public class Grid {
         this.dimY = gridConf.getInt("height");
         Position.setGridDimensions(dimX, dimY);
 
-        // terrain from bitmap
-        String mapFilePath = gridConf.optString("file");
-        if (!mapFilePath.isBlank()){
-            var mapFile = new File(mapFilePath);
-            if (mapFile.exists()) {
-                try {
-                    BufferedImage img = ImageIO.read(mapFile);
-                    var width = Math.min(dimX, img.getWidth());
-                    var height = Math.min(dimY, img.getHeight());
-                    for (int x = 0; x < width; x++) { for (int y = 0; y < height; y++) {
-                        switch(bitmapColors.getOrDefault(img.getRGB(x, y), "empty")) {
-                            case "obstacle" -> this.obstacles.create(Position.of(x, y));
-                            case "goal" -> addZone(ZoneType.GOAL, Position.of(x, y), 1);
-                            default -> Log.log(Log.Level.ERROR, "Unknown bitmap color: " + img.getRGB(x, y));
-                        }
-                    }}
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            else Log.log(Log.Level.ERROR, "File " + mapFile.getAbsolutePath() + " not found.");
-        }
+        GridBuilder.fromBitmap(gridConf.optString("file"), this);
 
-        this.addObstaclesFromConfig(gridConf.getJSONArray("instructions"));
+        GridBuilder.addObstaclesFromConfig(gridConf.getJSONArray("instructions"), this);
 
         var goalConf = gridConf.getJSONObject("goals");
         this.moveProbability = goalConf.getDouble("moveProbability");
         this.addZonesFromConfig(ZoneType.GOAL, goalConf);
 
         this.addZonesFromConfig(ZoneType.ROLE, gridConf.getJSONObject("roleZones"));
-    }
-
-    private void addObstaclesFromConfig(JSONArray instructions) {
-        boolean[][] obstacles = new boolean[dimX][dimY];
-        for (var i = 0; i < instructions.length(); i++) {
-            var instruction = instructions.optJSONArray(i);
-            if (instruction == null) continue;
-            switch (instruction.getString(0)) {
-                case "line-border" -> {
-                    var width = instruction.getInt(1);
-                    for (var j = 0; j < width; j++) createLineBorder(obstacles, j);
-                }
-                case "ragged-border" -> {
-                    var width = instruction.getInt(1);
-                    createRaggedBorder(obstacles, width);
-                }
-                case "cave" -> {
-                    var chanceAlive = instruction.getDouble(1);
-                    for (int x = 0; x < dimX; x++) {
-                        for (int y = 0; y < dimY; y++) {
-                            if (RNG.nextDouble() < chanceAlive) this.obstacles.create(Position.of(x, y));
-                        }
-                    }
-                    var iterations = instruction.getInt(2);
-                    var createLimit = instruction.getInt(3);
-                    var destroyLimit = instruction.getInt(4);
-                    for (var it = 0; it < iterations; it++) {
-                        obstacles = doCaveIteration(obstacles, createLimit, destroyLimit);
-                    }
-                }
-            }
-        }
-        for (int y = 0; y < dimY; y++) for (int x = 0; x < dimX; x++)
-            if (obstacles[x][y]) this.obstacles.create(Position.of(x, y));
     }
 
     private void addZonesFromConfig(ZoneType type, JSONObject zoneConf) {
@@ -162,71 +100,6 @@ public class Grid {
             case GOAL -> this.goalZones.getClosest(pos).position().distanceTo(pos);
             case ROLE -> this.roleZones.getClosest(pos).position().distanceTo(pos);
         };
-    }
-
-    private boolean[][] doCaveIteration(boolean[][] obstacles, int createLimit, int destroyLimit) {
-        var newTerrain = new boolean[dimX][dimY];
-        for (var x = 0; x < dimX; x++) { for (var y = 0; y < dimY; y++) {
-            var n = countObstacleNeighbours(obstacles, x,y);
-            if (obstacles[x][y]) {
-                newTerrain[x][y] = (n >= destroyLimit);
-            }
-            else if (!obstacles[x][y]) {
-                newTerrain[x][y] = (n > createLimit);
-            }
-            else {
-                newTerrain[x][y] = obstacles[x][y];
-            }
-        }}
-        return newTerrain;
-    }
-
-    private int countObstacleNeighbours(boolean[][] obstacles, int cx, int cy) {
-        var count = 0;
-        for (var x = cx - 1; x <= cx + 1; x++) { for (var y = cy - 1; y <= cy + 1; y++) {
-            if (x != cx || y != cy) {
-                var pos = Position.wrapped(x, y);
-                if (obstacles[pos.x][pos.y]) count++;
-            }
-        }}
-        return count;
-    }
-
-    /**
-     * @param offset distance to the outer map boundaries
-     */
-    private void createLineBorder(boolean[][] obstacles, int offset) {
-        for (int x = offset; x < dimX - offset; x++) {
-            obstacles[x][offset] = true;
-            obstacles[x][dimY - (offset + 1)] = true;
-        }
-        for (int y = offset; y < dimY - offset; y++) {
-            obstacles[offset][y] = true;
-            obstacles[dimX - (offset + 1)][y] = true;
-        }
-    }
-
-    private void createRaggedBorder(boolean[][] obstacles, int width) {
-        var currentWidth = width;
-        for (var x = 0; x < dimX; x++) {
-            currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) obstacles[x][i] = true;
-        }
-        currentWidth = width;
-        for (var x = 0; x < dimX; x++) {
-            currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) obstacles[x][dimY - (i + 1)] = true;
-        }
-        currentWidth = width;
-        for (var y = 0; y < dimY; y++) {
-            currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) obstacles[i][y] = true;
-        }
-        currentWidth = width;
-        for (var y = 0; y < dimY; y++) {
-            currentWidth = Math.max(currentWidth - 1 + RNG.nextInt(3), 1);
-            for (var i = 0; i < currentWidth; i++) obstacles[dimX - (i + 1)][y] = true;
-        }
     }
 
     public int getDimX() {
