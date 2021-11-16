@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import massim.util.RNG;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -18,7 +19,7 @@ import massim.protocol.data.NormInfo;
 import massim.protocol.data.Subject;
 
 public class NormRoleTeam extends Norm{
-    private Map<String, Integer> prohibitedRoles = new HashMap<>();
+    private final Map<String, Integer> prohibitedRoles = new HashMap<>();
 
     public NormRoleTeam(){
         
@@ -26,7 +27,7 @@ public class NormRoleTeam extends Norm{
 
     @Override
     public void bill(GameState state, JSONObject info) {
-        String role = state.getGrid().entities().getRoles().iterator().next().name(); // TODO
+        var role = state.getGrid().entities().getRandomRole().name();
         this.prohibitedRoles.put(role, 1);
         this.level = NormInfo.Level.TEAM;
     }

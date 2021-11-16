@@ -3,6 +3,7 @@ package massim.game.environment.positionable;
 import massim.game.environment.positionable.observer.MultiHub;
 import massim.protocol.data.Position;
 import massim.protocol.data.Role;
+import massim.util.RNG;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,5 +42,11 @@ public class EntityHub extends MultiHub<Entity> {
 
     public List<Role> getRoles() {
         return new ArrayList<>(this.roles.values());
+    }
+
+    public Role getRandomRole() {
+        var roles = getRoles();
+        int index = RNG.nextInt(roles.size());
+        return roles.get(index);
     }
 }
