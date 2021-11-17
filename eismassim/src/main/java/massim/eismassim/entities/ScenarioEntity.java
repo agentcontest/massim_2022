@@ -110,6 +110,9 @@ public class ScenarioEntity extends ConnectedEntity {
                 }
         );
 
+        percept.roleZones.forEach(r -> ret.add(new Percept("roleZone", new Numeral(r.x), new Numeral(r.y))));
+        percept.goalZones.forEach(r -> ret.add(new Percept("goalZone", new Numeral(r.x), new Numeral(r.y))));
+
         return ret;
     }
 
