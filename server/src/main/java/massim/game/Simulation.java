@@ -104,16 +104,6 @@ public class Simulation {
     private void handleActions(Map<String, ActionMessage> actions) {
         var entities = new ArrayList<>(state.grid().entities().getAll());
         RNG.shuffle(entities);
-        for (Entity entity : entities) {
-            var action = actions.get(entity.getAgentName());
-            entity.setNewAction(action);
-            if (entity.isDeactivated()) {
-                entity.setLastActionResult(FAILED_STATUS);
-            }
-            else if (RNG.nextInt(100) < state.getRandomFail()) {
-                entity.setLastActionResult(FAILED_RANDOM);
-            }
-        }
 
         var previousPositions = entities.stream().collect(
                 Collectors.toMap(Positionable::getPosition, e -> e));
