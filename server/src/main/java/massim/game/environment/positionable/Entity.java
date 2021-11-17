@@ -6,6 +6,7 @@ import massim.protocol.data.Role;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.ActionMessage;
 import massim.protocol.messages.scenario.ActionResults;
+import massim.protocol.messages.scenario.Actions;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -78,9 +79,16 @@ public class Entity extends Attachable {
     }
 
     public void setNewAction(ActionMessage action) {
-        this.lastAction = action.getActionType();
-        this.lastActionResult = ActionResults.UNPROCESSED;
-        this.lastActionParams = action.getParams();
+        if (action == null) {
+            this.lastAction = Actions.NO_ACTION;
+            this.lastActionResult = ActionResults.SUCCESS;
+            this.lastActionParams = Collections.emptyList();
+        }
+        else {
+            this.lastAction = action.getActionType();
+            this.lastActionResult = ActionResults.UNPROCESSED;
+            this.lastActionParams = action.getParams();
+        }
     }
 
     public String getLastAction() {

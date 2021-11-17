@@ -10,15 +10,13 @@ import massim.protocol.messages.RequestActionMessage;
 import massim.protocol.messages.SimEndMessage;
 import massim.protocol.messages.SimStartMessage;
 import massim.game.environment.Grid;
+import massim.protocol.messages.scenario.ActionResults;
 import massim.util.RNG;
 import massim.util.Util;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static massim.protocol.messages.scenario.Actions.*;
@@ -105,24 +103,27 @@ public class Simulation {
         var entities = new ArrayList<>(state.grid().entities().getAll());
         RNG.shuffle(entities);
 
-        var previousPositions = entities.stream().collect(
-                Collectors.toMap(Positionable::getPosition, e -> e));
-
+        var previousPositions = new HashMap<Position, List<Entity>>();
         for (Entity entity : entities) {
+            previousPositions.computeIfAbsent(entity.getPosition(), k -> new ArrayList<>()).add(entity);
+
             var actionMessage = actions.get(entity.getAgentName());
             entity.setNewAction(actionMessage);
+
             if (entity.isDeactivated()) {
                 entity.setLastActionResult(FAILED_STATUS);
-                continue;
             }
             else if (RNG.nextInt(100) < state.getRandomFail()) {
                 entity.setLastActionResult(FAILED_RANDOM);
-                continue;
             }
             else if (!entity.isActionAvailable(actionMessage.getActionType())) {
                 entity.setLastActionResult(FAILED_ROLE);
-                continue;
             }
+        }
+
+        for (Entity entity : entities) {
+            if (!Objects.equals(entity.getLastActionResult(), UNPROCESSED))
+                continue;
 
             var action = entity.getLastAction();
             var params = entity.getLastActionParams();
@@ -246,11 +247,11 @@ public class Simulation {
                             entity.setLastActionResult(FAILED_PARAMETER);
                             continue;
                         }
-                        var targetEntity = previousPositions.get(Position.of(x, y));
-                        if (targetEntity == null)
+                        var targetEntities = previousPositions.get(Position.of(x, y));
+                        if (targetEntities == null || targetEntities.isEmpty())
                             entity.setLastActionResult(FAILED_TARGET);
                         else
-                            entity.setLastActionResult(state.handleSurveyTargetAction(entity, targetEntity));
+                            entity.setLastActionResult(state.handleSurveyTargetAction(entity, targetEntities.get(0)));
                     } else
                         entity.setLastActionResult(FAILED_PARAMETER);
                 }
