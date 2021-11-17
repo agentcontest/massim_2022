@@ -101,6 +101,8 @@ public class RolesTest {
         sim.init(1000, config, teams);
         sim.preStep(0);
         sim.step(0, Map.of("A1", new ActionMessage("survey", 0, List.of("goal"))));
+        a1 = sim.getState().grid().entities().getByName("A1");
+        assert a1.getLastActionResult().equals(ActionResults.FAILED_ROLE);
     }
 
     private static boolean perceptContainsThing(StepPercept percept, Thing thing) {

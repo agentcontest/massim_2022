@@ -2,7 +2,6 @@ package massim.game;
 
 import massim.config.TeamConfig;
 import massim.game.environment.positionable.Entity;
-import massim.game.environment.positionable.Positionable;
 import massim.game.environment.zones.ZoneType;
 import massim.protocol.data.Position;
 import massim.protocol.messages.ActionMessage;
@@ -10,7 +9,6 @@ import massim.protocol.messages.RequestActionMessage;
 import massim.protocol.messages.SimEndMessage;
 import massim.protocol.messages.SimStartMessage;
 import massim.game.environment.Grid;
-import massim.protocol.messages.scenario.ActionResults;
 import massim.util.RNG;
 import massim.util.Util;
 import org.json.JSONArray;
@@ -35,6 +33,10 @@ public class Simulation {
                 .map(TeamConfig::getName)
                 .collect(Collectors.joining("_"));
         return state.getInitialPercepts(steps);
+    }
+
+    GameState getState() {
+        return this.state;
     }
 
     public Map<String, RequestActionMessage> preStep(int step) {
@@ -115,11 +117,11 @@ public class Simulation {
             if (entity.isDeactivated()) {
                 entity.setLastActionResult(FAILED_STATUS);
             }
-            else if (RNG.nextInt(100) < state.getRandomFail()) {
-                entity.setLastActionResult(FAILED_RANDOM);
-            }
             else if (!entity.isActionAvailable(actionMessage.getActionType())) {
                 entity.setLastActionResult(FAILED_ROLE);
+            }
+            else if (RNG.nextInt(100) < state.getRandomFail()) {
+                entity.setLastActionResult(FAILED_RANDOM);
             }
         }
 
