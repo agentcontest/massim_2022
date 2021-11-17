@@ -132,7 +132,7 @@ public class GameState {
         for (var block : this.grid.blocks().getTypes()) {
             var numberOfDispensers = RNG.betweenClosed(dispenserBounds);
             for (var i = 0; i < numberOfDispensers; i++) {
-                createDispenser(grid.findRandomFreePosition(), block);
+                this.grid.dispensers().create(this.grid.findRandomFreePosition(), block);
             }
         }
 
@@ -210,7 +210,7 @@ public class GameState {
                         break;
                     case "dispenser":
                         blockType = command[4];
-                        createDispenser(Position.of(x, y), blockType);
+                        this.grid.dispensers().create(Position.of(x, y), blockType);
                         break;
                     default:
                         Log.log(Log.Level.ERROR, "Cannot add " + command[3]);
@@ -640,15 +640,6 @@ public class GameState {
         Task t = new Task(name, step + duration, iterations, requirements);
         tasks.put(t.getName(), t);
         return t;
-    }
-
-    boolean createDispenser(Position xy, String blockType) {
-        if (!this.grid.blocks().typeExists(blockType)) return false;
-        if (!grid.isUnblocked(xy)) return false;
-        if (this.grid.dispensers().lookup(xy) != null) return false;
-        var d = this.grid.dispensers().create(xy, blockType);
-        Log.log(Log.Level.NORMAL, "Created " + d);
-        return true;
     }
 
     private boolean attachedToOpponent(Attachable a, Entity entity) {

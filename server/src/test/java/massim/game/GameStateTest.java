@@ -28,7 +28,7 @@ public class GameStateTest {
         var dispenserPos = Position.of(3, 3);
         Entity a1 = state.getGrid().entities().getByName("A1");
         assert a1 != null;
-        assert state.createDispenser(dispenserPos, blockTypes.iterator().next());
+        assert state.getGrid().dispensers().create(dispenserPos, blockTypes.iterator().next()) != null;
         assert state.teleport("A1", dispenserPos.moved("s", 2));
 
         // too far away -> fail
@@ -42,7 +42,8 @@ public class GameStateTest {
         // repeat -> fail
         assert state.handleRequestAction(a1, "n").equals(ActionResults.FAILED_BLOCKED);
         // another try
-        assert state.createDispenser(a1.getPosition().moved("e", 1), blockTypes.iterator().next());
+        assert state.getGrid().dispensers().create(a1.getPosition().moved("e", 1),
+                blockTypes.iterator().next()) != null;
         assert state.handleRequestAction(a1, "e").equals(ActionResults.SUCCESS);
     }
 

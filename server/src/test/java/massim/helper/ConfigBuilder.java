@@ -2,6 +2,7 @@ package massim.helper;
 
 import massim.config.TeamConfig;
 import massim.game.GameState;
+import massim.protocol.data.Role;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -106,5 +107,13 @@ public abstract class ConfigBuilder {
                 .put("number", number)
                 .put("size", new JSONArray().put(size).put(size))
         );
+    }
+
+    public static void addRole(JSONObject config, Role role) {
+        config.getJSONArray("roles").put(new JSONObject()
+                .put("name", role.name())
+                .put("vision", role.vision())
+                .put("actions", new JSONArray(role.actions()))
+                .put("speed", new JSONArray(role.speed())));
     }
 }
