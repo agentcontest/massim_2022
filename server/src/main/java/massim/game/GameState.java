@@ -269,7 +269,7 @@ public class GameState {
         return this.randomFail;
     }
 
-    public Grid getGrid() {
+    public Grid grid() {
         return grid;
     }
 

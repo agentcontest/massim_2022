@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import massim.util.RNG;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -27,7 +26,7 @@ public class NormRoleTeam extends Norm{
 
     @Override
     public void bill(GameState state, JSONObject info) {
-        var role = state.getGrid().entities().getRandomRole().name();
+        var role = state.grid().entities().getRandomRole().name();
         this.prohibitedRoles.put(role, 1);
         this.level = NormInfo.Level.TEAM;
     }

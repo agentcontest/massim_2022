@@ -76,7 +76,7 @@ public class NormsTest {
         Officer officer = new Officer(regulation);
         officer.createNorms(1, this.state);
 
-        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        Entity a1 = this.state.grid().entities().getByName("A1");
         state.teleport(a1.getAgentName(), Position.of(20, 20));
         int a1Energy = a1.getEnergy();
         Position pos = a1.getPosition();
@@ -86,12 +86,12 @@ public class NormsTest {
 
         assert officer.getActiveNorms(25).size() == 1;
 
-        assert this.state.getGrid().blocks().create(pos.east(), "b1") != null;
+        assert this.state.grid().blocks().create(pos.east(), "b1") != null;
         assert this.state.handleAttachAction(a1, "e").equals(ActionResults.SUCCESS);
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() == a1Energy;
 
-        assert this.state.getGrid().blocks().create(pos.south(), "b1") != null;
+        assert this.state.grid().blocks().create(pos.south(), "b1") != null;
         assert this.state.handleAttachAction(a1, "s").equals(ActionResults.SUCCESS);
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
@@ -114,12 +114,12 @@ public class NormsTest {
         officer.createNorms(1, this.state);
 
         String role = officer.getNorms().iterator().next().toPercept().requirements.get(0).name;
-        Set<String> roles = this.state.getGrid().entities().getRoles().stream().map(Role::name).collect(Collectors.toSet());
+        Set<String> roles = this.state.grid().entities().getRoles().stream().map(Role::name).collect(Collectors.toSet());
         List<String> available = roles.stream().filter(r -> !r.equals(role)).collect(Collectors.toList());
 
-        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        Entity a1 = this.state.grid().entities().getByName("A1");
         int a1Energy = a1.getEnergy();
-        a1.setRole(this.state.getGrid().entities().getRole(available.get(0)));
+        a1.setRole(this.state.grid().entities().getRole(available.get(0)));
 
         ArrayList<Entity> agents = new ArrayList<>();
         agents.add(a1);
@@ -127,7 +127,7 @@ public class NormsTest {
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() == a1Energy;
 
-        a1.setRole(this.state.getGrid().entities().getRole(role));
+        a1.setRole(this.state.grid().entities().getRole(role));
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
     }
@@ -145,17 +145,17 @@ public class NormsTest {
         NormInfo normInfo = officer.getNorms().iterator().next().toPercept();
         String role = normInfo.requirements.get(0).name;
         // int qty =  normInfo.requirements.get(0).quantity;
-        List<Role> roles = this.state.getGrid().entities().getRoles();
+        List<Role> roles = this.state.grid().entities().getRoles();
         List<Role> available = roles.stream().filter(r -> !r.name().equals(role)).collect(Collectors.toList());
 
-        Entity a1 = this.state.getGrid().entities().getByName("A1");
-        a1.setRole(this.state.getGrid().entities().getRole(role));
-        Entity a2 = this.state.getGrid().entities().getByName("A2");
+        Entity a1 = this.state.grid().entities().getByName("A1");
+        a1.setRole(this.state.grid().entities().getRole(role));
+        Entity a2 = this.state.grid().entities().getByName("A2");
         a2.setRole(available.get(0));
-        Entity a3 = this.state.getGrid().entities().getByName("A3");
+        Entity a3 = this.state.grid().entities().getByName("A3");
         a3.setRole(available.get(0));
-        Entity b1 = this.state.getGrid().entities().getByName("B1");
-        b1.setRole(this.state.getGrid().entities().getRole(role));
+        Entity b1 = this.state.grid().entities().getByName("B1");
+        b1.setRole(this.state.grid().entities().getRole(role));
         int a1Energy = a1.getEnergy();
         int a2Energy = a2.getEnergy();
         int a3Energy = a3.getEnergy();
@@ -173,7 +173,7 @@ public class NormsTest {
         assert a3.getEnergy() == a3Energy;
         assert b1.getEnergy() == b1Energy;
 
-        a2.setRole(this.state.getGrid().entities().getRole(role));
+        a2.setRole(this.state.grid().entities().getRole(role));
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
         assert a2.getEnergy() < a2Energy;
@@ -224,12 +224,12 @@ public class NormsTest {
 
         NormInfo normInfo = officer.getNorms().iterator().next().toPercept();
         String role = normInfo.requirements.get(0).name;
-        List<Role> roles = this.state.getGrid().entities().getRoles();
+        List<Role> roles = this.state.grid().entities().getRoles();
         List<Role> available = roles.stream().filter(r -> !r.name().equals(role)).collect(Collectors.toList());
 
-        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        Entity a1 = this.state.grid().entities().getByName("A1");
         a1.setRole(available.get(0));
-        Entity a2 = this.state.getGrid().entities().getByName("A2");
+        Entity a2 = this.state.grid().entities().getByName("A2");
         a2.setRole(available.get(0));
 
         assert officer.getArchive(0).size() == 0;
@@ -245,13 +245,13 @@ public class NormsTest {
         assert officer.getArchive(25).size() == 0;
         assert officer.getArchive(26).size() == 0;
    
-        a1.setRole(this.state.getGrid().entities().getRole(role));
+        a1.setRole(this.state.grid().entities().getRole(role));
         officer.regulateNorms(26, agents);
         assert officer.getArchive(25).size() == 0;
         assert officer.getArchive(26).size() == 1;
         assert officer.getArchive(27).size() == 0;
 
-        a2.setRole(this.state.getGrid().entities().getRole(role));
+        a2.setRole(this.state.grid().entities().getRole(role));
         officer.regulateNorms(27, agents);
         assert officer.getArchive(26).size() == 1;
         assert officer.getArchive(27).size() == 2;
@@ -271,12 +271,12 @@ public class NormsTest {
             this.state.prepareStep(i);
         }
 
-        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        Entity a1 = this.state.grid().entities().getByName("A1");
         state.teleport(a1.getAgentName(), Position.of(25, 20));
         Position pos = a1.getPosition();
-        assert this.state.getGrid().blocks().create(Position.of(pos.x+1, pos.y), "b1") != null;
+        assert this.state.grid().blocks().create(Position.of(pos.x+1, pos.y), "b1") != null;
         assert this.state.handleAttachAction(a1, "e").equals(ActionResults.SUCCESS);
-        assert this.state.getGrid().blocks().create(Position.of(pos.x, pos.y+1), "b2") != null;
+        assert this.state.grid().blocks().create(Position.of(pos.x, pos.y+1), "b2") != null;
         assert this.state.handleAttachAction(a1, "s").equals(ActionResults.SUCCESS);
 
         JSONObject snapshot = this.state.takeSnapshot();
@@ -323,12 +323,12 @@ public class NormsTest {
         JSONAssert.assertEquals(normJSON, norms.getJSONObject(0), false);
         JSONAssert.assertNotEquals(punishmentJSON, perceptA1, false);
 
-        Entity a1 = this.state.getGrid().entities().getByName("A1");
+        Entity a1 = this.state.grid().entities().getByName("A1");
         assert state.teleport(a1.getAgentName(), Position.of(20, 20));
         Position pos = a1.getPosition();
-        assert this.state.getGrid().blocks().create(Position.of(pos.x+1, pos.y), "b1") != null;
+        assert this.state.grid().blocks().create(Position.of(pos.x+1, pos.y), "b1") != null;
         assert this.state.handleAttachAction(a1, "e").equals(ActionResults.SUCCESS);
-        assert this.state.getGrid().blocks().create(Position.of(pos.x, pos.y+1), "b2") != null;
+        assert this.state.grid().blocks().create(Position.of(pos.x, pos.y+1), "b2") != null;
         assert this.state.handleAttachAction(a1, "s").equals(ActionResults.SUCCESS);
 
         this.state.prepareStep(50);

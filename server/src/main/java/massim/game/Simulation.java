@@ -72,8 +72,8 @@ public class Simulation {
 
     public JSONObject getStaticData() {
         var grid = new JSONObject();
-        grid.put("width", this.state.getGrid().getDimX());
-        grid.put("height", this.state.getGrid().getDimY());
+        grid.put("width", this.state.grid().getDimX());
+        grid.put("height", this.state.grid().getDimY());
 
         var teams = new JSONObject();
         for (var entry: this.state.getTeams().entrySet()) {
@@ -83,7 +83,7 @@ public class Simulation {
         }
 
         var blockTypes = new JSONArray();
-        for (var type: this.state.getGrid().blocks().getTypes()) {
+        for (var type: this.state.grid().blocks().getTypes()) {
             blockTypes.put(type);
         }
 
@@ -91,7 +91,7 @@ public class Simulation {
         world.put("sim", name);
         world.put("grid", grid);
         world.put("teams", teams);
-        world.put("blockTypes", this.state.getGrid().blocks().getTypes());
+        world.put("blockTypes", this.state.grid().blocks().getTypes());
         world.put("steps", steps);
         return world;
     }
@@ -102,7 +102,7 @@ public class Simulation {
      * Executes all actions in random order.
      */
     private void handleActions(Map<String, ActionMessage> actions) {
-        var entities = new ArrayList<>(state.getGrid().entities().getAll());
+        var entities = new ArrayList<>(state.grid().entities().getAll());
         RNG.shuffle(entities);
         for (Entity entity : entities) {
             var action = actions.get(entity.getAgentName());
@@ -171,7 +171,7 @@ public class Simulation {
 
                 case CONNECT -> {
                     var partnerEntityName = getStringParam(params, 0);
-                    var partnerEntity = state.getGrid().entities().getByName(partnerEntityName);
+                    var partnerEntity = state.grid().entities().getByName(partnerEntityName);
                     var x = getIntParam(params, 1);
                     var y = getIntParam(params, 2);
                     if (partnerEntity == null || x == null || y == null) {

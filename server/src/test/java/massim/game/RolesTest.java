@@ -5,7 +5,6 @@ import massim.game.environment.positionable.Entity;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneType;
 import massim.helper.ConfigBuilder;
-import massim.protocol.data.Position;
 import massim.protocol.data.Role;
 import massim.protocol.messages.scenario.ActionResults;
 import massim.util.RNG;
@@ -35,7 +34,7 @@ public class RolesTest {
         ConfigBuilder.addRole(config, new Role("testRole", 5, Set.of("adopt"), new int[]{3,2,1}));
         var state = new GameState(config, teams);
 
-        var zones = state.getGrid().getZones(ZoneType.ROLE);
+        var zones = state.grid().getZones(ZoneType.ROLE);
         assert zones.size() == number;
 
         for (Zone zone : zones) {
@@ -46,7 +45,7 @@ public class RolesTest {
 
         Zone testZone = zones.get(0);
         var zoneCenter = testZone.position();
-        Entity a1 = state.getGrid().entities().getByName("A1");
+        Entity a1 = state.grid().entities().getByName("A1");
 
         assert state.handleAdoptAction(a1, "unknownRole").equalsIgnoreCase(ActionResults.FAILED_PARAMETER);
 
@@ -61,6 +60,5 @@ public class RolesTest {
         assert a1.getPosition().equals(position.moved("e", 3));
 
         position = a1.getPosition();
-
     }
 }
