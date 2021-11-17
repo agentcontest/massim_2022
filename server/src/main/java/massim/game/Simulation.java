@@ -109,6 +109,8 @@ public class Simulation {
 
             var actionMessage = actions.get(entity.getAgentName());
             entity.setNewAction(actionMessage);
+            if (actionMessage == null)
+                continue;
 
             if (entity.isDeactivated()) {
                 entity.setLastActionResult(FAILED_STATUS);
