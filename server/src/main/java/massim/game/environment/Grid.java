@@ -82,8 +82,12 @@ public class Grid {
         this.getZoneList(type).remove(pos);
     }
 
+    public boolean isInZone(ZoneType type, Position pos) {
+        return this.getZoneList(type).isInZone(pos);
+    }
+
     public boolean isNotInZone(ZoneType type, Position pos) {
-        return !this.getZoneList(type).isInZone(pos);
+        return !isInZone(type, pos);
     }
 
     public List<Zone> getZones(ZoneType type) {

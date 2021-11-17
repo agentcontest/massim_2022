@@ -20,12 +20,14 @@ public class StepPercept extends RequestActionMessage {
     public String lastAction;
     public String lastActionResult;
     public List<String> lastActionParams = new ArrayList<>();
-    public Set<Position> attachedThings = new HashSet<>();
+    public List<Position> attachedThings = new ArrayList<>();
     public int energy;
     public boolean deactivated;
     public String role;
     public JSONArray stepEvents;
     public List<String> violate;
+    public List<Position> goalZones = new ArrayList<>();
+    public List<Position> roleZones = new ArrayList<>();
 
     public StepPercept(JSONObject content) {
         super(content);
@@ -34,8 +36,8 @@ public class StepPercept extends RequestActionMessage {
 
     public StepPercept(int step, long score, Set<Thing> things,
                        Set<TaskInfo> taskInfo, Set<NormInfo> normInfo, String action, List<String> lastActionParams, String result,
-                       Set<Position> attachedThings, JSONArray stepEvents, String role, int energy,
-                       boolean deactivated, List<String> violate) {
+                       List<Position> attachedThings, JSONArray stepEvents, String role, int energy,
+                       boolean deactivated, List<String> violate, List<Position> goalZones, List<Position> roleZones) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -50,6 +52,8 @@ public class StepPercept extends RequestActionMessage {
         this.energy = energy;
         this.deactivated = deactivated;
         this.violate = violate;
+        this.goalZones = goalZones;
+        this.roleZones = roleZones;
     }
 
     @Override
@@ -67,11 +71,13 @@ public class StepPercept extends RequestActionMessage {
                 .put("events", stepEvents != null? stepEvents : new JSONArray())
                 .put("role", this.role)
                 .put("attached", new JSONArray(attachedThings.stream().map(Position::toJSON).collect(Collectors.toList())))
-                .put("violate", new JSONArray(violate));
+                .put("violate", new JSONArray(violate))
+                .put("goalZones", new JSONArray(this.goalZones.stream().map(Position::toJSON).collect(Collectors.toList())))
+                .put("roleZones", new JSONArray(this.roleZones.stream().map(Position::toJSON).collect(Collectors.toList())));
     }
 
     private void parsePercept(JSONObject percept) {
-        score = percept.getLong("score");
+        this.score = percept.getLong("score");
         JSONArray jsonThings = percept.getJSONArray("things");
         JSONArray jsonTasks = percept.getJSONArray("tasks");
         JSONArray jsonNorms = percept.getJSONArray("norms");
@@ -87,19 +93,14 @@ public class StepPercept extends RequestActionMessage {
             JSONObject jsonNorm = jsonNorms.getJSONObject(i);
             normsInfo.add(NormInfo.fromJson(jsonNorm));
         }
-        lastAction = percept.getString("lastAction");
-        lastActionResult = percept.getString("lastActionResult");
+        this.lastAction = percept.getString("lastAction");
+        this.lastActionResult = percept.getString("lastActionResult");
 
         var params = percept.getJSONArray("lastActionParams");
         for (int i = 0; i < params.length(); i++) lastActionParams.add(params.getString(i));
-        JSONArray jsonAttached = percept.getJSONArray("attached");
-        for (int i = 0; i < jsonAttached.length(); i++) {
-            JSONArray pos = jsonAttached.getJSONArray(i);
-            attachedThings.add(Position.of(pos.getInt(0), pos.getInt(1)));
-        }
 
-        energy = percept.getInt("energy");
-        deactivated = percept.getBoolean("deactivated");
+        this.energy = percept.getInt("energy");
+        this.deactivated = percept.getBoolean("deactivated");
 
         var stepEvents = percept.optJSONArray("events");
         this.stepEvents = stepEvents != null? stepEvents : new JSONArray();
@@ -111,5 +112,21 @@ public class StepPercept extends RequestActionMessage {
             this.violate = new ArrayList<>();
             violate.forEach(e -> this.violate.add(String.valueOf(e)));
         }
+
+        this.attachedThings = positionArrayToList(percept.optJSONArray("attached"));
+        this.goalZones = positionArrayToList(percept.optJSONArray("goalZones"));
+        this.roleZones = positionArrayToList(percept.optJSONArray("roleZones"));
+    }
+
+    private static List<Position> positionArrayToList(JSONArray positions) {
+        if (positions == null)
+            return new ArrayList<>();
+
+        var result = new ArrayList<Position>();
+        for (int i = 0; i < positions.length(); i++) {
+            var pos = positions.getJSONArray(i);
+            result.add(Position.of(pos.getInt(0), pos.getInt(1)));
+        }
+        return result;
     }
 }

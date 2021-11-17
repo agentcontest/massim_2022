@@ -366,7 +366,9 @@ public class GameState {
         for (var entity : this.grid.entities().getAll()) {
             var pos = entity.getPosition();
             var visibleThings = new HashSet<Thing>();
-            var attachedThings = new HashSet<Position>();
+            var attachedThings = new ArrayList<Position>();
+            var goalZones = new ArrayList<Position>();
+            var roleZones = new ArrayList<Position>();
             for (var currentPos: pos.spanArea(entity.getVision())){
                 for (var thing : this.grid.getEverythingAt(currentPos)) {
                     visibleThings.add(thing.toPercept(pos));
@@ -374,6 +376,8 @@ public class GameState {
                         attachedThings.add(thing.getPosition().relativeTo(pos));
                     }
                 }
+                if (this.grid.isInZone(ZoneType.GOAL, pos)) goalZones.add(pos);
+                if (this.grid.isInZone(ZoneType.ROLE, pos)) roleZones.add(pos);
             }
             List<String> punishment = records.stream()
                                                 .filter(p -> p.entity().getAgentName().equals(entity.getAgentName()))
@@ -393,7 +397,10 @@ public class GameState {
                     entity.getRole().name(),
                     entity.getEnergy(),
                     entity.isDeactivated(),
-                    punishment));
+                    punishment,
+                    goalZones,
+                    roleZones
+            ));
         }
         return result;
     }
@@ -751,13 +758,6 @@ public class GameState {
         }
         return false;
     }
-
-//    boolean attach(Position p1, Position p2) {
-//        Attachable a1 = this.grid.getUniqueAttachable(p1);
-//        Attachable a2 = this.grid.getUniqueAttachable(p2);
-//        if (a1 == null || a2 == null) return false;
-//        return grid.attach(a1, a2);
-//    }
 
     public String handleSurveyDispenserAction(Entity entity) {
         var optDispenser = this.grid.dispensers().getAll().stream().min(
