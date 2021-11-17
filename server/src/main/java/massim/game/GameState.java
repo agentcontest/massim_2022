@@ -67,7 +67,7 @@ public class GameState {
 
     private final JSONArray logEvents = new JSONArray();
 
-    GameState(JSONObject config, Set<TeamConfig> matchTeams) {
+    public GameState(JSONObject config, Set<TeamConfig> matchTeams) {
         this.randomFail = ConfigUtil.getInt(config, "randomFail");
         int attachLimit = ConfigUtil.getInt(config, "attachLimit");
         var clusterSizes = ConfigUtil.getBounds(config, "clusterBounds");

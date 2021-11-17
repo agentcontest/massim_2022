@@ -17,7 +17,6 @@ public class Grid {
     public static final Set<String> DIRECTIONS = Set.of("n", "s", "e", "w");
     public static final Set<String> ROTATION_DIRECTIONS = Set.of("cw", "ccw");
 
-
     private final int dimX;
     private final int dimY;
     private final int attachLimit;
@@ -47,7 +46,6 @@ public class Grid {
         Position.setGridDimensions(dimX, dimY);
 
         GridBuilder.fromBitmap(gridConf.optString("file"), this);
-
         GridBuilder.addObstaclesFromConfig(gridConf.getJSONArray("instructions"), this);
 
         var goalConf = gridConf.getJSONObject("goals");
