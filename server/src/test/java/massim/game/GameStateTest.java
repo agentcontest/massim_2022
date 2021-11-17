@@ -166,6 +166,44 @@ public class GameStateTest {
     }
 
     @org.junit.Test
+    public void handleSurveyAction() {
+        var a1 = state.grid().entities().getByName("A1");
+        assert a1 != null;
+
+        state.grid().addZone(ZoneType.ROLE, a1.getPosition().moved("n", 10), 2);
+        assert state.grid().getZones(ZoneType.ROLE).size() == 1;
+        assert state.handleSurveyZoneAction(a1, ZoneType.ROLE).equals(ActionResults.SUCCESS);
+        var percept = this.getPercept("A1");
+        assert percept.stepEvents.length() == 1;
+        assert percept.stepEvents.getJSONObject(0).getInt("distance") == 10;
+
+        state.grid().addZone(ZoneType.GOAL, a1.getPosition().moved("n", 7), 2);
+        assert state.grid().getZones(ZoneType.GOAL).size() == 1;
+        assert state.handleSurveyZoneAction(a1, ZoneType.GOAL).equals(ActionResults.SUCCESS);
+        percept = this.getPercept("A1");
+        assert percept.stepEvents.length() == 1;
+        assert percept.stepEvents.getJSONObject(0).getInt("distance") == 7;
+
+        var pos = Position.of(10, 10);
+        assert state.teleport("A1", pos);
+        assert state.teleport("A2", pos.moved("e", a1.getVision()));
+        assert state.teleport("B1", pos.moved("e", a1.getVision() + 1));
+        var a2 = state.grid().entities().getByName("A2");
+        var b1 = state.grid().entities().getByName("B1");
+        assert state.handleSurveyTargetAction(a1, a2).equals(ActionResults.SUCCESS);
+        assert state.handleSurveyTargetAction(a1, b1).equals(ActionResults.FAILED_LOCATION);
+        percept = this.getPercept("A1");
+        assert percept.stepEvents.length() == 1;
+        assert percept.stepEvents.getJSONObject(0).getString("name").equals("A2");
+
+        state.grid().dispensers().create(pos.moved("s", 14), "b1");
+        assert state.handleSurveyDispenserAction(a1).equals(ActionResults.SUCCESS);
+        percept = this.getPercept("A1");
+        assert percept.stepEvents.length() == 1;
+        assert percept.stepEvents.getJSONObject(0).getInt("distance") == 14;
+    }
+
+    @org.junit.Test
     public void testArea() {
         var area = Position.of(10, 10).spanArea(2);
         assert(area.size() == 13);
@@ -254,13 +292,6 @@ public class GameStateTest {
         for (var b: blocks) assert b.getPosition().equals(positions.get(b));
     }
 
-    private void moveAgentsToStandardPositions() {
-        state.teleport("A1", Position.of(0, 0));
-        state.teleport("A2", Position.of(1, 0));
-        state.teleport("B1", Position.of(2, 0));
-        state.teleport("B1", Position.of(3, 0));
-    }
-
     @org.junit.Test
     public void testSnapshot() {
         this.moveAgentsToStandardPositions();
@@ -279,5 +310,16 @@ public class GameStateTest {
 
         var obstacles = snapshot.getJSONArray("obstacles");
         assert obstacles.length() == 10;
+    }
+
+    private void moveAgentsToStandardPositions() {
+        state.teleport("A1", Position.of(0, 0));
+        state.teleport("A2", Position.of(1, 0));
+        state.teleport("B1", Position.of(2, 0));
+        state.teleport("B1", Position.of(3, 0));
+    }
+
+    private StepPercept getPercept(String agent) {
+        return new StepPercept(state.getStepPerceptsAndCleanUp().get(agent).toJson().getJSONObject("content"));
     }
 }

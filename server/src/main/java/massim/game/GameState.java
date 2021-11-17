@@ -802,7 +802,7 @@ public class GameState {
      * These percepts survive until the next time percepts are sent out in prepareStep()
      */
     private void addEventPercept(Entity entity, JSONObject percept) {
-        stepEvents.computeIfAbsent(entity.getAgentName(), k -> new JSONArray())
+        this.stepEvents.computeIfAbsent(entity.getAgentName(), k -> new JSONArray())
                 .put(percept);
     }
 }
