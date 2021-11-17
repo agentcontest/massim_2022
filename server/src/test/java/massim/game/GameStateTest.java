@@ -15,11 +15,12 @@ import java.util.List;
 public class GameStateTest {
 
     private GameState state;
+    private final int agents = 2;
 
     @org.junit.Before
     public void setUp() {
         RNG.initialize(17);
-        state = ConfigBuilder.buildGameState(2);
+        state = ConfigBuilder.buildGameState(this.agents);
     }
 
     @org.junit.Test
@@ -261,13 +262,22 @@ public class GameStateTest {
     }
 
     @org.junit.Test
-    public void snapshotComplete() {
+    public void testSnapshot() {
         this.moveAgentsToStandardPositions();
         var grid = state.grid();
-        grid.obstacles().create(Position.of(17,17));
+        for (int i = 0; i < 10; i++) {
+            grid.obstacles().create(Position.of(17, i));
+        }
 
         var snapshot = state.takeSnapshot();
+
         var entities = snapshot.getJSONArray("entities");
-        assert entities.length() == 4;
+        assert entities.length() == 2 * agents;
+        var jsonEntity = entities.getJSONObject(0);
+        var entity = state.grid().entities().getByName(jsonEntity.getString("name"));
+        assert entity != null;
+
+        var obstacles = snapshot.getJSONArray("obstacles");
+        assert obstacles.length() == 10;
     }
 }
