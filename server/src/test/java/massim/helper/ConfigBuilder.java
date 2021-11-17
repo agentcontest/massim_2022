@@ -100,4 +100,11 @@ public abstract class ConfigBuilder {
                         .put("subjects", new JSONArray())
                 );
     }
+
+    public static void setRoleZones(JSONObject config, int number, int size) {
+        config.getJSONObject("grid").put("roleZones", new JSONObject()
+                .put("number", number)
+                .put("size", new JSONArray().put(size).put(size))
+        );
+    }
 }
