@@ -113,6 +113,28 @@ public class ScenarioEntity extends ConnectedEntity {
         percept.roleZones.forEach(r -> ret.add(new Percept("roleZone", new Numeral(r.x), new Numeral(r.y))));
         percept.goalZones.forEach(r -> ret.add(new Percept("goalZone", new Numeral(r.x), new Numeral(r.y))));
 
+        var events = percept.stepEvents;
+        for (int i = 0; i < events.length(); i++) {
+                var event = events.getJSONObject(i);
+                var type = event.getString("type");
+                switch(type) {
+                    case "surveyed" -> {
+                        var target = event.getString("target");
+                        if (target.equals("agent"))
+                            ret.add(new Percept(type, id(target),
+                                    id(event.getString("name")),
+                                    id(event.getString("role")),
+                                    num(event.getInt("energy"))));
+                        else
+                            ret.add(new Percept(type, id(target), num(event.getInt("distance"))));
+                    }
+                    case "hit" -> {
+                        var originPos = event.getJSONArray("origin");
+                        ret.add(new Percept(type, num(originPos.getInt(0)), num(originPos.getInt(1))));
+                    }
+                }
+        }
+
         return ret;
     }
 
@@ -147,5 +169,13 @@ public class ScenarioEntity extends ConnectedEntity {
         // create massim protocol action
         ActionMessage msg = new ActionMessage(action.getName(), actionID, parameters);
         return msg.toJson();
+    }
+
+    private static Identifier id(String value) {
+        return new Identifier(value);
+    }
+
+    private static Numeral num(Number value) {
+        return new Numeral(value);
     }
 }
