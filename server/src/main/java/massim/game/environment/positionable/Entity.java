@@ -138,10 +138,6 @@ public class Entity extends Attachable {
         }
     }
 
-    public void consumeNormPunishment(int cost) {
-        energy = Math.max(energy-cost, 0);
-    }
-
     public Role getRole() {
         return this.role;
     }
