@@ -28,15 +28,15 @@ public class ScenarioEntity extends ConnectedEntity {
         List<Percept> ret = new ArrayList<>();
         if(!(startPercept instanceof InitialPercept simStart)) return ret; // protocol incompatibility
 
-        ret.add(new Percept("name", new Identifier(simStart.agentName)));
-        ret.add(new Percept("team", new Identifier(simStart.teamName)));
-        ret.add(new Percept("teamSize", new Numeral(simStart.teamSize)));
-        ret.add(new Percept("steps", new Numeral(simStart.steps)));
+        ret.add(new Percept("name", id(simStart.agentName)));
+        ret.add(new Percept("team", id(simStart.teamName)));
+        ret.add(new Percept("teamSize", num(simStart.teamSize)));
+        ret.add(new Percept("steps", num(simStart.steps)));
 
         simStart.roles.forEach(role ->
                 ret.add(new Percept("role",
-                        new Identifier(role.name()),
-                        new Numeral(role.vision()),
+                        id(role.name()),
+                        num(role.vision()),
                         makeListOfIdentifiers(role.actions()),
                         makeListOfNumerals(role.speed())))
         );
@@ -51,7 +51,7 @@ public class ScenarioEntity extends ConnectedEntity {
     private ParameterList makeListOfNumerals(int[] numerals) {
         var result = new ParameterList();
         for (int numeral : numerals)
-            result.add(new Numeral(numeral));
+            result.add(num(numeral));
         return result;
     }
 
@@ -60,58 +60,58 @@ public class ScenarioEntity extends ConnectedEntity {
         var ret = new HashSet<Percept>();
         if(!(message instanceof StepPercept percept)) return ret; // percept incompatible with entity
 
-        ret.add(new Percept("actionID", new Numeral(percept.getId())));
-        ret.add(new Percept("timestamp", new Numeral(percept.getTime())));
-        ret.add(new Percept("deadline", new Numeral(percept.getDeadline())));
+        ret.add(new Percept("actionID", num(percept.getId())));
+        ret.add(new Percept("timestamp", num(percept.getTime())));
+        ret.add(new Percept("deadline", num(percept.getDeadline())));
 
-        ret.add(new Percept("step", new Numeral(percept.getStep())));
+        ret.add(new Percept("step", num(percept.getStep())));
 
-        ret.add(new Percept("lastAction", new Identifier(percept.lastAction)));
-        ret.add(new Percept("lastActionResult", new Identifier(percept.lastActionResult)));
+        ret.add(new Percept("lastAction", id(percept.lastAction)));
+        ret.add(new Percept("lastActionResult", id(percept.lastActionResult)));
         var params = new ParameterList();
-        percept.lastActionParams.forEach(p -> params.add(new Identifier(p)));
+        percept.lastActionParams.forEach(p -> params.add(id(p)));
         ret.add(new Percept("lastActionParams", params));
-        ret.add(new Percept("score", new Numeral(percept.score)));
+        ret.add(new Percept("score", num(percept.score)));
 
         percept.things.forEach(thing -> ret.add(new Percept("thing",
-                new Numeral(thing.x), new Numeral(thing.y), new Identifier(thing.type), new Identifier(thing.details))));
+                num(thing.x), num(thing.y), id(thing.type), id(thing.details))));
 
         percept.taskInfo.forEach(task -> {
             var reqs = new ParameterList();
             for(var req : task.requirements) {
-                reqs.add(new Function("req", new Numeral(req.x), new Numeral(req.y),
-                        new Identifier(req.type)));
+                reqs.add(new Function("req", num(req.x), num(req.y),
+                        id(req.type)));
             }
-            ret.add(new Percept("task", new Identifier(task.name), new Numeral(task.deadline), new Numeral(task.reward), reqs));
+            ret.add(new Percept("task", id(task.name), num(task.deadline), num(task.reward), reqs));
         });
 
         percept.attachedThings.forEach(pos -> ret.add(
-                new Percept("attached", new Numeral(pos.x), new Numeral(pos.y))));
+                new Percept("attached", num(pos.x), num(pos.y))));
 
-        ret.add(new Percept("energy", new Numeral(percept.energy)));
-        ret.add(new Percept("deactivated", new Identifier(percept.deactivated? "true" : "false")));
-        ret.add(new Percept("role", new Identifier(percept.role)));
+        ret.add(new Percept("energy", num(percept.energy)));
+        ret.add(new Percept("deactivated", id(percept.deactivated? "true" : "false")));
+        ret.add(new Percept("role", id(percept.role)));
 
         percept.violate.forEach(violation ->
-                ret.add(new Percept("violation", new Identifier(violation)))
+                ret.add(new Percept("violation", id(violation)))
         );
 
         percept.normsInfo.forEach(norm -> {
                     var requirements = new ParameterList();
                     norm.requirements.forEach(req -> {
-                        var subject = new ParameterList(new Identifier(req.type.toString()), new Identifier(req.name),
-                                new Numeral(req.quantity));
+                        var subject = new ParameterList(id(req.type.toString()), id(req.name),
+                                num(req.quantity));
                         if (req.details != null && !req.details.equals(""))
-                            subject.add(new Identifier(req.details));
+                            subject.add(id(req.details));
                         requirements.add(subject);
                     });
-                    ret.add(new Percept("norm", new Identifier(norm.name), new Numeral(norm.start),
-                            new Numeral(norm.until), requirements, new Numeral(norm.punishment)));
+                    ret.add(new Percept("norm", id(norm.name), num(norm.start),
+                            num(norm.until), requirements, num(norm.punishment)));
                 }
         );
 
-        percept.roleZones.forEach(r -> ret.add(new Percept("roleZone", new Numeral(r.x), new Numeral(r.y))));
-        percept.goalZones.forEach(r -> ret.add(new Percept("goalZone", new Numeral(r.x), new Numeral(r.y))));
+        percept.roleZones.forEach(r -> ret.add(new Percept("roleZone", num(r.x), num(r.y))));
+        percept.goalZones.forEach(r -> ret.add(new Percept("goalZone", num(r.x), num(r.y))));
 
         var events = percept.stepEvents;
         for (int i = 0; i < events.length(); i++) {
@@ -142,8 +142,8 @@ public class ScenarioEntity extends ConnectedEntity {
     protected Collection<Percept> simEndToIIL(SimEndMessage endPercept) {
         HashSet<Percept> ret = new HashSet<>();
         if (endPercept != null){
-            ret.add(new Percept("ranking", new Numeral(endPercept.getRanking())));
-            ret.add(new Percept("score", new Numeral(endPercept.getScore())));
+            ret.add(new Percept("ranking", num(endPercept.getRanking())));
+            ret.add(new Percept("score", num(endPercept.getScore())));
         }
         return ret;
     }
