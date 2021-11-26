@@ -455,14 +455,15 @@ public class GameState {
     String handleAttachAction(Entity entity, String direction) {
         Position target = entity.getPosition().moved(direction, 1);
         Attachable a = this.grid.getUniqueAttachable(target);
-        if (a == null) return ActionResults.FAILED_TARGET;
-        if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a)) {
-            return ActionResults.FAILED_TARGET;
-        }
-        if(!attachedToOpponent(a, entity) && grid.attach(entity, a)) {
-            return ActionResults.SUCCESS;
-        }
-        return ActionResults.FAILED;
+        if (a == null)
+            return FAILED_TARGET;
+        if (a instanceof Entity && ofDifferentTeams(entity, (Entity) a))
+            return FAILED_TARGET;
+        if(attachedToOpponent(a, entity))
+            return FAILED_BLOCKED;
+        if (!grid.attach(entity, a))
+            return FAILED;
+        return SUCCESS;
     }
 
     String handleDetachAction(Entity entity, String direction) {
@@ -505,9 +506,9 @@ public class GameState {
         if (partnerAttachables.contains(block1)) return ActionResults.FAILED_TARGET;
 
         if(grid.attach(block1, block2)){
-            return ActionResults.SUCCESS;
+            return SUCCESS;
         }
-        return ActionResults.FAILED;
+        return FAILED;
     }
 
     String handleRequestAction(Entity entity, String direction) {

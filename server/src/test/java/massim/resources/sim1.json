@@ -1,14 +1,13 @@
 {
   "NOsetup" : "conf/setup/test.txt",
 
-  "steps" : 750,
+  "steps" : 500,
   "randomSeed" : 17,
   "randomFail" : 1,
   "entities" : {"standard" : 3},
   "clusterBounds" : [1,3],
 
-  "clearSteps" : 3,
-  "clearEnergyCost" : 30,
+  "clearEnergyCost" : 1,
   "deactivatedDuration" : 10,
   "maxEnergy" : 300,
   "refreshEnergy" : 50,
