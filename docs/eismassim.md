@@ -227,12 +227,15 @@ The following percepts might be included in a `SIM-START` message:
   * n : Numeral - number of agents in the agent's team in the current round
 * `steps(n)`
   * n : Numeral - number of steps
-* `vision(n)`
-  * n : Numeral - initial vision of the agent
+* `role(name, vision, [action1, action2, ...], [speed1, speed2, ...])`
+  * name : Identifier
+  * vision : Numeral
+  * action[N] : Identifier
+  * speed[N] : Numeral
 
 #### REQUEST-ACTION percepts
 
-The following percepts might be included in a `REQUEST-ACTION` message. Most of them should be self-explanatory.
+The following percepts might be included in a `REQUEST-ACTION` message. See also [scenario.md](scenario.md) for the original JSON format and explanations these percepts are derived from.
 
 * `actionID(id)`
   * id : Numeral - current action-id to reply with
@@ -261,17 +264,41 @@ The following percepts might be included in a `REQUEST-ACTION` message. Most of 
   * req : Function - a required block for the task
     * x/y : Numeral - the relative position of the required block
     * type : the type of the block
-* `<terrainType>(x, y)`
-  * `<terrainType>` is one of the possible terrains (`obstacle`, `goal`, ...)
-  * x/y : Numeral - the relative position of the terrain
 * `attached(x, y)`
   * x/y : Numeral - relative position of a thing that is attached to some entity
 * `energy(n)`
   * n : Numeral - the agent's energy level
-* `disabled(b)`
-  * b : Identifier - true if the agent is disabled (else false)
-* `accepted(t)`
-  * t : Identifier - the task that the agent is currently committed to
+* `deactivated(b)`
+  * b : Identifier - true if the agent is deactivated (else false)
+* `role(name)`
+  * name : Identifier - the agent's current role
+* `roleZone(x, y)`
+  * x : Numeral
+  * y : Numeral
+* `goalZone(x, y)`
+  * x : Numeral
+  * y : Numeral
+* `violation(id)`
+  * id : Identifier - ID of a norm the agent has violated
+* `norm(id, start, end, [requirement(type, name, quantity, details), ...], fine)`
+  * id : Identifier - ID of the norm
+  * start : Numeral - first step the norm holds
+  * end : Numeral - last step the norm holds
+    * requirement:
+      * type : the subject of the norm
+      * name : the precise name the subject refers to, e.g., the role *constructor*
+      * quantity : the maximum quantity that can be carried/adopted
+      * details : possibly additional details
+  * fine : Numeral - the energy cost of violating the norm (per step)
+* `surveyed("agent", name, role, energy)`
+  * name : Identifier
+  * role : Identifier
+  * energy : Numeral
+* `surveyed("dispenser"/"goal"/"role", distance)`
+  * distance : Numeral
+* `hit(x, y)`
+  * x : Numeral
+  * y : Numeral
 
 #### SIM-END percepts
 
