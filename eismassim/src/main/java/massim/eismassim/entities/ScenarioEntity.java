@@ -99,10 +99,11 @@ public class ScenarioEntity extends ConnectedEntity {
         percept.normsInfo.forEach(norm -> {
                     var requirements = new ParameterList();
                     norm.requirements.forEach(req -> {
-                        var subject = new ParameterList(id(req.type.toString()), id(req.name),
-                                num(req.quantity));
-                        if (req.details != null && !req.details.equals(""))
-                            subject.add(id(req.details));
+                        var details = req.details;
+                        if (details == null)
+                            details = "";
+                        var subject = new Function("requirement", id(req.type.toString()), id(req.name),
+                                num(req.quantity), id(details));
                         requirements.add(subject);
                     });
                     ret.add(new Percept("norm", id(norm.name), num(norm.start),
