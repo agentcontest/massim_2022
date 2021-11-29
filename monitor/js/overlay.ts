@@ -31,14 +31,8 @@ function simplePlural(n: number, singular: string): string {
 }
 
 function teams(teamNames: string[], world: DynamicWorld): VNode[] {
-  return teamNames.map((name, i) =>
-    h(
-      'div.team',
-      {
-        style: styles.team(i),
-      },
-      `${name}: $${world.scores[name]}`
-    )
+  return world.scores.map(([name, score]) =>
+    h('div.team', { style: styles.team(teamNames.indexOf(name)) }, `${name}: $${score}`)
   );
 }
 

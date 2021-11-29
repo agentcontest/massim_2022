@@ -31,7 +31,7 @@ export interface DynamicWorld {
   dispensers: Dispenser[];
   tasks: Task[];
   clear: ClearEvent[];
-  scores: { [team: string]: number };
+  scores: [string, number][];
 }
 
 export type Pos = [number, number];
