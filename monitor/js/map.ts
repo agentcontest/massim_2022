@@ -395,7 +395,7 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         for (const clear of ctrl.root.vm.dynamic.clear) {
           ctx.lineWidth = 0.1;
           ctx.strokeStyle = 'red';
-          selectArea(ctx, dx + clear.pos[0], dy + clear.pos[1], clear.radius);
+          selectArea(ctx, dx + clear.pos[0], dy + clear.pos[1], clear.r);
           ctx.stroke();
         }
 

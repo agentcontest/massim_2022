@@ -80,7 +80,7 @@ export interface Task {
 }
 
 export interface ClearEvent extends Positionable {
-  radius: number;
+  r: number;
 }
 
 export interface Rect {
