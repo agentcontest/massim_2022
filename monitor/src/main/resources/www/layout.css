@@ -3,7 +3,7 @@ body {
   padding: 0;
   background: #161512;
   color: #bababa;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Helvetica, sans-serif;
   overflow: hidden;
 }
 a {
@@ -40,7 +40,8 @@ p {
   display: block;
 }
 
-span.no_action, span.unknown {
+span.no_action,
+span.unknown {
   color: red;
 }
 
@@ -48,7 +49,8 @@ span.no_action, span.unknown {
   padding: 4px;
 }
 
-#monitor > canvas, #monitor > .maps {
+#monitor > canvas,
+#monitor > .maps {
   position: absolute;
   top: 0;
   left: 0;
@@ -65,8 +67,9 @@ span.no_action, span.unknown {
   width: calc(100% - 350px);
 }
 
-.box, .map {
-  box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.2), 0 1px 5px 0 rgba(0,0,0,0.12);
+.box,
+.map {
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
   background-color: #252422;
   margin: 0.5em;
   padding: 0.5em;
@@ -81,7 +84,8 @@ ul {
   width: 250px;
   float: left;
 }
-.map.no_action, .map.unknown{
+.map.no_action,
+.map.unknown {
   background: #901717;
 }
 .map a {

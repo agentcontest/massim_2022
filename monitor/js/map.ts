@@ -274,9 +274,8 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
   ctx.save();
 
   // font
-  ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
-  ctx.font = '0.4px Arial';
+  ctx.font = '0.4px Helvetica';
 
   // fill background
   ctx.fillStyle = '#eee';
@@ -357,7 +356,11 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
             const r3 = rect(1, dx + dispenser.pos[0], dy + dispenser.pos[1], 9 * 0.025);
             drawBlock(ctx, r3, color, 'white', 'black');
             ctx.fillStyle = 'white';
-            ctx.fillText(dispenser.type, dx + dispenser.pos[0] + 0.5, dy + dispenser.pos[1] + 0.5);
+            ctx.fillText(
+              dispenser.type,
+              dx + dispenser.pos[0] + 0.5,
+              dy + dispenser.pos[1] + 0.5 + helveticaBaseline(0.4)
+            );
           }
         }
 
@@ -539,7 +542,7 @@ export function drawAgent(ctx: CanvasRenderingContext2D, dx: number, dy: number,
 
   if (agent.name) {
     ctx.fillStyle = style.color;
-    ctx.fillText(shortAgentName(agent.name), dx + agent.pos[0] + 0.5, dy + agent.pos[1] + 0.5);
+    ctx.fillText(shortAgentName(agent.name), dx + agent.pos[0] + 0.5, dy + agent.pos[1] + 0.5 + helveticaBaseline(0.4));
   }
 }
 
@@ -549,11 +552,10 @@ export function drawBlocks(ctx: CanvasRenderingContext2D, dx: number, dy: number
     const r = rect(1, dx + block.pos[0], dy + block.pos[1], 0.025);
     drawBlock(ctx, r, styles.blocks[st.blockTypes.indexOf(block.type) % styles.blocks.length], 'white', 'black');
 
-    ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     ctx.fillStyle = 'white';
-    ctx.font = '0.5px Arial';
-    ctx.fillText(block.type, dx + block.pos[0] + 0.5, dy + block.pos[1] + 0.5);
+    ctx.font = '0.5px Helvetica';
+    ctx.fillText(block.type, dx + block.pos[0] + 0.5, dy + block.pos[1] + 0.5 + helveticaBaseline(0.5));
   }
 }
 
@@ -615,4 +617,8 @@ function shortAgentName(name: string): string {
   if (name.startsWith('agent')) name = name.slice('agent'.length);
   const match = name.match(/^-?[A-Za-z][A-Za-z-_]*([0-9]+)$/);
   return match ? match[1] : name;
+}
+
+function helveticaBaseline(size: number) {
+  return size * 0.33;
 }
