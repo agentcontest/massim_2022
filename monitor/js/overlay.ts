@@ -268,8 +268,8 @@ export function overlay(ctrl: Ctrl): VNode {
                   'Reset zoom'
                 ),
           ]),
-          h('div.box', tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic)),
           selectedEntity ? box(h('div', ['Selected entity: ', ...entityDescription(ctrl, selectedEntity)])) : undefined,
+          h('div.box', tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic)),
           ctrl.vm.hover ? box(hover(ctrl, ctrl.vm.static, ctrl.vm.dynamic, ctrl.vm.hover)) : undefined,
         ]
       : []),
