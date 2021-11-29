@@ -47,6 +47,6 @@ public abstract class Positionable extends GameObject {
     public JSONObject toJSON() {
         return new JSONObject()
                 .put("id", this.getID())
-                .put("position", this.position.toJSON());
+                .put("pos", this.position.toJSON());
     }
 }
