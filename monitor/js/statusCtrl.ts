@@ -8,7 +8,7 @@ export function makeStatusCtrl(redraw: Redraw): StatusCtrl {
 
   function connect() {
     const protocol = document.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const path = document.location.pathname.substr(0, document.location.pathname.lastIndexOf('/'));
+    const path = document.location.pathname.substring(0, document.location.pathname.lastIndexOf('/'));
     const ws = new WebSocket(protocol + '//' + document.location.host + path + '/live/status');
 
     ws.onmessage = msg => {

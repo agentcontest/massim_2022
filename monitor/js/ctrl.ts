@@ -1,6 +1,6 @@
 import { Redraw, StaticWorld, DynamicWorld, ConnectionState, Pos } from './interfaces';
 import { MapCtrl, minScale, maxScale } from './map';
-import { compareAgent, compareNumbered } from './util';
+import { compareAgent, compareNumbered, samePos } from './util';
 
 export interface ViewModel {
   state: ConnectionState;
@@ -32,7 +32,7 @@ export class Ctrl {
 
   private connect(): void {
     const protocol = document.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const path = document.location.pathname.substr(0, document.location.pathname.lastIndexOf('/'));
+    const path = document.location.pathname.substring(0, document.location.pathname.lastIndexOf('/'));
     const ws = new WebSocket(protocol + '//' + document.location.host + path + '/live/monitor');
 
     ws.onmessage = msg => {
@@ -105,9 +105,7 @@ export class Ctrl {
 
   setHover(pos?: Pos) {
     const changed =
-      (!pos && this.vm.hover) ||
-      (pos && !this.vm.hover) ||
-      (pos && this.vm.hover && (pos[0] != this.vm.hover[0] || pos[1] != this.vm.hover[1]));
+      (!pos && this.vm.hover) || (pos && !this.vm.hover) || (pos && this.vm.hover && !samePos(pos, this.vm.hover));
     this.vm.hover = pos;
     if (changed) this.redraw();
   }
@@ -122,7 +120,7 @@ export class ReplayCtrl {
   private cache = new Map<number, any>();
 
   constructor(readonly root: Ctrl, readonly path: string) {
-    if (path.endsWith('/')) this.path = path.substr(0, path.length - 1);
+    if (path.endsWith('/')) this.path = path.substring(0, path.length - 1);
     this.suffix = location.pathname == '/' ? `?sri=${Math.random().toString(36).slice(-8)}` : '';
 
     this.loadStatic();

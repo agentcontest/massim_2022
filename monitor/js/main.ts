@@ -26,13 +26,13 @@ export function Monitor(element: Element) {
 
   const hashChange = function () {
     if (ctrl.replay) {
-      const step = parseInt(document.location.hash.substr(1), 10);
+      const step = parseInt(document.location.hash.substring(1), 10);
       if (step > 0) ctrl.replay.setStep(step);
       else if (!document.location.hash) ctrl.replay.start();
     }
   };
 
-  const replayPath = window.location.search.length > 1 ? window.location.search.substr(1) : undefined;
+  const replayPath = window.location.search.length > 1 ? window.location.search.substring(1) : undefined;
   ctrl = new Ctrl(redraw, replayPath);
 
   hashChange();
