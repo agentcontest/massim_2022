@@ -64,6 +64,7 @@ export interface Entity extends Positionable, EntityStatus {
   attached?: Pos[];
   deactivated: boolean;
   actionParams: string[];
+  role: string;
 }
 
 export interface Block extends Positionable {

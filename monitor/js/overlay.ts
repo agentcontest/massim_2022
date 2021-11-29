@@ -152,7 +152,7 @@ function entityDescription(ctrl: Ctrl, entity: Entity): Array<VNode | string> {
       },
       entity.name
     ),
-    `, energy = ${entity.energy}`,
+    `, role = ${entity.role}, energy = ${entity.energy}`,
   ];
   if (entity.action && entity.actionResult)
     r.push(
