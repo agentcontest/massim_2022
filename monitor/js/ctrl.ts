@@ -37,7 +37,6 @@ export class Ctrl {
 
     ws.onmessage = msg => {
       const data = JSON.parse(msg.data);
-      console.log(data);
       if (data.grid) this.setStatic(data);
       else this.setDynamic(data);
       this.redraw();
@@ -58,6 +57,7 @@ export class Ctrl {
   }
 
   setStatic(st?: StaticWorld) {
+    console.log(st);
     if (st) {
       st.blockTypes.sort(compareNumbered);
       this.vm.teamNames = Object.keys(st.teams);
@@ -86,6 +86,7 @@ export class Ctrl {
   }
 
   setDynamic(dynamic?: DynamicWorld) {
+    console.log(dynamic);
     if (dynamic) dynamic.entities.sort(compareEntity);
     this.vm.dynamic = dynamic;
   }
