@@ -69,7 +69,6 @@ function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
           simplePlural(world.tasks.length, 'task')
         ),
         ...world.tasks.map(t => {
-          const acceptedBy = world.entities.filter(a => a.acceptedTask === t.name).length;
           return h(
             'option',
             {
@@ -78,10 +77,7 @@ function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
                 selected: t.name === ctrl.vm.taskName,
               },
             },
-            [
-              `$${t.reward} for ${t.name} until step ${t.deadline}`,
-              acceptedBy ? ` (${acceptedBy} accepted)` : undefined,
-            ]
+            `$${t.reward} for ${t.name} until step ${t.deadline}`
           );
         }),
       ]
@@ -179,22 +175,6 @@ function entityDescription(ctrl: Ctrl, entity: Entity): Array<VNode | string> {
       )
     );
   if (entity.attached?.length) r.push(`, ${entity.attached.length}\xa0attached`);
-  if (entity.acceptedTask)
-    r.push(
-      ', ',
-      h(
-        'a',
-        {
-          on: {
-            click() {
-              ctrl.vm.taskName = entity.acceptedTask;
-              ctrl.redraw();
-            },
-          },
-        },
-        entity.acceptedTask
-      )
-    );
   if (entity.disabled) r.push(', disabled');
   return r;
 }
@@ -218,7 +198,6 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
     drawBlocks(ctx, 0, 0, st, task.requirements);
     ctx.restore();
   };
-  const acceptedBy = dynamic.entities.filter(a => a.acceptedTask === task.name);
   return [
     h('canvas', {
       attrs: {
@@ -230,32 +209,6 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
         update: (_, vnode) => render(vnode),
       },
     }),
-    ...(acceptedBy.length
-      ? [
-          h('p', `Accepted by ${simplePlural(acceptedBy.length, 'agent')}:`),
-          h(
-            'ul',
-            acceptedBy.map(by =>
-              h(
-                'li',
-                h(
-                  'a',
-                  {
-                    style: styles.team(ctrl.vm.teamNames.indexOf(by.team)),
-                    on: {
-                      click() {
-                        ctrl.map.vm.selected = by.id;
-                        ctrl.redraw();
-                      },
-                    },
-                  },
-                  by.name
-                )
-              )
-            )
-          ),
-        ]
-      : []),
     h('p', simplePlural(task.requirements.length, 'block')),
   ];
 }

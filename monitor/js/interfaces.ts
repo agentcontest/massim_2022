@@ -64,7 +64,6 @@ export interface Entity extends Positionable, EntityStatus {
   attached?: Pos[];
   disabled?: boolean;
   actionParams: string[];
-  acceptedTask?: string; // can be empty string before first accept
 }
 
 export interface Block extends Positionable {

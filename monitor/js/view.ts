@@ -17,7 +17,6 @@ function agentView(ctrl: Ctrl): VNode | undefined {
     ctrl.maps.map(m => {
       const entity = m.selectedEntity();
       if (!entity) return;
-      const acceptedTask = entity.acceptedTask;
       return h(
         'div',
         {
@@ -59,20 +58,6 @@ function agentView(ctrl: Ctrl): VNode | undefined {
           h('div.meta', [
             h('div', `energy = ${entity.energy}`),
             entity.action ? h('div', `${entity.action}(…) = ${entity.actionResult}`) : undefined,
-            acceptedTask
-              ? h(
-                  'a',
-                  {
-                    on: {
-                      click() {
-                        ctrl.vm.taskName = acceptedTask;
-                        ctrl.redraw();
-                      },
-                    },
-                  },
-                  entity.acceptedTask
-                )
-              : undefined,
             entity.disabled ? h('div', 'disabled') : undefined,
           ]),
         ]
