@@ -15,18 +15,18 @@ function agentView(ctrl: Ctrl): VNode | undefined {
   return h(
     'div.maps',
     ctrl.maps.map(m => {
-      const agent = m.selectedAgent();
-      if (!agent) return;
-      const acceptedTask = agent.acceptedTask;
+      const entity = m.selectedEntity();
+      if (!entity) return;
+      const acceptedTask = entity.acceptedTask;
       return h(
         'div',
         {
           class:
-            agent.action && agent.actionResult
+            entity.action && entity.actionResult
               ? {
                   map: true,
-                  [agent.action]: true,
-                  [agent.actionResult]: true,
+                  [entity.action]: true,
+                  [entity.actionResult]: true,
                 }
               : {
                   map: true,
@@ -42,23 +42,23 @@ function agentView(ctrl: Ctrl): VNode | undefined {
                       background: 'white',
                       color: 'black',
                     }
-                  : styles.team(ctrl.vm.teamNames.indexOf(agent.team)),
+                  : styles.team(ctrl.vm.teamNames.indexOf(entity.team)),
               on: {
                 click() {
-                  ctrl.map.vm.selected = agent.id;
+                  ctrl.map.vm.selected = entity.id;
                   ctrl.toggleMaps();
                 },
               },
             },
-            `${agent.name} (${agent.pos[0]}|${agent.pos[1]})`
+            `${entity.name} (${entity.pos[0]}|${entity.pos[1]})`
           ),
           mapView(m, {
             size: 250,
             viewOnly: true,
           }),
           h('div.meta', [
-            h('div', `energy = ${agent.energy}`),
-            agent.action ? h('div', `${agent.action}(…) = ${agent.actionResult}`) : undefined,
+            h('div', `energy = ${entity.energy}`),
+            entity.action ? h('div', `${entity.action}(…) = ${entity.actionResult}`) : undefined,
             acceptedTask
               ? h(
                   'a',
@@ -70,10 +70,10 @@ function agentView(ctrl: Ctrl): VNode | undefined {
                       },
                     },
                   },
-                  agent.acceptedTask
+                  entity.acceptedTask
                 )
               : undefined,
-            agent.disabled ? h('div', 'disabled') : undefined,
+            entity.disabled ? h('div', 'disabled') : undefined,
           ]),
         ]
       );

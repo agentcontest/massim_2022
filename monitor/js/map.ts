@@ -1,8 +1,8 @@
 import { h, VNode } from 'snabbdom';
 
-import { Pos, Agent, Block, StaticWorld, DynamicWorld, Positionable } from './interfaces';
+import { Pos, Entity, Block, StaticWorld, DynamicWorld, Positionable } from './interfaces';
 import { Ctrl } from './ctrl';
-import { compareAgent, samePos, taxicab } from './util';
+import { compareEntity, samePos, taxicab } from './util';
 import * as styles from './styles';
 
 interface Transform {
@@ -55,7 +55,7 @@ export class MapCtrl {
     };
   }
 
-  selectedAgent(): Agent | undefined {
+  selectedEntity(): Entity | undefined {
     if (!this.root.vm.dynamic) return;
     return this.root.vm.dynamic.entities.find(a => a.id === this.vm.selected);
   }
@@ -66,10 +66,10 @@ export class MapCtrl {
       agents.reverse(); // opposite of rendering order
 
       if (agents.every(a => a.id !== this.vm.selected)) this.vm.selected = undefined;
-      const selected = this.selectedAgent();
+      const selected = this.selectedEntity();
 
       for (const agent of agents) {
-        if (!selected || compareAgent(selected, agent) > 0) {
+        if (!selected || compareEntity(selected, agent) > 0) {
           this.vm.selected = agent.id;
           this.root.redraw();
           return;
@@ -283,12 +283,12 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
 
   // draw grid
   const transform = ctrl.vm.transform;
-  const selectedAgent = ctrl.selectedAgent();
-  if (opts?.viewOnly && selectedAgent) {
+  const selectedEntity = ctrl.selectedEntity();
+  if (opts?.viewOnly && selectedEntity) {
     // auto center to selection
-    transform.scale = Math.min(canvas.width, canvas.height) / (selectedAgent.vision * 2 + 3);
-    transform.x = canvas.width / 2 - (selectedAgent.pos[0] + 0.5) * transform.scale;
-    transform.y = canvas.height / 2 - (selectedAgent.pos[1] + 0.5) * transform.scale;
+    transform.scale = Math.min(canvas.width, canvas.height) / (selectedEntity.vision * 2 + 3);
+    transform.x = canvas.width / 2 - (selectedEntity.pos[0] + 0.5) * transform.scale;
+    transform.y = canvas.height / 2 - (selectedEntity.pos[1] + 0.5) * transform.scale;
   }
   ctx.translate(transform.x, transform.y);
   ctx.scale(transform.scale, transform.scale);
@@ -377,7 +377,7 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         for (const agent of ctrl.root.vm.dynamic.entities) {
           if (visible(xmin, xmax, ymin, ymax, agent.pos, dx, dy)) {
             const teamIndex = ctrl.root.vm.teamNames.indexOf(agent.team);
-            drawAgent(ctx, dx, dy, agent, teamIndex);
+            drawEntity(ctx, dx, dy, agent, teamIndex);
           }
 
           // agent action
@@ -392,10 +392,10 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         }
 
         // attachables of selected agent
-        if (selectedAgent?.attached) {
+        if (selectedEntity?.attached) {
           ctx.fillStyle = styles.hover;
-          for (const attached of selectedAgent.attached) {
-            if (!samePos(attached, selectedAgent.pos)) {
+          for (const attached of selectedEntity.attached) {
+            if (!samePos(attached, selectedEntity.pos)) {
               ctx.fillRect(dx + attached[0], dy + attached[1], 1, 1);
             }
           }
@@ -439,7 +439,7 @@ function visible(xmin: number, xmax: number, ymin: number, ymax: number, pos: Po
   return xmin <= pos[0] + dx && pos[0] + dx <= xmax && ymin <= pos[1] + dy && pos[1] + dy <= ymax;
 }
 
-function drawFogOfWar(ctx: CanvasRenderingContext2D, st: StaticWorld, dx: number, dy: number, agent: Agent) {
+function drawFogOfWar(ctx: CanvasRenderingContext2D, st: StaticWorld, dx: number, dy: number, agent: Entity) {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   const top = dy - st.grid.height + agent.pos[1] + agent.vision + 1;
   ctx.fillRect(dx, top, st.grid.width, st.grid.height - 2 * agent.vision - 1); // above
@@ -472,7 +472,7 @@ function drawHover(
   ctx.fillStyle = styles.hover;
   ctx.fillRect(dx + hover[0], dy + hover[1], 1, 1);
 
-  for (const attachable of (world.entities as Array<Agent | Block>).concat(world.blocks)) {
+  for (const attachable of (world.entities as Array<Entity | Block>).concat(world.blocks)) {
     if (samePos(attachable.pos, hover) && attachable.attached) {
       for (const pos of attachable.attached) {
         ctx.fillRect(dx + pos[0], dy + pos[1], 1, 1);
@@ -510,11 +510,17 @@ function rect(blockSize: number, x: number, y: number, margin: number): Rect {
   };
 }
 
-interface DrawAgent extends Positionable {
+interface DrawEntity extends Positionable {
   name?: string;
 }
 
-export function drawAgent(ctx: CanvasRenderingContext2D, dx: number, dy: number, agent: DrawAgent, teamIndex: number) {
+export function drawEntity(
+  ctx: CanvasRenderingContext2D,
+  dx: number,
+  dy: number,
+  agent: DrawEntity,
+  teamIndex: number
+) {
   ctx.lineWidth = 0.125;
   ctx.strokeStyle = 'black';
 
@@ -542,7 +548,11 @@ export function drawAgent(ctx: CanvasRenderingContext2D, dx: number, dy: number,
 
   if (agent.name) {
     ctx.fillStyle = style.color;
-    ctx.fillText(shortAgentName(agent.name), dx + agent.pos[0] + 0.5, dy + agent.pos[1] + 0.5 + helveticaBaseline(0.4));
+    ctx.fillText(
+      shortEntityName(agent.name),
+      dx + agent.pos[0] + 0.5,
+      dy + agent.pos[1] + 0.5 + helveticaBaseline(0.4)
+    );
   }
 }
 
@@ -613,7 +623,7 @@ function drawRotatedBlock(ctx: CanvasRenderingContext2D, r: Rect, color: string,
   ctx.stroke();
 }
 
-function shortAgentName(name: string): string {
+function shortEntityName(name: string): string {
   if (name.startsWith('agent')) name = name.slice('agent'.length);
   const match = name.match(/^-?[A-Za-z][A-Za-z-_]*([0-9]+)$/);
   return match ? match[1] : name;

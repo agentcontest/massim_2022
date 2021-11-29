@@ -1,6 +1,6 @@
-import { AgentStatus, Pos } from './interfaces';
+import { EntityStatus, Pos } from './interfaces';
 
-export function compareAgent(a: AgentStatus, b: AgentStatus): number {
+export function compareEntity(a: EntityStatus, b: EntityStatus): number {
   if (a.team < b.team) return -1;
   else if (a.team > b.team) return 1;
 

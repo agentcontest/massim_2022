@@ -1,4 +1,4 @@
-import { Redraw, ConnectionState, AgentStatus } from './interfaces';
+import { Redraw, ConnectionState, EntityStatus } from './interfaces';
 
 export interface StatusViewModel {
   state: ConnectionState;
@@ -14,5 +14,5 @@ export interface StatusData {
   sim: string;
   step: number;
   steps: number;
-  entities: AgentStatus[];
+  entities: EntityStatus[];
 }

@@ -1,6 +1,6 @@
-import { Agent, StaticWorld, DynamicWorld, Task, Pos } from './interfaces';
+import { Entity, StaticWorld, DynamicWorld, Task, Pos } from './interfaces';
 import { Ctrl, ReplayCtrl } from './ctrl';
-import { drawBlocks, drawAgent } from './map';
+import { drawBlocks, drawEntity } from './map';
 import { samePos, taxicab } from './util';
 import * as styles from './styles';
 
@@ -129,10 +129,10 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
     }
   }
 
-  // agents
-  for (const agent of world.entities) {
-    if (samePos(agent.pos, pos)) {
-      r.push(h('li', ['agent: ', ...agentDescription(ctrl, agent)]));
+  // entities
+  for (const entity of world.entities) {
+    if (samePos(entity.pos, pos)) {
+      r.push(h('li', ['entity: ', ...entityDescription(ctrl, entity)]));
     }
   }
 
@@ -152,34 +152,34 @@ function blockSpan(st: StaticWorld, type: string): VNode {
   );
 }
 
-function agentDescription(ctrl: Ctrl, agent: Agent): Array<VNode | string> {
+function entityDescription(ctrl: Ctrl, entity: Entity): Array<VNode | string> {
   const r = [
     'name = ',
     h(
       'span',
       {
-        style: styles.team(ctrl.vm.teamNames.indexOf(agent.team)),
+        style: styles.team(ctrl.vm.teamNames.indexOf(entity.team)),
       },
-      agent.name
+      entity.name
     ),
-    `, energy = ${agent.energy}`,
+    `, energy = ${entity.energy}`,
   ];
-  if (agent.action && agent.actionResult)
+  if (entity.action && entity.actionResult)
     r.push(
       ', ',
       h(
         'span',
         {
           class: {
-            [agent.action]: true,
-            [agent.actionResult]: true,
+            [entity.action]: true,
+            [entity.actionResult]: true,
           },
         },
-        `${agent.action}(…) = ${agent.actionResult}`
+        `${entity.action}(…) = ${entity.actionResult}`
       )
     );
-  if (agent.attached?.length) r.push(`, ${agent.attached.length}\xa0attached`);
-  if (agent.acceptedTask)
+  if (entity.attached?.length) r.push(`, ${entity.attached.length}\xa0attached`);
+  if (entity.acceptedTask)
     r.push(
       ', ',
       h(
@@ -187,15 +187,15 @@ function agentDescription(ctrl: Ctrl, agent: Agent): Array<VNode | string> {
         {
           on: {
             click() {
-              ctrl.vm.taskName = agent.acceptedTask;
+              ctrl.vm.taskName = entity.acceptedTask;
               ctrl.redraw();
             },
           },
         },
-        agent.acceptedTask
+        entity.acceptedTask
       )
     );
-  if (agent.disabled) r.push(', disabled');
+  if (entity.disabled) r.push(', disabled');
   return r;
 }
 
@@ -214,7 +214,7 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.translate((elementWidth - gridSize) / 2, (elementHeight - gridSize) / 2);
     ctx.scale(gridSize, gridSize);
-    drawAgent(ctx, 0, 0, { pos: [0, 0] }, 0);
+    drawEntity(ctx, 0, 0, { pos: [0, 0] }, 0);
     drawBlocks(ctx, 0, 0, st, task.requirements);
     ctx.restore();
   };
@@ -278,7 +278,7 @@ function box(child: VNode | undefined): VNode | undefined {
 }
 
 export function overlay(ctrl: Ctrl): VNode {
-  const selectedAgent = ctrl.map.selectedAgent();
+  const selectedEntity = ctrl.map.selectedEntity();
   return h('div#overlay', [
     ctrl.vm.static && (ctrl.replay ? replay(ctrl.replay) : h('div.box', ctrl.vm.static.sim)),
     ctrl.vm.state === 'error' || ctrl.vm.state === 'offline'
@@ -304,7 +304,7 @@ export function overlay(ctrl: Ctrl): VNode {
                   click: () => ctrl.toggleMaps(),
                 },
               },
-              ctrl.maps.length ? 'Global view' : 'Agent view'
+              ctrl.maps.length ? 'Global view' : 'Entity view'
             ),
             ctrl.maps.length
               ? undefined
@@ -322,7 +322,7 @@ export function overlay(ctrl: Ctrl): VNode {
                 ),
           ]),
           h('div.box', tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic)),
-          selectedAgent ? box(h('div', ['Selected agent: ', ...agentDescription(ctrl, selectedAgent)])) : undefined,
+          selectedEntity ? box(h('div', ['Selected entity: ', ...entityDescription(ctrl, selectedEntity)])) : undefined,
           ctrl.vm.hover ? box(hover(ctrl, ctrl.vm.static, ctrl.vm.dynamic, ctrl.vm.hover)) : undefined,
         ]
       : []),

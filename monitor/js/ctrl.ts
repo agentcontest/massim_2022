@@ -1,6 +1,6 @@
 import { Redraw, StaticWorld, DynamicWorld, ConnectionState, Pos } from './interfaces';
 import { MapCtrl, minScale, maxScale } from './map';
-import { compareAgent, compareNumbered, samePos } from './util';
+import { compareEntity, compareNumbered, samePos } from './util';
 
 export interface ViewModel {
   state: ConnectionState;
@@ -86,7 +86,7 @@ export class Ctrl {
   }
 
   setDynamic(dynamic?: DynamicWorld) {
-    if (dynamic) dynamic.entities.sort(compareAgent);
+    if (dynamic) dynamic.entities.sort(compareEntity);
     this.vm.dynamic = dynamic;
   }
 

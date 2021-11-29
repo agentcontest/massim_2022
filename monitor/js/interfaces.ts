@@ -26,7 +26,7 @@ export interface DynamicWorld {
   obstacles: Obstacle[];
   goalZones: GoalZone[];
   roleZones: RoleZone[];
-  entities: Agent[];
+  entities: Entity[];
   blocks: Block[];
   dispensers: Dispenser[];
   tasks: Task[];
@@ -50,14 +50,14 @@ export interface GoalZone extends Zone {}
 
 export interface RoleZone extends Zone {}
 
-export interface AgentStatus {
+export interface EntityStatus {
   name: string;
   team: string;
   action: string; // can be empty string before first step
   actionResult: string;
 }
 
-export interface Agent extends Positionable, AgentStatus {
+export interface Entity extends Positionable, EntityStatus {
   id: number;
   energy: number;
   vision: number;

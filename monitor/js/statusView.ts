@@ -1,11 +1,11 @@
 import { h, VNode } from 'snabbdom';
 
 import { StatusCtrl, StatusData } from './statusInterfaces';
-import { compareAgent } from './util';
+import { compareEntity } from './util';
 import * as styles from './styles';
 
 function view(data: StatusData): VNode[] {
-  data.entities.sort(compareAgent);
+  data.entities.sort(compareEntity);
 
   const teams: string[] = [];
   for (const entity of data.entities) {
