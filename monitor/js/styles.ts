@@ -25,7 +25,10 @@ export function team(index: number): Style {
 }
 
 export const goalZone = 'rgba(255, 0, 0, 0.4)';
+export const goalZoneOnLight = '#f58f8f'; // without transparency
+
 export const roleZone = 'rgba(0, 0, 255, 0.4)';
+export const roleZoneOnLight = '#8f8ff5'; // without transparency
 
 export const obstacle = '#333';
 

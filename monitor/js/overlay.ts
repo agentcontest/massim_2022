@@ -111,14 +111,14 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
   // goal zones
   for (const zone of world.goalZones) {
     if (taxicab(zone.pos, pos) <= zone.r) {
-      r.push(h('li', h('span', { style: { background: styles.goalZone, color: 'white' } }, 'goal zone')));
+      r.push(h('li', h('span', { style: { background: styles.goalZoneOnLight, color: 'white' } }, 'goal zone')));
     }
   }
 
   // role zones
   for (const zone of world.roleZones) {
     if (taxicab(zone.pos, pos) <= zone.r) {
-      r.push(h('li', h('span', { style: { background: styles.roleZone, color: 'white' } }, 'role zone')));
+      r.push(h('li', h('span', { style: { background: styles.roleZoneOnLight, color: 'white' } }, 'role zone')));
     }
   }
 
