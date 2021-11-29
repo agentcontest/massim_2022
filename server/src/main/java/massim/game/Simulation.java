@@ -92,6 +92,7 @@ public class Simulation {
         world.put("grid", grid);
         world.put("teams", teams);
         world.put("blockTypes", this.state.grid().blocks().getTypes());
+        world.put("maxEnergy", Entity.maxEnergy);
         world.put("steps", steps);
         return world;
     }

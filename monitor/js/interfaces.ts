@@ -9,6 +9,7 @@ export interface StaticWorld {
   grid: Grid;
   teams: { [key: string]: Team };
   blockTypes: BlockType[];
+  maxEnergy: number;
   steps: number;
 }
 
