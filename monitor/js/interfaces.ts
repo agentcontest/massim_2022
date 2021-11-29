@@ -40,15 +40,15 @@ export interface Positionable {
   pos: Pos;
 }
 
+export interface Zone extends Positionable {
+  r: number;
+}
+
 export interface Obstacle extends Positionable {}
 
-export interface GoalZone extends Positionable {
-  r: number;
-}
+export interface GoalZone extends Zone {}
 
-export interface RoleZone extends Positionable {
-  r: number;
-}
+export interface RoleZone extends Zone {}
 
 export interface AgentStatus {
   name: string;
@@ -84,9 +84,7 @@ export interface Task {
   requirements: Block[];
 }
 
-export interface ClearEvent extends Positionable {
-  r: number;
-}
+export interface ClearEvent extends Zone {}
 
 export interface Rect {
   x1: number;

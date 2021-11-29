@@ -2,7 +2,7 @@ import { h, VNode } from 'snabbdom';
 
 import { Pos, Agent, Block, StaticWorld, DynamicWorld, Positionable } from './interfaces';
 import { Ctrl } from './ctrl';
-import { compareAgent, samePos } from './util';
+import { compareAgent, samePos, taxicab } from './util';
 import * as styles from './styles';
 
 interface Transform {
@@ -479,7 +479,7 @@ function drawHover(
 
   ctx.lineWidth = 0.1;
   for (const agent of world.entities) {
-    if (Math.abs(agent.pos[0] - hover[0]) + Math.abs(agent.pos[1] - hover[1]) <= agent.vision) {
+    if (taxicab(agent.pos, hover) <= agent.vision) {
       ctx.strokeStyle = styles.team(teamNames.indexOf(agent.team)).background;
       selectArea(ctx, dx + agent.pos[0], dy + agent.pos[1], 5);
       ctx.stroke();

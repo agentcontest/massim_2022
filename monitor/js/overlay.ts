@@ -1,7 +1,7 @@
 import { Agent, StaticWorld, DynamicWorld, Task, Pos } from './interfaces';
 import { Ctrl, ReplayCtrl } from './ctrl';
 import { drawBlocks, drawAgent } from './map';
-import { samePos } from './util';
+import { samePos, taxicab } from './util';
 import * as styles from './styles';
 
 import { h, VNode } from 'snabbdom';
@@ -94,28 +94,24 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
   // pos
   const r = [h('li', `x = ${pos[0]}, y = ${pos[1]}`)];
 
-  /* TODO: terrain
-  if (terrain === 1)
-    r.push(
-      h('li', [
-        'terrain: ',
-        h(
-          'span',
-          {
-            style: {
-              background: styles.goalOnLight,
-              color: 'black',
-            },
-          },
-          'goal'
-        ),
-      ])
-    ); */
-
   // obstacles
   for (const obstacle of world.obstacles) {
     if (samePos(obstacle.pos, pos)) {
-      r.push(h('li', 'terrain: obstacle'));
+      r.push(h('li', h('span', { style: { background: styles.obstacle, color: 'white' } }, 'obstacle')));
+    }
+  }
+
+  // goal zones
+  for (const zone of world.goalZones) {
+    if (taxicab(zone.pos, pos) <= zone.r) {
+      r.push(h('li', h('span', { style: { background: styles.goalZone, color: 'white' } }, 'goal zone')));
+    }
+  }
+
+  // role zones
+  for (const zone of world.roleZones) {
+    if (taxicab(zone.pos, pos) <= zone.r) {
+      r.push(h('li', h('span', { style: { background: styles.roleZone, color: 'white' } }, 'role zone')));
     }
   }
 

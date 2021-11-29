@@ -31,3 +31,7 @@ export function compareNumbered(a: string, b: string): number {
 export function samePos(a: Pos, b: Pos): boolean {
   return a[0] == b[0] && a[1] == b[1];
 }
+
+export function taxicab(a: Pos, b: Pos): number {
+  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+}
