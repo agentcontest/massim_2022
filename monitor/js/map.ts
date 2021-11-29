@@ -319,9 +319,12 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
           }
         }
 
-        // TODO: goals
-        //ctx.fillStyle = styles.goal;
-        //ctx.fillRect(x, y, 1, 1);
+        // goals
+        ctx.fillStyle = styles.goal;
+        for (const goalZone of ctrl.root.vm.dynamic.goalZones) {
+          selectArea(ctx, dx + goalZone.pos[0], dy + goalZone.pos[1], goalZone.r);
+          ctx.fill();
+        }
 
         // draw axis
         ctx.globalCompositeOperation = 'difference';
@@ -373,7 +376,8 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
             const y = dy + agent.pos[1] + parseInt(agent.actionParams[1], 10);
             ctx.lineWidth = 0.05;
             ctx.strokeStyle = 'red';
-            drawArea(ctx, x, y, 1);
+            selectArea(ctx, x, y, 1);
+            ctx.stroke();
           }
         }
 
@@ -391,7 +395,8 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         for (const clear of ctrl.root.vm.dynamic.clear) {
           ctx.lineWidth = 0.1;
           ctx.strokeStyle = 'red';
-          drawArea(ctx, dx + clear.pos[0], dy + clear.pos[1], clear.radius);
+          selectArea(ctx, dx + clear.pos[0], dy + clear.pos[1], clear.radius);
+          ctx.stroke();
         }
 
         // hover
@@ -469,7 +474,8 @@ function drawHover(
   for (const agent of world.entities) {
     if (Math.abs(agent.pos[0] - hover[0]) + Math.abs(agent.pos[1] - hover[1]) <= agent.vision) {
       ctx.strokeStyle = styles.team(teamNames.indexOf(agent.team)).background;
-      drawArea(ctx, dx + agent.pos[0], dy + agent.pos[1], 5);
+      selectArea(ctx, dx + agent.pos[0], dy + agent.pos[1], 5);
+      ctx.stroke();
     }
   }
 }
@@ -563,14 +569,14 @@ function drawBlock(ctx: CanvasRenderingContext2D, r: Rect, color: string, light:
   ctx.stroke();
 }
 
-function drawArea(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
+function selectArea(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number) {
   ctx.beginPath();
   ctx.moveTo(x - radius, y + 0.5);
   ctx.lineTo(x + 0.5, y - radius);
   ctx.lineTo(x + 1 + radius, y + 0.5);
   ctx.lineTo(x + 0.5, y + radius + 1);
   ctx.lineTo(x - radius, y + 0.5);
-  ctx.stroke();
+  ctx.closePath();
 }
 
 function drawRotatedBlock(ctx: CanvasRenderingContext2D, r: Rect, color: string, light: string, dark: string) {

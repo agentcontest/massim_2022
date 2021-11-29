@@ -23,12 +23,13 @@ export interface Grid {
 
 export interface DynamicWorld {
   step: number;
+  obstacles: Obstacle[];
+  goalZones: GoalZone[];
   entities: Agent[];
   blocks: Block[];
   dispensers: Dispenser[];
   tasks: Task[];
   clear: ClearEvent[];
-  obstacles: Obstacle[];
   scores: { [team: string]: number };
 }
 
@@ -39,6 +40,10 @@ export interface Positionable {
 }
 
 export interface Obstacle extends Positionable {}
+
+export interface GoalZone extends Positionable {
+  r: number;
+}
 
 export interface AgentStatus {
   name: string;
