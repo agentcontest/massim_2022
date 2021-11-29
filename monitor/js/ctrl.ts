@@ -107,7 +107,7 @@ export class Ctrl {
     const changed =
       (!pos && this.vm.hover) ||
       (pos && !this.vm.hover) ||
-      (pos && this.vm.hover && (pos.x != this.vm.hover.x || pos.y != this.vm.hover.y));
+      (pos && this.vm.hover && (pos[0] != this.vm.hover[0] || pos[1] != this.vm.hover[1]));
     this.vm.hover = pos;
     if (changed) this.redraw();
   }

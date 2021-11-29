@@ -33,12 +33,13 @@ export interface DynamicWorld {
   scores: { [team: string]: number };
 }
 
-export interface Positionable {
-  x: number;
-  y: number;
+export type Pos = [number, number];
+
+export interface Positioned {
+  position: Pos;
 }
 
-export interface Obstacle extends Positionable {}
+export interface Obstacle extends Positioned {}
 
 export interface AgentStatus {
   name: string;
@@ -47,7 +48,7 @@ export interface AgentStatus {
   actionResult: string;
 }
 
-export interface Agent extends Positionable, AgentStatus {
+export interface Agent extends Positioned, AgentStatus {
   id: number;
   energy: number;
   vision: number;
@@ -57,17 +58,17 @@ export interface Agent extends Positionable, AgentStatus {
   acceptedTask?: string; // can be empty string before first accept
 }
 
-export interface Block extends Positionable {
+export interface Block extends Positioned {
   type: BlockType;
   attached?: Pos[];
 }
 
-export interface Dispenser extends Positionable {
+export interface Dispenser extends Positioned {
   id: number;
   type: BlockType;
 }
 
-export type TaskBoard = Positionable;
+export interface TaskBoard extends Positioned {}
 
 export interface Task {
   reward: number;
@@ -76,7 +77,7 @@ export interface Task {
   requirements: Block[];
 }
 
-export interface ClearEvent extends Positionable {
+export interface ClearEvent extends Positioned {
   radius: number;
 }
 
@@ -88,5 +89,3 @@ export interface Rect {
   width: number;
   height: number;
 }
-
-export type Pos = Positionable;

@@ -91,7 +91,7 @@ function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
 
 function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNode | undefined {
   // pos
-  const r = [h('li', `x = ${pos.x}, y = ${pos.y}`)];
+  const r = [h('li', `x = ${pos[0]}, y = ${pos[1]}`)];
 
   /* TODO: terrain
   if (terrain === 1)
@@ -114,7 +114,7 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
 
   // dispensers
   for (const dispenser of world.dispensers) {
-    if (dispenser.x == pos.x && dispenser.y == pos.y) {
+    if (dispenser.position[0] == pos[0] && dispenser.position[1] == pos[1]) {
       r.push(h('li', ['dispenser: type = ', blockSpan(st, dispenser.type)]));
     }
   }
@@ -122,7 +122,7 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
   // task boards
   if (world.taskboards) {
     for (const board of world.taskboards) {
-      if (board.x == pos.x && board.y == pos.y) {
+      if (board.position[0] == pos[0] && board.position[1] == pos[1]) {
         r.push(
           h(
             'li',
@@ -144,14 +144,14 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
 
   // blocks
   for (const block of world.blocks) {
-    if (block.x == pos.x && block.y == pos.y) {
+    if (block.position[0] == pos[0] && block.position[1] == pos[1]) {
       r.push(h('li', ['block: type = ', blockSpan(st, block.type)]));
     }
   }
 
   // agents
   for (const agent of world.entities) {
-    if (agent.x == pos.x && agent.y == pos.y) {
+    if (agent.position[0] == pos[0] && agent.position[1] == pos[1]) {
       r.push(h('li', ['agent: ', ...agentDescription(ctrl, agent)]));
     }
   }
@@ -220,8 +220,8 @@ function agentDescription(ctrl: Ctrl, agent: Agent): Array<VNode | string> {
 }
 
 function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: Task): VNode[] {
-  const xs = task.requirements.map(b => Math.abs(b.x));
-  const ys = task.requirements.map(b => Math.abs(b.y));
+  const xs = task.requirements.map(b => Math.abs(b.position[0]));
+  const ys = task.requirements.map(b => Math.abs(b.position[1]));
   const width = 2 * Math.max(...xs) + 1;
   const height = 2 * Math.max(...ys) + 1;
   const elementWidth = 218;
@@ -234,7 +234,7 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.translate((elementWidth - gridSize) / 2, (elementHeight - gridSize) / 2);
     ctx.scale(gridSize, gridSize);
-    drawAgent(ctx, 0, 0, { x: 0, y: 0 }, 0);
+    drawAgent(ctx, 0, 0, { position: [0, 0] }, 0);
     drawBlocks(ctx, 0, 0, st, task.requirements);
     ctx.restore();
   };

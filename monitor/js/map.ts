@@ -1,6 +1,6 @@
 import { h, VNode } from 'snabbdom';
 
-import { Pos, Positionable, Agent, Block, StaticWorld, DynamicWorld } from './interfaces';
+import { Pos, Agent, Block, StaticWorld, DynamicWorld, Positioned } from './interfaces';
 import { Ctrl } from './ctrl';
 import { compareAgent } from './util';
 import * as styles from './styles';
@@ -62,7 +62,7 @@ export class MapCtrl {
 
   select(pos?: Pos) {
     if (pos && this.root.vm.dynamic) {
-      const agents = this.root.vm.dynamic.entities.filter(a => a.x == pos.x && a.y == pos.y);
+      const agents = this.root.vm.dynamic.entities.filter(a => a.position[0] == pos[0] && a.position[1] == pos[1]);
       agents.reverse(); // opposite of rendering order
 
       if (agents.every(a => a.id !== this.vm.selected)) this.vm.selected = undefined;
@@ -88,17 +88,14 @@ export class MapCtrl {
     if (x < 0 || x > bounds.width || y < 0 || y > bounds.height) return;
 
     // relative to transform
-    const p = {
-      x: Math.floor((x - this.vm.transform.x) / this.vm.transform.scale),
-      y: Math.floor((y - this.vm.transform.y) / this.vm.transform.scale),
-    };
+    const p: Pos = [
+      Math.floor((x - this.vm.transform.x) / this.vm.transform.scale),
+      Math.floor((y - this.vm.transform.y) / this.vm.transform.scale),
+    ];
 
     // relative to grid
     if (this.root.vm.static) {
-      return {
-        x: mod(p.x, this.root.vm.static.grid.width),
-        y: mod(p.y, this.root.vm.static.grid.height),
-      };
+      return [mod(p[0], this.root.vm.static.grid.width), mod(p[1], this.root.vm.static.grid.height)];
     } else return p;
   }
 
@@ -291,8 +288,8 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
   if (opts?.viewOnly && selectedAgent) {
     // auto center to selection
     transform.scale = Math.min(canvas.width, canvas.height) / (selectedAgent.vision * 2 + 3);
-    transform.x = canvas.width / 2 - (selectedAgent.x + 0.5) * transform.scale;
-    transform.y = canvas.height / 2 - (selectedAgent.y + 0.5) * transform.scale;
+    transform.x = canvas.width / 2 - (selectedAgent.position[0] + 0.5) * transform.scale;
+    transform.y = canvas.height / 2 - (selectedAgent.position[1] + 0.5) * transform.scale;
   }
   ctx.translate(transform.x, transform.y);
   ctx.scale(transform.scale, transform.scale);
@@ -317,8 +314,8 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         // obstacles
         ctx.fillStyle = styles.obstacle;
         for (const obstacle of ctrl.root.vm.dynamic.obstacles) {
-          if (visible(xmin, xmax, ymin, ymax, obstacle, dx, dy)) {
-            ctx.fillRect(dx + obstacle.x - 0.04, dy + obstacle.y - 0.04, 1.08, 1.08);
+          if (visible(xmin, xmax, ymin, ymax, obstacle.position, dx, dy)) {
+            ctx.fillRect(dx + obstacle.position[0] - 0.04, dy + obstacle.position[1] - 0.04, 1.08, 1.08);
           }
         }
 
@@ -340,26 +337,32 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
 
         // dispensers
         for (const dispenser of ctrl.root.vm.dynamic.dispensers) {
-          if (visible(xmin, xmax, ymin, ymax, dispenser, dx, dy)) {
+          if (visible(xmin, xmax, ymin, ymax, dispenser.position, dx, dy)) {
             ctx.lineWidth = 2 * 0.025;
             const color = styles.blocks[ctrl.root.vm.static.blockTypes.indexOf(dispenser.type) % styles.blocks.length];
-            const r1 = rect(1, dx + dispenser.x, dy + dispenser.y, 0.025);
+            const r1 = rect(1, dx + dispenser.position[0], dy + dispenser.position[1], 0.025);
             drawBlock(ctx, r1, color, 'white', 'black');
-            const r2 = rect(1, dx + dispenser.x, dy + dispenser.y, 5 * 0.025);
+            const r2 = rect(1, dx + dispenser.position[0], dy + dispenser.position[1], 5 * 0.025);
             drawBlock(ctx, r2, color, 'white', 'black');
-            const r3 = rect(1, dx + dispenser.x, dy + dispenser.y, 9 * 0.025);
+            const r3 = rect(1, dx + dispenser.position[0], dy + dispenser.position[1], 9 * 0.025);
             drawBlock(ctx, r3, color, 'white', 'black');
             ctx.fillStyle = 'white';
-            ctx.fillText(dispenser.type, dx + dispenser.x + 0.5, dy + dispenser.y + 0.5);
+            ctx.fillText(dispenser.type, dx + dispenser.position[0] + 0.5, dy + dispenser.position[1] + 0.5);
           }
         }
 
         // task boards
         if (ctrl.root.vm.dynamic.taskboards) {
           for (const board of ctrl.root.vm.dynamic.taskboards) {
-            if (visible(xmin, xmax, ymin, ymax, board, dx, dy)) {
+            if (visible(xmin, xmax, ymin, ymax, board.position, dx, dy)) {
               ctx.lineWidth = 0.05;
-              drawBlock(ctx, rect(1, dx + board.x, dy + board.y, 0.05), styles.board, 'white', 'black');
+              drawBlock(
+                ctx,
+                rect(1, dx + board.position[0], dy + board.position[1], 0.05),
+                styles.board,
+                'white',
+                'black'
+              );
             }
           }
         }
@@ -370,20 +373,20 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
           dx,
           dy,
           ctrl.root.vm.static,
-          ctrl.root.vm.dynamic.blocks.filter(b => visible(xmin, xmax, ymin, ymax, b, dx, dy))
+          ctrl.root.vm.dynamic.blocks.filter(b => visible(xmin, xmax, ymin, ymax, b.position, dx, dy))
         );
 
         // agents
         for (const agent of ctrl.root.vm.dynamic.entities) {
-          if (visible(xmin, xmax, ymin, ymax, agent, dx, dy)) {
+          if (visible(xmin, xmax, ymin, ymax, agent.position, dx, dy)) {
             const teamIndex = ctrl.root.vm.teamNames.indexOf(agent.team);
             drawAgent(ctx, dx, dy, agent, teamIndex);
           }
 
           // agent action
           if (agent.action == 'clear' && agent.actionResult.indexOf('failed_') != 0) {
-            const x = dx + agent.x + parseInt(agent.actionParams[0], 10);
-            const y = dy + agent.y + parseInt(agent.actionParams[1], 10);
+            const x = dx + agent.position[0] + parseInt(agent.actionParams[0], 10);
+            const y = dy + agent.position[1] + parseInt(agent.actionParams[1], 10);
             ctx.lineWidth = 0.05;
             ctx.strokeStyle = 'red';
             drawArea(ctx, x, y, 1);
@@ -394,8 +397,8 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         if (selectedAgent?.attached) {
           ctx.fillStyle = styles.hover;
           for (const attached of selectedAgent.attached) {
-            if (attached.x != selectedAgent.x || attached.y != selectedAgent.y) {
-              ctx.fillRect(dx + attached.x, dy + attached.y, 1, 1);
+            if (attached[0] != selectedAgent.position[0] || attached[1] != selectedAgent.position[1]) {
+              ctx.fillRect(dx + attached[0], dy + attached[1], 1, 1);
             }
           }
         }
@@ -404,7 +407,7 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         for (const clear of ctrl.root.vm.dynamic.clear) {
           ctx.lineWidth = 0.1;
           ctx.strokeStyle = 'red';
-          drawArea(ctx, dx + clear.x, dy + clear.y, clear.radius);
+          drawArea(ctx, dx + clear.position[0], dy + clear.position[1], clear.radius);
         }
 
         // hover
@@ -433,32 +436,24 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
   }
 }
 
-function visible(
-  xmin: number,
-  xmax: number,
-  ymin: number,
-  ymax: number,
-  pos: Positionable,
-  dx: number,
-  dy: number
-): boolean {
-  return xmin <= pos.x + dx && pos.x + dx <= xmax && ymin <= pos.y + dy && pos.y + dy <= ymax;
+function visible(xmin: number, xmax: number, ymin: number, ymax: number, pos: Pos, dx: number, dy: number): boolean {
+  return xmin <= pos[0] + dx && pos[0] + dx <= xmax && ymin <= pos[1] + dy && pos[1] + dy <= ymax;
 }
 
 function drawFogOfWar(ctx: CanvasRenderingContext2D, st: StaticWorld, dx: number, dy: number, agent: Agent) {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-  const top = dy - st.grid.height + agent.y + agent.vision + 1;
+  const top = dy - st.grid.height + agent.position[1] + agent.vision + 1;
   ctx.fillRect(dx, top, st.grid.width, st.grid.height - 2 * agent.vision - 1); // above
   ctx.fillRect(
-    dx - st.grid.width + agent.x + agent.vision + 1,
-    dy + agent.y - agent.vision,
+    dx - st.grid.width + agent.position[0] + agent.vision + 1,
+    dy + agent.position[1] - agent.vision,
     st.grid.width - 2 * agent.vision - 1,
     2 * agent.vision + 1
   );
   for (let x = -agent.vision; x <= agent.vision; x++) {
     for (let y = -agent.vision; y <= agent.vision; y++) {
       if (Math.abs(x) + Math.abs(y) > agent.vision) {
-        ctx.fillRect(dx + agent.x + x, dy + agent.y + y, 1, 1);
+        ctx.fillRect(dx + agent.position[0] + x, dy + agent.position[1] + y, 1, 1);
       }
     }
   }
@@ -473,15 +468,15 @@ function drawHover(
   dy: number,
   hover: Pos
 ) {
-  if (hover.x < 0 || hover.x >= st.grid.width || hover.y < 0 || hover.y >= st.grid.height) return;
+  if (hover[0] < 0 || hover[0] >= st.grid.width || hover[1] < 0 || hover[1] >= st.grid.height) return;
   ctx.beginPath();
   ctx.fillStyle = styles.hover;
-  ctx.fillRect(dx + hover.x, dy + hover.y, 1, 1);
+  ctx.fillRect(dx + hover[0], dy + hover[1], 1, 1);
 
   for (const attachable of (world.entities as Array<Agent | Block>).concat(world.blocks)) {
-    if (attachable.x == hover.x && attachable.y == hover.y && attachable.attached) {
+    if (attachable.position[0] == hover[0] && attachable.position[1] == hover[1] && attachable.attached) {
       for (let pos of attachable.attached) {
-        ctx.fillRect(dx + pos.x, dy + pos.y, 1, 1);
+        ctx.fillRect(dx + pos[0], dy + pos[1], 1, 1);
       }
     }
   }
@@ -489,15 +484,15 @@ function drawHover(
   ctx.lineWidth = 0.1;
   if (world.taskboards)
     for (const taskboard of world.taskboards) {
-      if (Math.abs(taskboard.x - hover.x) + Math.abs(taskboard.y - hover.y) <= 2) {
+      if (Math.abs(taskboard.position[0] - hover[0]) + Math.abs(taskboard.position[1] - hover[1]) <= 2) {
         ctx.strokeStyle = styles.board;
-        drawArea(ctx, dx + taskboard.x, dy + taskboard.y, 2);
+        drawArea(ctx, dx + taskboard.position[0], dy + taskboard.position[1], 2);
       }
     }
   for (const agent of world.entities) {
-    if (Math.abs(agent.x - hover.x) + Math.abs(agent.y - hover.y) <= agent.vision) {
+    if (Math.abs(agent.position[0] - hover[0]) + Math.abs(agent.position[1] - hover[1]) <= agent.vision) {
       ctx.strokeStyle = styles.team(teamNames.indexOf(agent.team)).background;
-      drawArea(ctx, dx + agent.x, dy + agent.y, 5);
+      drawArea(ctx, dx + agent.position[0], dy + agent.position[1], 5);
     }
   }
 }
@@ -522,7 +517,7 @@ function rect(blockSize: number, x: number, y: number, margin: number): Rect {
   };
 }
 
-interface DrawAgent extends Positionable {
+interface DrawAgent extends Positioned {
   name?: string;
 }
 
@@ -531,44 +526,44 @@ export function drawAgent(ctx: CanvasRenderingContext2D, dx: number, dy: number,
   ctx.strokeStyle = 'black';
 
   ctx.beginPath();
-  ctx.moveTo(dx + agent.x + 0.5, dy + agent.y);
-  ctx.lineTo(dx + agent.x + 0.5, dy + agent.y + 1);
+  ctx.moveTo(dx + agent.position[0] + 0.5, dy + agent.position[1]);
+  ctx.lineTo(dx + agent.position[0] + 0.5, dy + agent.position[1] + 1);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(dx + agent.x, dy + agent.y + 0.5);
-  ctx.lineTo(dx + agent.x + 1, dy + agent.y + 0.5);
+  ctx.moveTo(dx + agent.position[0], dy + agent.position[1] + 0.5);
+  ctx.lineTo(dx + agent.position[0] + 1, dy + agent.position[1] + 0.5);
   ctx.stroke();
 
   const style = styles.team(teamIndex);
   if (teamIndex % 2 === 0) {
     ctx.lineWidth = 0.05;
     const margin = (1 - 15 / 16 / Math.sqrt(2)) / 2;
-    const r = rect(1, dx + agent.x, dy + agent.y, margin);
+    const r = rect(1, dx + agent.position[0], dy + agent.position[1], margin);
     drawBlock(ctx, r, style.background, 'white', 'black');
   } else {
     ctx.lineWidth = 0.04;
-    const r = rect(1, dx + agent.x, dy + agent.y, 0.0625);
+    const r = rect(1, dx + agent.position[0], dy + agent.position[1], 0.0625);
     drawRotatedBlock(ctx, r, style.background, 'white', 'black');
   }
 
   if (agent.name) {
     ctx.fillStyle = style.color;
-    ctx.fillText(shortAgentName(agent.name), dx + agent.x + 0.5, dy + agent.y + 0.5);
+    ctx.fillText(shortAgentName(agent.name), dx + agent.position[0] + 0.5, dy + agent.position[1] + 0.5);
   }
 }
 
 export function drawBlocks(ctx: CanvasRenderingContext2D, dx: number, dy: number, st: StaticWorld, blocks: Block[]) {
   for (const block of blocks) {
     ctx.lineWidth = 0.05;
-    const r = rect(1, dx + block.x, dy + block.y, 0.025);
+    const r = rect(1, dx + block.position[0], dy + block.position[1], 0.025);
     drawBlock(ctx, r, styles.blocks[st.blockTypes.indexOf(block.type) % styles.blocks.length], 'white', 'black');
 
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     ctx.fillStyle = 'white';
     ctx.font = '0.5px Arial';
-    ctx.fillText(block.type, dx + block.x + 0.5, dy + block.y + 0.5);
+    ctx.fillText(block.type, dx + block.position[0] + 0.5, dy + block.position[1] + 0.5);
   }
 }
 

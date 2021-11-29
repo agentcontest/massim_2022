@@ -50,7 +50,7 @@ function agentView(ctrl: Ctrl): VNode | undefined {
                 },
               },
             },
-            `${agent.name} (${agent.x}|${agent.y})`
+            `${agent.name} (${agent.position[0]}|${agent.position[1]})`
           ),
           mapView(m, {
             size: 250,
