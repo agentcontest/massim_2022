@@ -60,24 +60,17 @@ export class MapCtrl {
     return this.root.vm.dynamic.entities.find(a => a.id === this.vm.selected);
   }
 
+  nextSelection(pos?: Pos): Entity | undefined {
+    if (!pos || !this.root.vm.dynamic) return;
+    const selected = this.selectedEntity();
+
+    const agents = this.root.vm.dynamic.entities.filter(a => samePos(a.pos, pos));
+    agents.reverse(); // opposite of rendering order
+    return agents.find(a => !selected || compareEntity(selected, a));
+  }
+
   select(pos?: Pos) {
-    if (pos && this.root.vm.dynamic) {
-      const agents = this.root.vm.dynamic.entities.filter(a => samePos(a.pos, pos));
-      agents.reverse(); // opposite of rendering order
-
-      if (agents.every(a => a.id !== this.vm.selected)) this.vm.selected = undefined;
-      const selected = this.selectedEntity();
-
-      for (const agent of agents) {
-        if (!selected || compareEntity(selected, agent) > 0) {
-          this.vm.selected = agent.id;
-          this.root.redraw();
-          return;
-        }
-      }
-    }
-
-    this.vm.selected = undefined;
+    this.vm.selected = this.nextSelection(pos)?.id;
     this.root.redraw();
   }
 
@@ -411,7 +404,16 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
 
         // hover
         if (ctrl.root.vm.hover) {
-          drawHover(ctx, ctrl.root.vm.static, ctrl.root.vm.dynamic, ctrl.root.vm.teamNames, dx, dy, ctrl.root.vm.hover);
+          drawHover(
+            ctx,
+            ctrl,
+            ctrl.root.vm.static,
+            ctrl.root.vm.dynamic,
+            ctrl.root.vm.teamNames,
+            dx,
+            dy,
+            ctrl.root.vm.hover
+          );
         }
       }
     }
@@ -422,6 +424,7 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         for (const agent of ctrl.root.vm.dynamic.entities) {
           if (agent.id === ctrl.vm.selected) {
             drawFogOfWar(ctx, ctrl.root.vm.static, dx, dy, agent);
+            drawEnergyBar(ctx, dx, dy, agent.pos, 2, agent.energy / ctrl.root.vm.static.maxEnergy);
           }
         }
       }
@@ -460,6 +463,7 @@ function drawFogOfWar(ctx: CanvasRenderingContext2D, st: StaticWorld, dx: number
 
 function drawHover(
   ctx: CanvasRenderingContext2D,
+  ctrl: MapCtrl,
   st: StaticWorld,
   world: DynamicWorld,
   teamNames: string[],
@@ -480,12 +484,18 @@ function drawHover(
     }
   }
 
+  const nextSelection = ctrl.nextSelection(hover);
+
   ctx.lineWidth = 0.1;
   for (const agent of world.entities) {
     if (taxicab(agent.pos, hover) <= agent.vision) {
       ctx.strokeStyle = styles.team(teamNames.indexOf(agent.team)).background;
       selectArea(ctx, dx + agent.pos[0], dy + agent.pos[1], 5);
       ctx.stroke();
+
+      if (nextSelection && agent.id == nextSelection.id) {
+        drawEnergyBar(ctx, dx, dy, agent.pos, 1.2, agent.energy / st.maxEnergy);
+      }
     }
   }
 }
@@ -508,6 +518,13 @@ function rect(blockSize: number, x: number, y: number, margin: number): Rect {
     width: blockSize - 2 * margin,
     height: blockSize - 2 * margin,
   };
+}
+
+function drawEnergyBar(ctx: CanvasRenderingContext2D, dx: number, dy: number, pos: Pos, size: number, ratio: number) {
+  ctx.fillStyle = 'red';
+  ctx.fillRect(dx + pos[0] + 0.5 - size / 2, dy + pos[1] - size / 4, size, size / 10);
+  ctx.fillStyle = 'green';
+  ctx.fillRect(dx + pos[0] + 0.5 - size / 2, dy + pos[1] - size / 4, size * ratio, size / 10);
 }
 
 interface DrawEntity extends Positionable {
