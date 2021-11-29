@@ -33,6 +33,8 @@ export interface DynamicWorld {
   tasks: Task[];
   clear: ClearEvent[];
   scores: [string, number][];
+  norms: Norm[];
+  // TODO: violations,
 }
 
 export type Pos = [number, number];
@@ -83,6 +85,21 @@ export interface Task {
   name: string;
   deadline: number;
   requirements: Block[];
+}
+
+export interface Norm {
+  level: 'individual' | 'team';
+  name: string;
+  punishment: number;
+  start: number;
+  until: number;
+  requirements: NormRequirement[];
+}
+
+export interface NormRequirement {
+  type: string;
+  name: string;
+  quantity: number;
 }
 
 export interface ClearEvent extends Zone {}

@@ -59,13 +59,13 @@ public abstract class Norm {
         norm.put("start", this.start);
         norm.put("until", this.until);
         norm.put("level", this.level.name().toLowerCase());
-        norm.put("requirement", new JSONArray());
+        norm.put("requirements", new JSONArray());
         for (Subject req : getRequirements()) {
             JSONObject requirement = new JSONObject();
             requirement.put("name", req.name);
             requirement.put("quantity", req.quantity);
-            norm.getJSONArray("requirement").put(requirement);
-        } 
+            norm.getJSONArray("requirements").put(requirement);
+        }
         norm.put("punishment", this.punishment);
 
         return norm;

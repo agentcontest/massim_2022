@@ -25,7 +25,7 @@ public class StepPercept extends RequestActionMessage {
     public boolean deactivated;
     public String role;
     public JSONArray stepEvents;
-    public List<String> violate;
+    public List<String> violations;
     public List<Position> goalZones = new ArrayList<>();
     public List<Position> roleZones = new ArrayList<>();
 
@@ -37,7 +37,7 @@ public class StepPercept extends RequestActionMessage {
     public StepPercept(int step, long score, Set<Thing> things,
                        Set<TaskInfo> taskInfo, Set<NormInfo> normInfo, String action, List<String> lastActionParams, String result,
                        List<Position> attachedThings, JSONArray stepEvents, String role, int energy,
-                       boolean deactivated, List<String> violate, List<Position> goalZones, List<Position> roleZones) {
+                       boolean deactivated, List<String> violations, List<Position> goalZones, List<Position> roleZones) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -51,7 +51,7 @@ public class StepPercept extends RequestActionMessage {
         this.role = role;
         this.energy = energy;
         this.deactivated = deactivated;
-        this.violate = violate;
+        this.violations = violations;
         this.goalZones = goalZones;
         this.roleZones = roleZones;
     }
@@ -71,7 +71,7 @@ public class StepPercept extends RequestActionMessage {
                 .put("events", stepEvents != null? stepEvents : new JSONArray())
                 .put("role", this.role)
                 .put("attached", new JSONArray(attachedThings.stream().map(Position::toJSON).collect(Collectors.toList())))
-                .put("violate", new JSONArray(violate))
+                .put("violations", new JSONArray(violations))
                 .put("goalZones", new JSONArray(this.goalZones.stream().map(Position::toJSON).collect(Collectors.toList())))
                 .put("roleZones", new JSONArray(this.roleZones.stream().map(Position::toJSON).collect(Collectors.toList())));
     }
@@ -107,10 +107,10 @@ public class StepPercept extends RequestActionMessage {
 
         this.role = percept.getString("role");
 
-        var violate = percept.optJSONArray("violate");
-        if (violate != null) {
-            this.violate = new ArrayList<>();
-            violate.forEach(e -> this.violate.add(String.valueOf(e)));
+        var violations = percept.optJSONArray("violations");
+        if (violations != null) {
+            this.violations = new ArrayList<>();
+            violations.forEach(e -> this.violations.add(String.valueOf(e)));
         }
 
         this.attachedThings = positionArrayToList(percept.optJSONArray("attached"));

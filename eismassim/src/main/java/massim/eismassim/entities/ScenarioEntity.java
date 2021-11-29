@@ -92,7 +92,7 @@ public class ScenarioEntity extends ConnectedEntity {
         ret.add(new Percept("deactivated", id(percept.deactivated? "true" : "false")));
         ret.add(new Percept("role", id(percept.role)));
 
-        percept.violate.forEach(violation ->
+        percept.violations.forEach(violation ->
                 ret.add(new Percept("violation", id(violation)))
         );
 

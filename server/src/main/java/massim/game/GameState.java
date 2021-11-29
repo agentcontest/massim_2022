@@ -682,7 +682,7 @@ public class GameState {
         JSONArray normArr = new JSONArray();
         snapshot.put("norms", normArr);
         JSONArray punishmentArr = new JSONArray();
-        snapshot.put("violate", punishmentArr);
+        snapshot.put("violations", punishmentArr);
 
         for (Entity entity : this.grid.entities().getAll()) {
             entities.put(entity.toJSON()

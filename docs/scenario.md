@@ -463,7 +463,7 @@ Example (complete request-action message):
               "start": 1,
               "until" : 100,
               "level" : "individual",
-              "requirement": [
+              "requirements": [
                   {
                     "type": "carry",
                     "name": "any",
@@ -473,7 +473,7 @@ Example (complete request-action message):
               "punishment" : 15, 
             },
          ],
-         "violate": ["n1"],
+         "violations": ["n1"],
          "attached": [[2,-1]]
       }
    }
@@ -531,7 +531,7 @@ Example (complete request-action message):
     * __type__: the subject of the norm
     * __name__: the precise name the subject refers to, e.g., the role *constructor*
     * __quantity__: the maximum quantity that can be carried/adopted
-* __violate__: the list of norms an agent is violating at the current step
+* __violations__: the list of norms an agent is violating at the current step
 * __attached__: an array of positions - each position represents a thing that is (directly or indirectly) attached to an entity
 
 ## Configuration
