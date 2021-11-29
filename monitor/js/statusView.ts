@@ -1,5 +1,4 @@
-import { h } from 'snabbdom';
-import { VNode } from 'snabbdom/vnode';
+import { h, VNode } from 'snabbdom';
 
 import { StatusCtrl, StatusData } from './statusInterfaces';
 import { compareAgent } from './util';

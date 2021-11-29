@@ -1,5 +1,4 @@
-import { h } from 'snabbdom/h';
-import { VNode } from 'snabbdom/vnode';
+import { h, VNode } from 'snabbdom';
 
 import { Ctrl } from './ctrl';
 import { overlay } from './overlay';

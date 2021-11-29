@@ -1,9 +1,4 @@
-import { init } from 'snabbdom';
-import { VNode } from 'snabbdom/vnode';
-import { classModule } from 'snabbdom/modules/class';
-import { attributesModule } from 'snabbdom/modules/attributes';
-import { eventListenersModule } from 'snabbdom/modules/eventlisteners';
-import { styleModule } from 'snabbdom/modules/style';
+import { init, VNode, classModule, attributesModule, eventListenersModule, styleModule } from 'snabbdom';
 
 import { Ctrl } from './ctrl';
 import { view } from './view';
