@@ -299,7 +299,10 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
   }
 
   if (ctrl.root.vm.static && ctrl.root.vm.dynamic) {
-    const grid = ctrl.root.vm.static.grid;
+    const grid = ctrl.root.vm.static.grid,
+      maxEnergy = ctrl.root.vm.static.maxEnergy;
+
+    const criminals = new Set(ctrl.root.vm.dynamic.violations.map(v => v.who));
 
     for (let dy = Math.floor(ymin / grid.height) * grid.height; dy <= ymax + grid.height; dy += grid.height) {
       for (let dx = Math.floor(xmin / grid.width) * grid.width; dx <= xmax + grid.width; dx += grid.width) {
@@ -371,6 +374,14 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
           if (visible(xmin, xmax, ymin, ymax, agent.pos, dx, dy)) {
             const teamIndex = ctrl.root.vm.teamNames.indexOf(agent.team);
             drawEntity(ctx, dx, dy, agent, teamIndex);
+
+            if (
+              criminals.has(agent.name) &&
+              agent.id != ctrl.vm.selected &&
+              (!ctrl.root.vm.hover || !samePos(agent.pos, ctrl.root.vm.hover))
+            ) {
+              drawEnergyBar(ctx, dx, dy, agent.pos, 0.9, agent.energy / maxEnergy);
+            }
           }
 
           // agent action
@@ -522,9 +533,9 @@ function rect(blockSize: number, x: number, y: number, margin: number): Rect {
 
 function drawEnergyBar(ctx: CanvasRenderingContext2D, dx: number, dy: number, pos: Pos, size: number, ratio: number) {
   ctx.fillStyle = 'red';
-  ctx.fillRect(dx + pos[0] + 0.5 - size / 2, dy + pos[1] - size / 4, size, size / 10);
+  ctx.fillRect(dx + pos[0] + 0.5 - size / 2, dy + pos[1] - size * 0.2, size, size * 0.1);
   ctx.fillStyle = 'green';
-  ctx.fillRect(dx + pos[0] + 0.5 - size / 2, dy + pos[1] - size / 4, size * ratio, size / 10);
+  ctx.fillRect(dx + pos[0] + 0.5 - size / 2, dy + pos[1] - size * 0.2, size * ratio, size * 0.1);
 }
 
 interface DrawEntity extends Positionable {

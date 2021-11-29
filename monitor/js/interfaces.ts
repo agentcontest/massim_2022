@@ -34,7 +34,7 @@ export interface DynamicWorld {
   clear: ClearEvent[];
   scores: [string, number][];
   norms: Norm[];
-  // TODO: violations,
+  violations: Violation[];
 }
 
 export type Pos = [number, number];
@@ -100,6 +100,11 @@ export interface NormRequirement {
   type: string;
   name: string;
   quantity: number;
+}
+
+export interface Violation {
+  norm: string;
+  who: string;
 }
 
 export interface ClearEvent extends Zone {}
