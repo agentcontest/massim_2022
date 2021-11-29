@@ -114,28 +114,28 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
 
   // obstacles
   for (const obstacle of world.obstacles) {
-    if (samePos(obstacle.position, pos)) {
+    if (samePos(obstacle.pos, pos)) {
       r.push(h('li', 'terrain: obstacle'));
     }
   }
 
   // dispensers
   for (const dispenser of world.dispensers) {
-    if (samePos(dispenser.position, pos)) {
+    if (samePos(dispenser.pos, pos)) {
       r.push(h('li', ['dispenser: type = ', blockSpan(st, dispenser.type)]));
     }
   }
 
   // blocks
   for (const block of world.blocks) {
-    if (samePos(block.position, pos)) {
+    if (samePos(block.pos, pos)) {
       r.push(h('li', ['block: type = ', blockSpan(st, block.type)]));
     }
   }
 
   // agents
   for (const agent of world.entities) {
-    if (samePos(agent.position, pos)) {
+    if (samePos(agent.pos, pos)) {
       r.push(h('li', ['agent: ', ...agentDescription(ctrl, agent)]));
     }
   }
@@ -204,8 +204,8 @@ function agentDescription(ctrl: Ctrl, agent: Agent): Array<VNode | string> {
 }
 
 function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: Task): VNode[] {
-  const xs = task.requirements.map(b => Math.abs(b.position[0]));
-  const ys = task.requirements.map(b => Math.abs(b.position[1]));
+  const xs = task.requirements.map(b => Math.abs(b.pos[0]));
+  const ys = task.requirements.map(b => Math.abs(b.pos[1]));
   const width = 2 * Math.max(...xs) + 1;
   const height = 2 * Math.max(...ys) + 1;
   const elementWidth = 218;
@@ -218,7 +218,7 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.translate((elementWidth - gridSize) / 2, (elementHeight - gridSize) / 2);
     ctx.scale(gridSize, gridSize);
-    drawAgent(ctx, 0, 0, { position: [0, 0] }, 0);
+    drawAgent(ctx, 0, 0, { pos: [0, 0] }, 0);
     drawBlocks(ctx, 0, 0, st, task.requirements);
     ctx.restore();
   };
