@@ -1,6 +1,6 @@
 export type Style = {
-  background: string,
-  color: string,
+  background: string;
+  color: string;
 };
 
 const teams: Style[] = [

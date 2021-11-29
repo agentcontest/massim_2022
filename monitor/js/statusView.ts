@@ -15,30 +15,26 @@ function view(data: StatusData): VNode[] {
   return [
     h('h2', `Step ${data.step}/${data.steps - 1}`),
     h('table', [
-      h('thead', [
-        h('tr', [
-          h('th', 'Team'),
-          h('th', 'Agent'),
-          h('th', 'Last action'),
-          h('th', 'Last action result')
-        ])
-      ]),
-      h('tbody', data.entities.map((entity) => {
-        const teamStyle = { style: styles.team(teams.indexOf(entity.team)) };
-        return h('tr', [
-          h('td', teamStyle, entity.team),
-          h('td', teamStyle, entity.name),
-          h('td', { attrs: { class: entity.action } }, entity.action),
-          h('td', { attrs: { class: entity.actionResult } }, entity.actionResult)
-        ]);
-      }))
-    ])
+      h('thead', [h('tr', [h('th', 'Team'), h('th', 'Agent'), h('th', 'Last action'), h('th', 'Last action result')])]),
+      h(
+        'tbody',
+        data.entities.map(entity => {
+          const teamStyle = { style: styles.team(teams.indexOf(entity.team)) };
+          return h('tr', [
+            h('td', teamStyle, entity.team),
+            h('td', teamStyle, entity.name),
+            h('td', { attrs: { class: entity.action } }, entity.action),
+            h('td', { attrs: { class: entity.actionResult } }, entity.actionResult),
+          ]);
+        })
+      ),
+    ]),
   ];
 }
 
 export function statusView(ctrl: StatusCtrl): VNode {
   return h('div#status', [
     h('h1', ['Status: ', ctrl.vm.data ? ctrl.vm.data.sim : ctrl.vm.state]),
-    ...(ctrl.vm.data ? view(ctrl.vm.data) : [])
+    ...(ctrl.vm.data ? view(ctrl.vm.data) : []),
   ]);
 }

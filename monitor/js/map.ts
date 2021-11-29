@@ -115,22 +115,25 @@ export class MapCtrl {
 
 export function mapView(ctrl: MapCtrl, opts?: MapViewOpts): VNode {
   return h('canvas', {
-    attrs: opts?.size ? {
-      width: opts.size,
-      height: opts.size,
-    } : undefined,
+    attrs: opts?.size
+      ? {
+          width: opts.size,
+          height: opts.size,
+        }
+      : undefined,
     hook: {
       insert(vnode) {
         const elm = vnode.elm as HTMLCanvasElement;
 
         if (opts?.size) render(elm, ctrl, opts);
-        else new (window as any).ResizeObserver((entries: any) => {
-          for (const entry of entries) {
-            elm.width = entry.contentRect.width;
-            elm.height = entry.contentRect.height;
-            requestAnimationFrame(() => render(elm, ctrl, opts));
-          }
-        }).observe(elm);
+        else
+          new (window as any).ResizeObserver((entries: any) => {
+            for (const entry of entries) {
+              elm.width = entry.contentRect.width;
+              elm.height = entry.contentRect.height;
+              requestAnimationFrame(() => render(elm, ctrl, opts));
+            }
+          }).observe(elm);
 
         const mouseup = (ev: Event) => {
           if (ctrl.vm.dragging || ctrl.vm.zooming) ev.preventDefault();
@@ -145,11 +148,14 @@ export function mapView(ctrl: MapCtrl, opts?: MapViewOpts): VNode {
         const mousemove = (ev: Partial<MouseEvent & TouchEvent> & Event) => {
           const zoom = eventZoom(ev);
           if (ctrl.vm.zooming && zoom) {
-            ctrl.vm.transform = {...ctrl.vm.zooming.initialTransform};
-            ctrl.zoom([
-              (ctrl.vm.zooming.zoom.center[0] + zoom.center[0]) / 2,
-              (ctrl.vm.zooming.zoom.center[1] + zoom.center[1]) / 2,
-            ], zoom.distance / ctrl.vm.zooming.zoom.distance);
+            ctrl.vm.transform = { ...ctrl.vm.zooming.initialTransform };
+            ctrl.zoom(
+              [
+                (ctrl.vm.zooming.zoom.center[0] + zoom.center[0]) / 2,
+                (ctrl.vm.zooming.zoom.center[1] + zoom.center[1]) / 2,
+              ],
+              zoom.distance / ctrl.vm.zooming.zoom.distance
+            );
             ev.preventDefault();
             return;
           }
@@ -177,7 +183,7 @@ export function mapView(ctrl: MapCtrl, opts?: MapViewOpts): VNode {
           const zoom = eventZoom(ev);
           if (zoom) {
             ctrl.vm.zooming = {
-              initialTransform: {...ctrl.vm.transform},
+              initialTransform: { ...ctrl.vm.transform },
               zoom,
             };
           } else if (pos) {
@@ -185,8 +191,8 @@ export function mapView(ctrl: MapCtrl, opts?: MapViewOpts): VNode {
               first: pos,
               latest: pos,
               started: false,
-            }
-          };
+            };
+          }
           if (zoom || pos) {
             ev.preventDefault();
             requestAnimationFrame(() => render(ev.target as HTMLCanvasElement, ctrl, opts, true));
@@ -200,17 +206,17 @@ export function mapView(ctrl: MapCtrl, opts?: MapViewOpts): VNode {
         };
 
         (elm as any).massim = {
-          unbinds: opts?.viewOnly ? [
-            unbindable(document, 'mousemove', mousemove, { passive: false }),
-          ] : [
-            unbindable(elm, 'mousedown', mousedown, { passive: false }),
-            unbindable(elm, 'touchstart', mousedown, { passive: false }),
-            unbindable(elm, 'wheel', wheel, { passive: false }),
-            unbindable(document, 'mouseup', mouseup),
-            unbindable(document, 'touchend', mouseup),
-            unbindable(document, 'mousemove', mousemove, { passive: false }),
-            unbindable(document, 'touchmove', mousemove, { passive: false }),
-          ],
+          unbinds: opts?.viewOnly
+            ? [unbindable(document, 'mousemove', mousemove, { passive: false })]
+            : [
+                unbindable(elm, 'mousedown', mousedown, { passive: false }),
+                unbindable(elm, 'touchstart', mousedown, { passive: false }),
+                unbindable(elm, 'wheel', wheel, { passive: false }),
+                unbindable(document, 'mouseup', mouseup),
+                unbindable(document, 'touchend', mouseup),
+                unbindable(document, 'mousemove', mousemove, { passive: false }),
+                unbindable(document, 'touchmove', mousemove, { passive: false }),
+              ],
         };
       },
       update(_, vnode) {
@@ -234,12 +240,15 @@ function eventZoom(e: Partial<TouchEvent>): Zoom | undefined {
   return {
     center: [
       (e.targetTouches[0].clientX + e.targetTouches[1].clientX) / 2,
-      (e.targetTouches[0].clientY + e.targetTouches[1].clientY) / 2
+      (e.targetTouches[0].clientY + e.targetTouches[1].clientY) / 2,
     ],
-    distance: Math.max(20, Math.hypot(
-      e.targetTouches[0].clientX - e.targetTouches[1].clientX,
-      e.targetTouches[0].clientY - e.targetTouches[1].clientY
-    ))
+    distance: Math.max(
+      20,
+      Math.hypot(
+        e.targetTouches[0].clientX - e.targetTouches[1].clientX,
+        e.targetTouches[0].clientY - e.targetTouches[1].clientY
+      )
+    ),
   };
 }
 
@@ -261,7 +270,8 @@ function mod(a: number, b: number): number {
 
 function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | undefined, raf = false) {
   const vm = ctrl.vm;
-  const width = canvas.width, height = canvas.height;
+  const width = canvas.width,
+    height = canvas.height;
 
   const ctx = canvas.getContext('2d')!;
   ctx.save();
@@ -294,7 +304,7 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
 
   ctx.fillStyle = '#ddd';
   for (let y = ymin; y <= ymax; y++) {
-    for (let x = xmin + (((xmin + y) % 2) + 2) % 2; x <= xmax; x += 2) {
+    for (let x = xmin + ((((xmin + y) % 2) + 2) % 2); x <= xmax; x += 2) {
       ctx.fillRect(x, y, 1, 1);
     }
   }
@@ -367,7 +377,13 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         }
 
         // blocks
-        drawBlocks(ctx, dx, dy, ctrl.root.vm.static, ctrl.root.vm.dynamic.blocks.filter(b => visible(xmin, xmax, ymin, ymax, b, dx, dy)));
+        drawBlocks(
+          ctx,
+          dx,
+          dy,
+          ctrl.root.vm.static,
+          ctrl.root.vm.dynamic.blocks.filter(b => visible(xmin, xmax, ymin, ymax, b, dx, dy))
+        );
 
         // agents
         for (const agent of ctrl.root.vm.dynamic.entities) {
@@ -429,7 +445,15 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
   }
 }
 
-function visible(xmin: number, xmax: number, ymin: number, ymax: number, pos: Positionable, dx: number, dy: number): boolean {
+function visible(
+  xmin: number,
+  xmax: number,
+  ymin: number,
+  ymax: number,
+  pos: Positionable,
+  dx: number,
+  dy: number
+): boolean {
   return xmin <= pos.x + dx && pos.x + dx <= xmax && ymin <= pos.y + dy && pos.y + dy <= ymax;
 }
 
@@ -437,7 +461,12 @@ function drawFogOfWar(ctx: CanvasRenderingContext2D, st: StaticWorld, dx: number
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   const top = dy - st.grid.height + agent.y + agent.vision + 1;
   ctx.fillRect(dx, top, st.grid.width, st.grid.height - 2 * agent.vision - 1); // above
-  ctx.fillRect(dx - st.grid.width + agent.x + agent.vision + 1, dy + agent.y - agent.vision, st.grid.width - 2 * agent.vision - 1, 2 * agent.vision + 1);
+  ctx.fillRect(
+    dx - st.grid.width + agent.x + agent.vision + 1,
+    dy + agent.y - agent.vision,
+    st.grid.width - 2 * agent.vision - 1,
+    2 * agent.vision + 1
+  );
   for (let x = -agent.vision; x <= agent.vision; x++) {
     for (let y = -agent.vision; y <= agent.vision; y++) {
       if (Math.abs(x) + Math.abs(y) > agent.vision) {
@@ -447,7 +476,15 @@ function drawFogOfWar(ctx: CanvasRenderingContext2D, st: StaticWorld, dx: number
   }
 }
 
-function drawHover(ctx: CanvasRenderingContext2D, st: StaticWorld, world: DynamicWorld, teamNames: string[], dx: number, dy: number, hover: Pos) {
+function drawHover(
+  ctx: CanvasRenderingContext2D,
+  st: StaticWorld,
+  world: DynamicWorld,
+  teamNames: string[],
+  dx: number,
+  dy: number,
+  hover: Pos
+) {
   if (hover.x < 0 || hover.x >= st.grid.width || hover.y < 0 || hover.y >= st.grid.height) return;
   ctx.beginPath();
   ctx.fillStyle = styles.hover;
@@ -462,12 +499,13 @@ function drawHover(ctx: CanvasRenderingContext2D, st: StaticWorld, world: Dynami
   }
 
   ctx.lineWidth = 0.1;
-  if (world.taskboards) for (const taskboard of world.taskboards) {
-    if (Math.abs(taskboard.x - hover.x) + Math.abs(taskboard.y - hover.y) <= 2) {
-      ctx.strokeStyle = styles.board;
-      drawArea(ctx, dx + taskboard.x, dy + taskboard.y, 2);
+  if (world.taskboards)
+    for (const taskboard of world.taskboards) {
+      if (Math.abs(taskboard.x - hover.x) + Math.abs(taskboard.y - hover.y) <= 2) {
+        ctx.strokeStyle = styles.board;
+        drawArea(ctx, dx + taskboard.x, dy + taskboard.y, 2);
+      }
     }
-  }
   for (const agent of world.entities) {
     if (Math.abs(agent.x - hover.x) + Math.abs(agent.y - hover.y) <= agent.vision) {
       ctx.strokeStyle = styles.team(teamNames.indexOf(agent.team)).background;
@@ -497,7 +535,7 @@ function rect(blockSize: number, x: number, y: number, margin: number): Rect {
 }
 
 interface DrawAgent extends Positionable {
-  name?: string
+  name?: string;
 }
 
 export function drawAgent(ctx: CanvasRenderingContext2D, dx: number, dy: number, agent: DrawAgent, teamIndex: number) {

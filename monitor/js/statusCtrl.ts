@@ -3,7 +3,7 @@ import { StatusCtrl, StatusViewModel } from './statusInterfaces';
 
 export function makeStatusCtrl(redraw: Redraw): StatusCtrl {
   const vm: StatusViewModel = {
-    state: 'connecting'
+    state: 'connecting',
   };
 
   function connect() {
@@ -11,7 +11,7 @@ export function makeStatusCtrl(redraw: Redraw): StatusCtrl {
     const path = document.location.pathname.substr(0, document.location.pathname.lastIndexOf('/'));
     const ws = new WebSocket(protocol + '//' + document.location.host + path + '/live/status');
 
-    ws.onmessage = (msg) => {
+    ws.onmessage = msg => {
       const data = JSON.parse(msg.data);
       console.log(data);
       vm.data = data;
@@ -37,6 +37,6 @@ export function makeStatusCtrl(redraw: Redraw): StatusCtrl {
 
   return {
     vm,
-    redraw
+    redraw,
   };
 }

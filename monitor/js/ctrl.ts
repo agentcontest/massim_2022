@@ -3,12 +3,12 @@ import { MapCtrl, minScale, maxScale } from './map';
 import { compareAgent, compareNumbered } from './util';
 
 export interface ViewModel {
-  state: ConnectionState
-  static?: StaticWorld
-  dynamic?: DynamicWorld
-  taskName?: string
-  hover?: Pos
-  teamNames: string[]
+  state: ConnectionState;
+  static?: StaticWorld;
+  dynamic?: DynamicWorld;
+  taskName?: string;
+  hover?: Pos;
+  teamNames: string[];
 }
 
 export class Ctrl {
@@ -35,7 +35,7 @@ export class Ctrl {
     const path = document.location.pathname.substr(0, document.location.pathname.lastIndexOf('/'));
     const ws = new WebSocket(protocol + '//' + document.location.host + path + '/live/monitor');
 
-    ws.onmessage = (msg) => {
+    ws.onmessage = msg => {
       const data = JSON.parse(msg.data);
       console.log(data);
       if (data.grid) this.setStatic(data);
@@ -71,7 +71,13 @@ export class Ctrl {
     const margin = 2;
     const grid = this.vm.static?.grid;
     if (!grid) return;
-    const scale = Math.max(minScale, Math.min(maxScale, Math.min(window.innerWidth, window.innerHeight) / (2 * margin + Math.max(grid.width, grid.height))));
+    const scale = Math.max(
+      minScale,
+      Math.min(
+        maxScale,
+        Math.min(window.innerWidth, window.innerHeight) / (2 * margin + Math.max(grid.width, grid.height))
+      )
+    );
     this.map.vm.transform = {
       x: (window.innerWidth - scale * (grid.width + 2 * margin)) / 2 + scale * margin,
       y: (window.innerHeight - scale * (grid.height + 2 * margin)) / 2 + scale * margin,
@@ -98,7 +104,10 @@ export class Ctrl {
   }
 
   setHover(pos?: Pos) {
-    const changed = (!pos && this.vm.hover) || (pos && !this.vm.hover) || (pos && this.vm.hover && (pos.x != this.vm.hover.x || pos.y != this.vm.hover.y));
+    const changed =
+      (!pos && this.vm.hover) ||
+      (pos && !this.vm.hover) ||
+      (pos && this.vm.hover && (pos.x != this.vm.hover.x || pos.y != this.vm.hover.y));
     this.vm.hover = pos;
     if (changed) this.redraw();
   }
@@ -126,9 +135,10 @@ export class ReplayCtrl {
   }
 
   start() {
-    if (!this.timer) this.timer = setInterval(() => {
-      if (this.root.vm.state !== 'connecting') this.setStep(this.step + 1);
-    }, 1000);
+    if (!this.timer)
+      this.timer = setInterval(() => {
+        if (this.root.vm.state !== 'connecting') this.setStep(this.step + 1);
+      }, 1000);
     this.root.redraw();
   }
 
@@ -156,7 +166,7 @@ export class ReplayCtrl {
     const entry = this.cache.get(step);
     if (entry) {
       this.root.setDynamic(entry);
-      this.root.vm.state = (this.root.vm.dynamic && this.root.vm.dynamic.step == step) ? 'online' : 'connecting';
+      this.root.vm.state = this.root.vm.dynamic && this.root.vm.dynamic.step == step ? 'online' : 'connecting';
       this.root.redraw();
       return;
     }
@@ -180,7 +190,7 @@ export class ReplayCtrl {
 
         if (response[step]) {
           this.root.setDynamic(response[step]);
-          this.root.vm.state = (this.root.vm.dynamic && this.root.vm.dynamic.step == step) ? 'online' : 'connecting';
+          this.root.vm.state = this.root.vm.dynamic && this.root.vm.dynamic.step == step ? 'online' : 'connecting';
           this.root.redraw();
           return;
         }

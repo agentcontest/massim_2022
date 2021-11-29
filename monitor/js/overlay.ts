@@ -1,7 +1,7 @@
 import { Agent, StaticWorld, DynamicWorld, Task, Pos } from './interfaces';
 import { Ctrl, ReplayCtrl } from './ctrl';
 import { drawBlocks, drawAgent } from './map';
-import  * as styles from './styles';
+import * as styles from './styles';
 
 import { h, VNode } from 'snabbdom';
 
@@ -11,12 +11,16 @@ function replay(ctrl: ReplayCtrl) {
     h('div', [
       h('button', { on: { click: () => ctrl.setStep(-1) } }, '|<<'),
       h('button', { on: { click: () => ctrl.setStep(ctrl.step - 10) } }, '<<'),
-      h('button', {
-        on: { click: () => ctrl.toggle() }
-      }, ctrl.playing() ? '||' : '>'),
+      h(
+        'button',
+        {
+          on: { click: () => ctrl.toggle() },
+        },
+        ctrl.playing() ? '||' : '>'
+      ),
       h('button', { on: { click: () => ctrl.setStep(ctrl.step + 10) } }, '>>'),
-      h('button', { on: { click: () => ctrl.setStep(99999999) } }, '>>|')
-    ])
+      h('button', { on: { click: () => ctrl.setStep(99999999) } }, '>>|'),
+    ]),
   ]);
 }
 
@@ -26,45 +30,63 @@ function simplePlural(n: number, singular: string): string {
 }
 
 function teams(teamNames: string[], world: DynamicWorld): VNode[] {
-  return teamNames.map((name, i) => h('div.team', {
-    style: styles.team(i),
-  }, `${name}: $${world.scores[name]}`));
+  return teamNames.map((name, i) =>
+    h(
+      'div.team',
+      {
+        style: styles.team(i),
+      },
+      `${name}: $${world.scores[name]}`
+    )
+  );
 }
 
 function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
   const selectedTask = world.tasks.find(t => t.name === ctrl.vm.taskName);
   return [
-    h('select', {
-      attrs: {
-        name: 'tasks',
-      },
-      on: {
-        change: function(e) {
-          ctrl.vm.taskName = (e.target as HTMLOptionElement).value;
-          ctrl.redraw();
-        }
-      }
-    }, [
-      h('option', {
+    h(
+      'select',
+      {
         attrs: {
-          value: ''
+          name: 'tasks',
         },
-      }, simplePlural(world.tasks.length, 'task')),
-      ...world.tasks.map(t => {
-        const acceptedBy = world.entities.filter(a => a.acceptedTask === t.name).length;
-        return h('option', {
-          attrs: {
-            value: t.name,
-            selected: t.name === ctrl.vm.taskName,
+        on: {
+          change: function (e) {
+            ctrl.vm.taskName = (e.target as HTMLOptionElement).value;
+            ctrl.redraw();
           },
-        }, [
-          `$${t.reward} for ${t.name} until step ${t.deadline}`,
-          acceptedBy ? ` (${acceptedBy} accepted)` : undefined,
-        ]);
-      }),
-    ]),
-    ...(selectedTask ? taskDetails(ctrl, st, world, selectedTask) : [])
-  ]
+        },
+      },
+      [
+        h(
+          'option',
+          {
+            attrs: {
+              value: '',
+            },
+          },
+          simplePlural(world.tasks.length, 'task')
+        ),
+        ...world.tasks.map(t => {
+          const acceptedBy = world.entities.filter(a => a.acceptedTask === t.name).length;
+          return h(
+            'option',
+            {
+              attrs: {
+                value: t.name,
+                selected: t.name === ctrl.vm.taskName,
+              },
+            },
+            [
+              `$${t.reward} for ${t.name} until step ${t.deadline}`,
+              acceptedBy ? ` (${acceptedBy} accepted)` : undefined,
+            ]
+          );
+        }),
+      ]
+    ),
+    ...(selectedTask ? taskDetails(ctrl, st, world, selectedTask) : []),
+  ];
 }
 
 function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNode | undefined {
@@ -76,12 +98,22 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
   const r = [h('li', `x = ${pos.x}, y = ${pos.y}`)];
 
   // terrain
-  if (terrain === 1) r.push(h('li', ['terrain: ', h('span', {
-    style: {
-      background: styles.goalOnLight,
-      color: 'black',
-    }
-  }, 'goal')]));
+  if (terrain === 1)
+    r.push(
+      h('li', [
+        'terrain: ',
+        h(
+          'span',
+          {
+            style: {
+              background: styles.goalOnLight,
+              color: 'black',
+            },
+          },
+          'goal'
+        ),
+      ])
+    );
   else if (terrain === 2) r.push(h('li', 'terrain: obstacle'));
 
   // dispensers
@@ -95,12 +127,21 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
   if (world.taskboards) {
     for (const board of world.taskboards) {
       if (board.x == pos.x && board.y == pos.y) {
-        r.push(h('li', h('span', {
-          style: {
-            background: styles.board,
-            color: 'black',
-          }
-        }, 'task board')));
+        r.push(
+          h(
+            'li',
+            h(
+              'span',
+              {
+                style: {
+                  background: styles.board,
+                  color: 'black',
+                },
+              },
+              'task board'
+            )
+          )
+        );
       }
     }
   }
@@ -123,36 +164,61 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
 }
 
 function blockSpan(st: StaticWorld, type: string): VNode {
-  return h('span', {
-    style: {
-      background: styles.blocks[st.blockTypes.indexOf(type)],
-      color: 'white',
-    }
-  }, type)
+  return h(
+    'span',
+    {
+      style: {
+        background: styles.blocks[st.blockTypes.indexOf(type)],
+        color: 'white',
+      },
+    },
+    type
+  );
 }
 
 function agentDescription(ctrl: Ctrl, agent: Agent): Array<VNode | string> {
   const r = [
-    'name = ', h('span', {
-      style: styles.team(ctrl.vm.teamNames.indexOf(agent.team)),
-    }, agent.name),
-    `, energy = ${agent.energy}`
+    'name = ',
+    h(
+      'span',
+      {
+        style: styles.team(ctrl.vm.teamNames.indexOf(agent.team)),
+      },
+      agent.name
+    ),
+    `, energy = ${agent.energy}`,
   ];
-  if (agent.action && agent.actionResult) r.push(', ', h('span', {
-    class: {
-      [agent.action]: true,
-      [agent.actionResult]: true,
-    }
-  }, `${agent.action}(…) = ${agent.actionResult}`));
+  if (agent.action && agent.actionResult)
+    r.push(
+      ', ',
+      h(
+        'span',
+        {
+          class: {
+            [agent.action]: true,
+            [agent.actionResult]: true,
+          },
+        },
+        `${agent.action}(…) = ${agent.actionResult}`
+      )
+    );
   if (agent.attached?.length) r.push(`, ${agent.attached.length}\xa0attached`);
-  if (agent.acceptedTask) r.push(', ', h('a', {
-    on: {
-      click() {
-        ctrl.vm.taskName = agent.acceptedTask;
-        ctrl.redraw();
-      }
-    }
-  }, agent.acceptedTask));
+  if (agent.acceptedTask)
+    r.push(
+      ', ',
+      h(
+        'a',
+        {
+          on: {
+            click() {
+              ctrl.vm.taskName = agent.acceptedTask;
+              ctrl.redraw();
+            },
+          },
+        },
+        agent.acceptedTask
+      )
+    );
   if (agent.disabled) r.push(', disabled');
   return r;
 }
@@ -181,25 +247,39 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
     h('canvas', {
       attrs: {
         width: elementWidth,
-        height: elementHeight
+        height: elementHeight,
       },
       hook: {
         insert: render,
-        update: (_, vnode) => render(vnode)
-      }
+        update: (_, vnode) => render(vnode),
+      },
     }),
-    ...(acceptedBy.length ? [
-      h('p', `Accepted by ${simplePlural(acceptedBy.length, 'agent')}:`),
-      h('ul', acceptedBy.map(by => h('li', h('a', {
-        style: styles.team(ctrl.vm.teamNames.indexOf(by.team)),
-        on: {
-          click() {
-            ctrl.map.vm.selected = by.id;
-            ctrl.redraw();
-          }
-        },
-      }, by.name)))),
-    ] : []),
+    ...(acceptedBy.length
+      ? [
+          h('p', `Accepted by ${simplePlural(acceptedBy.length, 'agent')}:`),
+          h(
+            'ul',
+            acceptedBy.map(by =>
+              h(
+                'li',
+                h(
+                  'a',
+                  {
+                    style: styles.team(ctrl.vm.teamNames.indexOf(by.team)),
+                    on: {
+                      click() {
+                        ctrl.map.vm.selected = by.id;
+                        ctrl.redraw();
+                      },
+                    },
+                  },
+                  by.name
+                )
+              )
+            )
+          ),
+        ]
+      : []),
     h('p', simplePlural(task.requirements.length, 'block')),
   ];
 }
@@ -207,9 +287,13 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
 function disconnected(): VNode {
   return h('div.box', [
     h('p', 'Live server not connected.'),
-    h('a', {
-      attrs: { href: document.location.pathname + document.location.search }
-    }, 'Retry now.')
+    h(
+      'a',
+      {
+        attrs: { href: document.location.pathname + document.location.search },
+      },
+      'Retry now.'
+    ),
   ]);
 }
 
@@ -221,36 +305,50 @@ export function overlay(ctrl: Ctrl): VNode {
   const selectedAgent = ctrl.map.selectedAgent();
   return h('div#overlay', [
     ctrl.vm.static && (ctrl.replay ? replay(ctrl.replay) : h('div.box', ctrl.vm.static.sim)),
-    (ctrl.vm.state === 'error' || ctrl.vm.state === 'offline') ?
-      ctrl.replay ?
-        h('div.box', ctrl.vm.static ? 'Could not load step' : 'Could not load replay') :
-        disconnected() : undefined,
-    (ctrl.vm.static && ctrl.vm.dynamic) ?
-      h('div.box', [
-        `Step: ${ctrl.vm.dynamic.step} / ${ctrl.vm.static.steps - 1}`
-      ]) : undefined,
+    ctrl.vm.state === 'error' || ctrl.vm.state === 'offline'
+      ? ctrl.replay
+        ? h('div.box', ctrl.vm.static ? 'Could not load step' : 'Could not load replay')
+        : disconnected()
+      : undefined,
+    ctrl.vm.static && ctrl.vm.dynamic
+      ? h('div.box', [`Step: ${ctrl.vm.dynamic.step} / ${ctrl.vm.static.steps - 1}`])
+      : undefined,
     ctrl.vm.state === 'connecting' ? h('div.box', ['Connecting ...', h('div.loader')]) : undefined,
-    (ctrl.vm.state === 'online' && (!ctrl.vm.static || !ctrl.vm.dynamic)) ? h('div.box', ['Waiting ...', h('div.loader')]) : undefined,
-    ...((ctrl.vm.state === 'online' && ctrl.vm.static && ctrl.vm.dynamic) ? [
-      h('div.box', teams(ctrl.vm.teamNames, ctrl.vm.dynamic)),
-      h('div.box', [
-        h('button', {
-          on: {
-            click: () => ctrl.toggleMaps(),
-          }
-        }, ctrl.maps.length ? 'Global view' : 'Agent view'),
-        ctrl.maps.length ? undefined : h('button', {
-          on: {
-            click() {
-              ctrl.resetTransform();
-              ctrl.redraw();
-            }
-          }
-        }, 'Reset zoom'),
-      ]),
-      h('div.box', tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic)),
-      selectedAgent ? box(h('div', ['Selected agent: ', ...agentDescription(ctrl, selectedAgent)])) : undefined,
-      ctrl.vm.hover ? box(hover(ctrl, ctrl.vm.static, ctrl.vm.dynamic, ctrl.vm.hover)) : undefined,
-    ] : [])
+    ctrl.vm.state === 'online' && (!ctrl.vm.static || !ctrl.vm.dynamic)
+      ? h('div.box', ['Waiting ...', h('div.loader')])
+      : undefined,
+    ...(ctrl.vm.state === 'online' && ctrl.vm.static && ctrl.vm.dynamic
+      ? [
+          h('div.box', teams(ctrl.vm.teamNames, ctrl.vm.dynamic)),
+          h('div.box', [
+            h(
+              'button',
+              {
+                on: {
+                  click: () => ctrl.toggleMaps(),
+                },
+              },
+              ctrl.maps.length ? 'Global view' : 'Agent view'
+            ),
+            ctrl.maps.length
+              ? undefined
+              : h(
+                  'button',
+                  {
+                    on: {
+                      click() {
+                        ctrl.resetTransform();
+                        ctrl.redraw();
+                      },
+                    },
+                  },
+                  'Reset zoom'
+                ),
+          ]),
+          h('div.box', tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic)),
+          selectedAgent ? box(h('div', ['Selected agent: ', ...agentDescription(ctrl, selectedAgent)])) : undefined,
+          ctrl.vm.hover ? box(hover(ctrl, ctrl.vm.static, ctrl.vm.dynamic, ctrl.vm.hover)) : undefined,
+        ]
+      : []),
   ]);
 }

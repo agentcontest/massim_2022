@@ -7,12 +7,7 @@ import { StatusCtrl } from './statusInterfaces';
 import { makeStatusCtrl } from './statusCtrl';
 import { statusView } from './statusView';
 
-const patch = init([
-  classModule,
-  attributesModule,
-  styleModule,
-  eventListenersModule
-]);
+const patch = init([classModule, attributesModule, styleModule, eventListenersModule]);
 
 export function Monitor(element: Element) {
   let vnode: VNode | Element = element;
@@ -20,7 +15,7 @@ export function Monitor(element: Element) {
 
   let redrawRequested = false;
 
-  const redraw = function() {
+  const redraw = function () {
     if (redrawRequested) return;
     redrawRequested = true;
     requestAnimationFrame(() => {
@@ -29,7 +24,7 @@ export function Monitor(element: Element) {
     });
   };
 
-  const hashChange = function() {
+  const hashChange = function () {
     if (ctrl.replay) {
       const step = parseInt(document.location.hash.substr(1), 10);
       if (step > 0) ctrl.replay.setStep(step);
@@ -60,7 +55,7 @@ export function Status(target: Element) {
 
   let redrawRequested = false;
 
-  const redraw = function() {
+  const redraw = function () {
     if (redrawRequested) return;
     redrawRequested = true;
     requestAnimationFrame(() => {
