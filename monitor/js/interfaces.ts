@@ -26,7 +26,6 @@ export interface DynamicWorld {
   entities: Agent[];
   blocks: Block[];
   dispensers: Dispenser[];
-  taskboards?: TaskBoard[];
   tasks: Task[];
   clear: ClearEvent[];
   obstacles: Obstacle[];
@@ -67,8 +66,6 @@ export interface Dispenser extends Positioned {
   id: number;
   type: BlockType;
 }
-
-export interface TaskBoard extends Positioned {}
 
 export interface Task {
   reward: number;

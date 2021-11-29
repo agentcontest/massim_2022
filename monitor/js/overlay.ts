@@ -126,29 +126,6 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
     }
   }
 
-  // task boards
-  if (world.taskboards) {
-    for (const board of world.taskboards) {
-      if (samePos(board.position, pos)) {
-        r.push(
-          h(
-            'li',
-            h(
-              'span',
-              {
-                style: {
-                  background: styles.board,
-                  color: 'black',
-                },
-              },
-              'task board'
-            )
-          )
-        );
-      }
-    }
-  }
-
   // blocks
   for (const block of world.blocks) {
     if (samePos(block.position, pos)) {

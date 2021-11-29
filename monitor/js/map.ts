@@ -351,22 +351,6 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
           }
         }
 
-        // task boards
-        if (ctrl.root.vm.dynamic.taskboards) {
-          for (const board of ctrl.root.vm.dynamic.taskboards) {
-            if (visible(xmin, xmax, ymin, ymax, board.position, dx, dy)) {
-              ctx.lineWidth = 0.05;
-              drawBlock(
-                ctx,
-                rect(1, dx + board.position[0], dy + board.position[1], 0.05),
-                styles.board,
-                'white',
-                'black'
-              );
-            }
-          }
-        }
-
         // blocks
         drawBlocks(
           ctx,
@@ -482,13 +466,6 @@ function drawHover(
   }
 
   ctx.lineWidth = 0.1;
-  if (world.taskboards)
-    for (const taskboard of world.taskboards) {
-      if (Math.abs(taskboard.position[0] - hover[0]) + Math.abs(taskboard.position[1] - hover[1]) <= 2) {
-        ctx.strokeStyle = styles.board;
-        drawArea(ctx, dx + taskboard.position[0], dy + taskboard.position[1], 2);
-      }
-    }
   for (const agent of world.entities) {
     if (Math.abs(agent.position[0] - hover[0]) + Math.abs(agent.position[1] - hover[1]) <= agent.vision) {
       ctx.strokeStyle = styles.team(teamNames.indexOf(agent.team)).background;
