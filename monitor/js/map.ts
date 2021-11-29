@@ -331,18 +331,10 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 0.3;
         ctx.beginPath();
-        if (ctrl.root.vm.dynamic.taskboards) {
-          ctx.moveTo(dx - 1.5, dy);
-          ctx.lineTo(dx + 1.5, dy);
-          ctx.moveTo(dx, dy - 1.5);
-          ctx.lineTo(dx, dy + 1.5);
-        } else {
-          // 2019
-          ctx.moveTo(dx, dy);
-          ctx.lineTo(dx + grid.width, dy);
-          ctx.moveTo(dx, dy);
-          ctx.lineTo(dx, dy + grid.height);
-        }
+        ctx.moveTo(dx - 1.5, dy);
+        ctx.lineTo(dx + 1.5, dy);
+        ctx.moveTo(dx, dy - 1.5);
+        ctx.lineTo(dx, dy + 1.5);
         ctx.stroke();
         ctx.globalCompositeOperation = 'source-over';
 
