@@ -80,6 +80,23 @@ function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
   ];
 }
 
+function norms(ctrl: Ctrl, world: DynamicWorld): VNode {
+  return h(
+    'ul',
+    world.norms.map(norm =>
+      h('li', [
+        h('strong', norm.name),
+        ` from ${norm.start} to ${norm.until}: ${norm.level} must`,
+        h(
+          'ul',
+          norm.requirements.map(requirement => h('li', JSON.stringify(requirement)))
+        ),
+        `or lose ${norm.punishment} energy`,
+      ])
+    )
+  );
+}
+
 function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNode | undefined {
   // pos
   const r = [h('li', `x = ${pos[0]}, y = ${pos[1]}`)];
@@ -270,6 +287,7 @@ export function overlay(ctrl: Ctrl): VNode {
           ]),
           selectedEntity ? box(h('div', ['Selected entity: ', ...entityDescription(ctrl, selectedEntity)])) : undefined,
           h('div.box', tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic)),
+          h('div.box', norms(ctrl, ctrl.vm.dynamic)),
           ctrl.vm.hover ? box(hover(ctrl, ctrl.vm.static, ctrl.vm.dynamic, ctrl.vm.hover)) : undefined,
         ]
       : []),
