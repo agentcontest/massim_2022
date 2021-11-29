@@ -1,6 +1,7 @@
 import { Agent, StaticWorld, DynamicWorld, Task, Pos } from './interfaces';
 import { Ctrl, ReplayCtrl } from './ctrl';
 import { drawBlocks, drawAgent } from './map';
+import { samePos } from './util';
 import * as styles from './styles';
 
 import { h, VNode } from 'snabbdom';
@@ -109,12 +110,18 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
           'goal'
         ),
       ])
-    );
-  else if (terrain === 2) r.push(h('li', 'terrain: obstacle')); */
+    ); */
+
+  // obstacles
+  for (const obstacle of world.obstacles) {
+    if (samePos(obstacle.position, pos)) {
+      r.push(h('li', 'terrain: obstacle'));
+    }
+  }
 
   // dispensers
   for (const dispenser of world.dispensers) {
-    if (dispenser.position[0] == pos[0] && dispenser.position[1] == pos[1]) {
+    if (samePos(dispenser.position, pos)) {
       r.push(h('li', ['dispenser: type = ', blockSpan(st, dispenser.type)]));
     }
   }
@@ -122,7 +129,7 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
   // task boards
   if (world.taskboards) {
     for (const board of world.taskboards) {
-      if (board.position[0] == pos[0] && board.position[1] == pos[1]) {
+      if (samePos(board.position, pos)) {
         r.push(
           h(
             'li',
@@ -144,14 +151,14 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
 
   // blocks
   for (const block of world.blocks) {
-    if (block.position[0] == pos[0] && block.position[1] == pos[1]) {
+    if (samePos(block.position, pos)) {
       r.push(h('li', ['block: type = ', blockSpan(st, block.type)]));
     }
   }
 
   // agents
   for (const agent of world.entities) {
-    if (agent.position[0] == pos[0] && agent.position[1] == pos[1]) {
+    if (samePos(agent.position, pos)) {
       r.push(h('li', ['agent: ', ...agentDescription(ctrl, agent)]));
     }
   }
