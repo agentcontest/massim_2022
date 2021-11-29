@@ -17,6 +17,9 @@ function agentView(ctrl: Ctrl): VNode | undefined {
     ctrl.maps.map(m => {
       const entity = m.selectedEntity();
       if (!entity) return;
+
+      const violations = ctrl.vm.dynamic?.violations.filter(v => v.who == entity.name).map(v => v.norm) || [];
+
       return h(
         'div',
         {
@@ -56,10 +59,9 @@ function agentView(ctrl: Ctrl): VNode | undefined {
             viewOnly: true,
           }),
           h('div.meta', [
-            h('div', `role = ${entity.role}`),
-            h('div', `energy = ${entity.energy}`),
+            h('div', `role = ${entity.role}, energy = ${entity.energy}` + (entity.deactivated ? ' 🪫' : '')),
             entity.action ? h('div', `${entity.action}(…) = ${entity.actionResult}`) : undefined,
-            entity.deactivated ? h('div', 'deactivated') : undefined,
+            violations.length ? h('div', 'violates ' + violations.join(', ') + ' ⚠️') : undefined,
           ]),
         ]
       );
