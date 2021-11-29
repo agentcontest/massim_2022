@@ -62,7 +62,7 @@ export interface Entity extends Positionable, EntityStatus {
   energy: number;
   vision: number;
   attached?: Pos[];
-  disabled?: boolean;
+  deactivated: boolean;
   actionParams: string[];
 }
 

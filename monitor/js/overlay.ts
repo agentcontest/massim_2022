@@ -169,7 +169,7 @@ function entityDescription(ctrl: Ctrl, entity: Entity): Array<VNode | string> {
       )
     );
   if (entity.attached?.length) r.push(`, ${entity.attached.length}\xa0attached`);
-  if (entity.disabled) r.push(', disabled');
+  if (entity.deactivated) r.push(', deactivated');
   return r;
 }
 

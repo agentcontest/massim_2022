@@ -58,7 +58,7 @@ function agentView(ctrl: Ctrl): VNode | undefined {
           h('div.meta', [
             h('div', `energy = ${entity.energy}`),
             entity.action ? h('div', `${entity.action}(…) = ${entity.actionResult}`) : undefined,
-            entity.disabled ? h('div', 'disabled') : undefined,
+            entity.deactivated ? h('div', 'deactivated') : undefined,
           ]),
         ]
       );
