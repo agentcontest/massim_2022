@@ -90,14 +90,10 @@ function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
 }
 
 function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNode | undefined {
-  if (!world.cells[pos.y]) return;
-  const terrain = world.cells[pos.y][pos.x];
-  if (typeof terrain == 'undefined') return;
-
   // pos
   const r = [h('li', `x = ${pos.x}, y = ${pos.y}`)];
 
-  // terrain
+  /* TODO: terrain
   if (terrain === 1)
     r.push(
       h('li', [
@@ -114,7 +110,7 @@ function hover(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld, pos: Pos): VNod
         ),
       ])
     );
-  else if (terrain === 2) r.push(h('li', 'terrain: obstacle'));
+  else if (terrain === 2) r.push(h('li', 'terrain: obstacle')); */
 
   // dispensers
   for (const dispenser of world.dispensers) {

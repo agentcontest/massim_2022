@@ -312,24 +312,20 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
   if (ctrl.root.vm.static && ctrl.root.vm.dynamic) {
     const grid = ctrl.root.vm.static.grid;
 
-    // terrain
-    for (let y = ymin; y <= ymax; y++) {
-      for (let x = xmin; x <= xmax; x++) {
-        switch (ctrl.root.vm.dynamic.cells[mod(y, grid.height)][mod(x, grid.width)]) {
-          case 1: // GOAL
-            ctx.fillStyle = styles.goal;
-            ctx.fillRect(x, y, 1, 1);
-            break;
-          case 2: // OBSTABLE
-            ctx.fillStyle = styles.obstacle;
-            ctx.fillRect(x - 0.04, y - 0.04, 1.08, 1.08);
-            break;
-        }
-      }
-    }
-
     for (let dy = Math.floor(ymin / grid.height) * grid.height; dy <= ymax + grid.height; dy += grid.height) {
       for (let dx = Math.floor(xmin / grid.width) * grid.width; dx <= xmax + grid.width; dx += grid.width) {
+        // obstacles
+        ctx.fillStyle = styles.obstacle;
+        for (const obstacle of ctrl.root.vm.dynamic.obstacles) {
+          if (visible(xmin, xmax, ymin, ymax, obstacle, dx, dy)) {
+            ctx.fillRect(dx + obstacle.x - 0.04, dy + obstacle.y - 0.04, 1.08, 1.08);
+          }
+        }
+
+        // TODO: goals
+        //ctx.fillStyle = styles.goal;
+        //ctx.fillRect(x, y, 1, 1);
+
         // draw axis
         ctx.globalCompositeOperation = 'difference';
         ctx.strokeStyle = 'white';

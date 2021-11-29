@@ -21,8 +21,6 @@ export interface Grid {
   height: number;
 }
 
-type Terrain = 0 | 1 | 2;
-
 export interface DynamicWorld {
   step: number;
   entities: Agent[];
@@ -31,7 +29,7 @@ export interface DynamicWorld {
   taskboards?: TaskBoard[];
   tasks: Task[];
   clear: ClearEvent[];
-  cells: Terrain[][];
+  obstacles: Obstacle[];
   scores: { [team: string]: number };
 }
 
@@ -39,6 +37,8 @@ export interface Positionable {
   x: number;
   y: number;
 }
+
+export interface Obstacle extends Positionable {}
 
 export interface AgentStatus {
   name: string;
