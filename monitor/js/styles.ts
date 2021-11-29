@@ -24,8 +24,8 @@ export function team(index: number): Style {
   return teams[index % teams.length];
 }
 
-export const goal = 'rgba(255, 0, 0, 0.4)';
-export const goalOnLight = '#f58f8f';
+export const goalZone = 'rgba(255, 0, 0, 0.4)';
+export const roleZone = 'rgba(0, 0, 255, 0.4)';
 
 export const obstacle = '#333';
 

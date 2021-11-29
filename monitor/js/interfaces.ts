@@ -25,6 +25,7 @@ export interface DynamicWorld {
   step: number;
   obstacles: Obstacle[];
   goalZones: GoalZone[];
+  roleZones: RoleZone[];
   entities: Agent[];
   blocks: Block[];
   dispensers: Dispenser[];
@@ -42,6 +43,10 @@ export interface Positionable {
 export interface Obstacle extends Positionable {}
 
 export interface GoalZone extends Positionable {
+  r: number;
+}
+
+export interface RoleZone extends Positionable {
   r: number;
 }
 

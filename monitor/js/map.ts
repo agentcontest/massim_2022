@@ -311,19 +311,26 @@ function render(canvas: HTMLCanvasElement, ctrl: MapCtrl, opts: MapViewOpts | un
 
     for (let dy = Math.floor(ymin / grid.height) * grid.height; dy <= ymax + grid.height; dy += grid.height) {
       for (let dx = Math.floor(xmin / grid.width) * grid.width; dx <= xmax + grid.width; dx += grid.width) {
+        // goal zones
+        ctx.fillStyle = styles.goalZone;
+        for (const zone of ctrl.root.vm.dynamic.goalZones) {
+          selectArea(ctx, dx + zone.pos[0], dy + zone.pos[1], zone.r);
+          ctx.fill();
+        }
+
+        // role zones
+        ctx.fillStyle = styles.roleZone;
+        for (const zone of ctrl.root.vm.dynamic.roleZones) {
+          selectArea(ctx, dx + zone.pos[0], dy + zone.pos[1], zone.r);
+          ctx.fill();
+        }
+
         // obstacles
         ctx.fillStyle = styles.obstacle;
         for (const obstacle of ctrl.root.vm.dynamic.obstacles) {
           if (visible(xmin, xmax, ymin, ymax, obstacle.pos, dx, dy)) {
             ctx.fillRect(dx + obstacle.pos[0] - 0.04, dy + obstacle.pos[1] - 0.04, 1.08, 1.08);
           }
-        }
-
-        // goals
-        ctx.fillStyle = styles.goal;
-        for (const goalZone of ctrl.root.vm.dynamic.goalZones) {
-          selectArea(ctx, dx + goalZone.pos[0], dy + goalZone.pos[1], goalZone.r);
-          ctx.fill();
         }
 
         // draw axis
