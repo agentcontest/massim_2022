@@ -60,7 +60,7 @@ public abstract class GridBuilder {
                     var chanceAlive = instruction.getDouble(1);
                     for (int x = 0; x < dimX; x++) {
                         for (int y = 0; y < dimY; y++) {
-                            if (RNG.nextDouble() < chanceAlive) grid.obstacles().create(Position.of(x, y));
+                            if (RNG.nextDouble() < chanceAlive) obstacles[x][y] = true;
                         }
                     }
                     var iterations = instruction.getInt(2);
