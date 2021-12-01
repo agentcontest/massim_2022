@@ -560,19 +560,23 @@ public class GameState {
         if (RNG.nextDouble() > entity.getRole().clearChance())
             return FAILED_RANDOM;
 
+        int maxDistance = entity.getRole().clearMaxDistance();
+
         var targetPosition = xy.translate(entity.getPosition());
         var distance = entity.getPosition().distanceTo(targetPosition);
-        if (distance > entity.getVision()) return FAILED_LOCATION;
+        if (distance > maxDistance) return FAILED_LOCATION;
         if (entity.getEnergy() < Entity.clearEnergyCost) return FAILED_RESOURCES;
 
         entity.consumeClearEnergy();
 
         var removed = this.clearArea(targetPosition, 0, 0, false);
 
-        var targetEntities = new ArrayList<>(this.grid.entities().lookup(targetPosition));
-        if (!targetEntities.isEmpty()) {
-            var damage = this.getClearDamage(distance);
+        var targetEntities = new ArrayList<Entity>();
+
+        if (maxDistance > 1) {
+            targetEntities.addAll(this.grid.entities().lookup(targetPosition));
             for (Entity targetEntity : targetEntities) {
+                var damage = this.getClearDamage(distance);
                 targetEntity.decreaseEnergy(damage);
                 addEventPercept(targetEntity, new JSONObject()
                         .put("type", "hit")

@@ -5,6 +5,7 @@ import massim.game.environment.positionable.Entity;
 import massim.game.environment.zones.ZoneType;
 import massim.helper.ConfigBuilder;
 import massim.protocol.data.Position;
+import massim.protocol.data.Role;
 import massim.protocol.messages.scenario.ActionResults;
 import massim.protocol.messages.scenario.StepPercept;
 import massim.util.RNG;
@@ -108,7 +109,10 @@ public class GameStateTest {
 
     @org.junit.Test
     public void handleClearAction() {
+        var clearRole = getClearRole("testClearRole", 1, 5);
+        state.grid().entities().addRole(clearRole);
         var a1 = state.grid().entities().getByName("A1");
+        a1.setRole(clearRole);
         var a2 = state.grid().entities().getByName("A2");
         var posA2 = Position.of(21, 20);
         state.teleport(a1.getAgentName(), Position.of(20, 20));
@@ -257,8 +261,8 @@ public class GameStateTest {
         state.grid().obstacles().create(Position.of(1, 1));
         assert state.grid().isBlocked(Position.of(1, 1));
         state.prepareStep(0);
+        a1.setRole(getClearRole("testClear", 1, 5));
         var result = state.handleClearAction(a1, Position.of(0, 1));
-        System.out.println(result);
         assert result.equals(ActionResults.SUCCESS);
         assert state.grid().isUnblocked(Position.of(0, 0));
 
@@ -321,5 +325,9 @@ public class GameStateTest {
 
     private StepPercept getPercept(String agent) {
         return new StepPercept(state.getStepPerceptsAndCleanUp().get(agent).toJson().getJSONObject("content"));
+    }
+
+    private Role getClearRole(String name, double chance, int maxDistance) {
+        return new Role(name, maxDistance, Set.of("clear"), new int[]{1}, chance, maxDistance);
     }
 }
