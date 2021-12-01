@@ -483,7 +483,7 @@ public class GameState {
         var attachable1 = this.grid.getUniqueAttachable(attPos1.translate(entity.getPosition()));
         var attachable2 = this.grid.getUniqueAttachable(attPos2.translate(entity.getPosition()));
         if (attachable1 == null || attachable2 == null) return ActionResults.FAILED_TARGET;
-        var allAttachments = entity.collectAllAttachments();
+        var allAttachments = entity.collectAllAttachments(true);
         if (!allAttachments.contains(attachable1) || !allAttachments.contains(attachable2))
             return ActionResults.FAILED_TARGET;
         if (grid.detachNeighbors(attachable1, attachable2)) return ActionResults.SUCCESS;
@@ -496,12 +496,12 @@ public class GameState {
 
         if(!(block1 instanceof Block) || !(block2 instanceof Block)) return ActionResults.FAILED_TARGET;
 
-        Set<Attachable> attachables = entity.collectAllAttachments();
+        Set<Attachable> attachables = entity.collectAllAttachments(true);
         if (attachables.contains(partnerEntity)) return ActionResults.FAILED;
         if (!attachables.contains(block1)) return ActionResults.FAILED_TARGET;
         if (attachables.contains(block2)) return ActionResults.FAILED_TARGET;
 
-        Set<Attachable> partnerAttachables = partnerEntity.collectAllAttachments();
+        Set<Attachable> partnerAttachables = partnerEntity.collectAllAttachments(true);
         if (!partnerAttachables.contains(block2)) return ActionResults.FAILED_TARGET;
         if (partnerAttachables.contains(block1)) return ActionResults.FAILED_TARGET;
 
@@ -526,7 +526,7 @@ public class GameState {
             return ActionResults.FAILED_TARGET;
         Position ePos = e.getPosition();
         if (grid.isNotInZone(ZoneType.GOAL, ePos)) return ActionResults.FAILED;
-        Set<Attachable> attachedBlocks = e.collectAllAttachments();
+        Set<Attachable> attachedBlocks = e.collectAllAttachments(true);
         for (Map.Entry<Position, String> entry : task.getRequirements().entrySet()) {
             var pos = entry.getKey();
             var reqType = entry.getValue();
@@ -644,7 +644,7 @@ public class GameState {
     }
 
     private boolean attachedToOpponent(Attachable a, Entity entity) {
-        return a.collectAllAttachments().stream().anyMatch(other -> other instanceof Entity && ofDifferentTeams((Entity) other, entity));
+        return a.collectAllAttachments(true).stream().anyMatch(other -> other instanceof Entity e2 && ofDifferentTeams(e2, entity));
     }
 
     private boolean ofDifferentTeams(Entity e1, Entity e2) {

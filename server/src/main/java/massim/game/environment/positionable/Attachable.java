@@ -49,9 +49,8 @@ public abstract class Attachable extends Positionable {
 
     /**
      * @return a set of all attachments and attachments attached to these attachments (and so on)
-     * including this Attachable
      */
-    public Set<Attachable> collectAllAttachments() {
+    public Set<Attachable> collectAllAttachments(boolean selfIncluded) {
         var attachables = new HashSet<Attachable>();
         attachables.add(this);
         Set<Attachable> newAttachables = new HashSet<>(attachables);
@@ -64,18 +63,19 @@ public abstract class Attachable extends Positionable {
             }
             newAttachables = tempAttachables;
         }
+        if(!selfIncluded) attachables.remove(this);
         return attachables;
     }
 
-    public boolean isAttachedToAnotherEntity() {
-        return this.collectAllAttachments().stream().anyMatch(a -> a instanceof Entity && a != this);
+    public boolean  isAttachedToAnotherEntity() {
+        return this.collectAllAttachments(false).stream().anyMatch(a -> a instanceof Entity);
     }
 
     @Override
     public JSONObject toJSON() {
         var result = super.toJSON();
         var positions = new JSONArray();
-        this.collectAllAttachments().forEach(a ->
+        this.collectAllAttachments(false).forEach(a ->
                 positions.put(a.getPosition().toJSON()));
         if (!positions.isEmpty())
             result.put("attached", positions);

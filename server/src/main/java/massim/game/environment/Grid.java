@@ -130,8 +130,8 @@ public class Grid {
         if (a1 == null || a2 == null) return false;
         if (a1.getPosition().distanceTo(a2.getPosition()) != 1) return false;
 
-        var attachments = a1.collectAllAttachments();
-        attachments.addAll(a2.collectAllAttachments());
+        var attachments = a1.collectAllAttachments(true);
+        attachments.addAll(a2.collectAllAttachments(true));
         if (attachments.size() > attachLimit) return false;
 
         a1.attach(a2);
@@ -150,7 +150,7 @@ public class Grid {
      * @return whether the movement succeeded
      */
     public boolean moveWithAttached(Attachable anchor, String direction, int distance) {
-        var things = new HashSet<Positionable>(anchor.collectAllAttachments());
+        var things = new HashSet<Positionable>(anchor.collectAllAttachments(true));
         var newPositions = canMove(things, direction, distance);
         if (newPositions == null) return false;
         this.moveMany(things, newPositions);
@@ -173,7 +173,7 @@ public class Grid {
      * @return a map from the element and all attachments to their new positions after rotation or null if anything is blocked
      */
     private Map<Positionable, Position> canRotate(Attachable anchor, boolean clockwise) {
-        var attachments = new HashSet<Positionable>(anchor.collectAllAttachments());
+        var attachments = new HashSet<Positionable>(anchor.collectAllAttachments(true));
         if(attachments.stream().anyMatch(a -> a != anchor && a instanceof Entity)) return null;
         var newPositions = new HashMap<Positionable, Position>();
         for (var a : attachments) {

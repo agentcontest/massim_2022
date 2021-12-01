@@ -155,14 +155,14 @@ public class GameStateTest {
         assert state.grid().attach(b2, b3);
         assert state.grid().attach(b3, a2);
 
-        assert b2.collectAllAttachments().contains(b3);
-        assert b3.collectAllAttachments().contains(b2);
+        assert b2.collectAllAttachments(false).contains(b3);
+        assert b3.collectAllAttachments(false).contains(b2);
 
         state.handleDisconnectAction(a1,
                 b2.getPosition().relativeTo(a1.getPosition()), b3.getPosition().relativeTo(a1.getPosition()));
 
-        assert !b2.collectAllAttachments().contains(b3);
-        assert !b3.collectAllAttachments().contains(b2);
+        assert !b2.collectAllAttachments(false).contains(b3);
+        assert !b3.collectAllAttachments(false).contains(b2);
     }
 
     @org.junit.Test

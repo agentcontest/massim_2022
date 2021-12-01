@@ -111,7 +111,7 @@ public class Entity extends Attachable {
      * @return the entity's speed considering current attachments
      */
     public int getCurrentSpeed() {
-        return this.role.maxSpeed(collectAllAttachments().size() - 1);
+        return this.role.maxSpeed(collectAllAttachments(false).size());
     }
 
     public void deactivate() {
