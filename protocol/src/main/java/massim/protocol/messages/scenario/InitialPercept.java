@@ -45,6 +45,6 @@ public class InitialPercept extends SimStartMessage {
         this.teamName = percept.getString("team");
         this.steps = percept.getInt("steps");
         this.teamSize = percept.getInt("teamSize");
-        this.roles = Role.fromJSON(percept.getJSONArray("roles"));
+        this.roles = Role.fromJSONArray(percept.getJSONArray("roles"));
     }
 }

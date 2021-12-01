@@ -5,7 +5,6 @@ import massim.game.environment.positionable.Entity;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneType;
 import massim.helper.ConfigBuilder;
-import massim.protocol.data.Position;
 import massim.protocol.data.Role;
 import massim.protocol.data.Thing;
 import massim.protocol.messages.ActionMessage;
@@ -38,7 +37,8 @@ public class RolesTest {
         var size = 3;
         ConfigBuilder.setRoleZones(config, number, size);
         var vision = 2;
-        ConfigBuilder.addRole(config, new Role("testRole", vision, Set.of("adopt"), new int[]{3,2,1}));
+        ConfigBuilder.addRole(config,
+                new Role("testRole", vision, Set.of("adopt"), new int[]{3,2,1}, 1, 1));
         var state = new GameState(config, teams);
 
         var zones = state.grid().getZones(ZoneType.ROLE);
@@ -108,8 +108,7 @@ public class RolesTest {
     private static boolean perceptContainsThing(StepPercept percept, Thing thing) {
         var filteredList = percept.things.stream()
                 .filter(t -> t.x == thing.x && t.y == thing.y)
-                .filter(t -> t.type.equals(thing.type) && t.details.equals(thing.details))
-                .collect(Collectors.toList());
+                .filter(t -> t.type.equals(thing.type) && t.details.equals(thing.details)).toList();
         return filteredList.size() == 1;
     }
 }

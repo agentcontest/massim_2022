@@ -104,7 +104,7 @@ public class GameState {
 
         matchTeams.forEach(team -> teams.put(team.getName(), new Team(team.getName())));
 
-        var defaultRole = parseRoles(config);
+        var defaultRole = this.parseRoles(config);
 
         // create entities
         var entities = config.getJSONObject("entities");
@@ -156,21 +156,15 @@ public class GameState {
     }
 
     private Role parseRoles(JSONObject config) {
-        Role defaultRole = null;
         var rolesData = config.getJSONArray("roles");
-        for (int i = 0; i < rolesData.length(); i++) {
+        var defaultRoleData = rolesData.getJSONObject(0);
+        var defaultRole = Role.fromJSON(defaultRoleData);
+        this.grid.entities().addRole(defaultRole);
+
+        for (int i = 1; i < rolesData.length(); i++) {
             var roleData = rolesData.getJSONObject(i);
-            var role = new Role(
-                    roleData.getString("name"),
-                    roleData.getInt("vision"),
-                    JSONUtil.arrayToStringSet(roleData.getJSONArray("actions")),
-                    JSONUtil.arrayToIntArray(roleData.getJSONArray("speed"))
-                    );
+            var role = Role.fromJSON(roleData, defaultRole);
             this.grid.entities().addRole(role);
-            Log.log(Log.Level.NORMAL, "Role " + role.name() + " added.");
-            if (i == 0) {
-                defaultRole = role;
-            }
         }
         return defaultRole;
     }
