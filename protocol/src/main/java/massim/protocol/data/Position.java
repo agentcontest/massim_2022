@@ -127,18 +127,18 @@ public final class Position {
     }
 
     public Position north() {
-        return Position.of(this.x, this.y - 1);
+        return Position.of(this.x, this.y - 1).wrapped();
     }
 
     public Position east() {
-        return Position.of(this.x + 1, this.y);
+        return Position.of(this.x + 1, this.y).wrapped();
     }
 
     public Position south() {
-        return Position.of(this.x, this.y + 1);
+        return Position.of(this.x, this.y + 1).wrapped();
     }
 
     public Position west() {
-        return Position.of(this.x - 1, this.y);
+        return Position.of(this.x - 1, this.y).wrapped();
     }
 }

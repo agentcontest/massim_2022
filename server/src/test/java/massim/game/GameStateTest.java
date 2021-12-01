@@ -146,6 +146,29 @@ public class GameStateTest {
     }
 
     @org.junit.Test
+    public void handleRegularClearAction() {
+        var clearRole = getClearRole("testClearRole", 1, 1);
+        state.grid().entities().addRole(clearRole);
+        var a1 = state.grid().entities().getByName("A1");
+        a1.setRole(clearRole);
+        var a2 = state.grid().entities().getByName("A2");
+        state.teleport(a1.getAgentName(), Position.of(20, 20));
+        state.teleport(a2.getAgentName(), a1.getPosition().east());
+
+        state.prepareStep(0);
+        int energy = a2.getEnergy();
+        var result = state.handleClearAction(a1, Position.of(0, 0).east());
+        assert result.equals(ActionResults.FAILED_TARGET);
+        assert a2.getEnergy() == energy;
+
+        var block = state.grid().blocks().create(a1.getPosition().west(), "b1");
+        assert block != null;
+        result = state.handleClearAction(a1, Position.of(0, 0).west());
+        assert result.equals(ActionResults.SUCCESS);
+        assert state.grid().blocks().lookup(block.getPosition()) != block;
+    }
+
+    @org.junit.Test
     public void handleDisconnectAction() {
         var a1 = state.grid().entities().getByName("A1");
         var a2 = state.grid().entities().getByName("A2");
