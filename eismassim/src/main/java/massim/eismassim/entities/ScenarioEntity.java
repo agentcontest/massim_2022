@@ -38,7 +38,9 @@ public class ScenarioEntity extends ConnectedEntity {
                         id(role.name()),
                         num(role.vision()),
                         makeListOfIdentifiers(role.actions()),
-                        makeListOfNumerals(role.speed())))
+                        makeListOfNumerals(role.speed()),
+                        num(role.clearChance()),
+                        num(role.clearMaxDistance())))
         );
 
         return ret;
