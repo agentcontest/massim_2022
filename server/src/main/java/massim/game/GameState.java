@@ -326,7 +326,7 @@ public class GameState {
     private void createNewTasks() {
         var activeTasks = tasks.values().stream()
                 .filter(t -> !t.isCompleted())
-                .filter(t -> t.getDeadline() <= step)
+                .filter(t -> this.step <= t.getDeadline())
                 .count();
         var tasksMissing = this.concurrentTasks - activeTasks;
         for (var i = 0; i < tasksMissing; i++)
@@ -639,7 +639,8 @@ public class GameState {
     Task createTask(String name, int duration, int iterations, Map<Position, String> requirements) {
         if (requirements.size() == 0) return null;
         Task t = new Task(name, step + duration, iterations, requirements);
-        tasks.put(t.getName(), t);
+        this.tasks.put(t.getName(), t);
+        Log.log(Log.Level.NORMAL, "Task created: " + t);
         return t;
     }
 

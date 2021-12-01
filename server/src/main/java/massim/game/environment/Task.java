@@ -16,7 +16,7 @@ public class Task {
     private final String name;
     private final Map<Position, String> requirements;
     private final int deadline;
-    private int completed = 0;
+    private int timesCompleted = 0;
     private final int reward;
     private final int iterations;
 
@@ -37,11 +37,11 @@ public class Task {
     }
 
     public boolean isCompleted() {
-        return completed >= iterations;
+        return timesCompleted >= iterations;
     }
 
     public void completeOnce() {
-        completed++;
+        timesCompleted++;
     }
 
     public Map<Position, String> getRequirements() {

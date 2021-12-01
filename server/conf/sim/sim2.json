@@ -39,8 +39,8 @@
     "dispensers" : [5, 10],
 
     "tasks" : {
-      "size" : [1, 4],
-      "concurrent" : 2,
+      "size" : [2, 4],
+      "concurrent" : 3,
       "iterations" : [5, 10],
       "maxDuration" : [100, 200]
     },
