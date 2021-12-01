@@ -22,7 +22,7 @@
       "height" : 70,
       "width" : 70,
       "instructions": [
-        ["cave", 0.45, 9, 5, 4]
+        ["cave", 0.6, 2, 5, 4]
       ],
       "goals": {
         "number" : 3,
