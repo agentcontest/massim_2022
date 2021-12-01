@@ -557,6 +557,9 @@ public class GameState {
      * @return action result
      */
     String handleClearAction(Entity entity, Position xy) {
+        if (RNG.nextDouble() > entity.getRole().clearChance())
+            return FAILED_RANDOM;
+
         var targetPosition = xy.translate(entity.getPosition());
         var distance = entity.getPosition().distanceTo(targetPosition);
         if (distance > entity.getVision()) return FAILED_LOCATION;
