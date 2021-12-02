@@ -147,7 +147,7 @@ public class Entity extends Attachable {
     }
 
     public boolean isActionAvailable(String action) {
-        return this.role.actions().contains(action);
+        return action.equals(Actions.NO_ACTION) || this.role.actions().contains(action);
     }
 
     @Override
