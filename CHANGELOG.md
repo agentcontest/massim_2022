@@ -1,5 +1,27 @@
 # MASSim CHANGELOG
 
+## 2022
+
+### MASSim 2022-1.0 - Agents Assemble III (Beta to be sure)
+
+This time, some more things have changed. Please tell us soon if you think something doesn't work as expected.
+
+* scenario
+  * Norms
+    * Dynamic rules change what is allowed.
+  * Tasks
+    * Task boards are gone.
+    * Tasks can be submitted multiple times while they are active.
+    * Goal zones move away!
+  * Roles
+    * Agent's can adopt roles that change their parameters and which actions they are allowed to use.
+    * Role zones allow agents to adopt roles.
+  * Actions
+    * `accept` is now obsolete
+    * `adopt` is for roles
+    * `survey` gathers information
+    * `clear` is more important than ever
+
 ## 2020
 
 ### MASSim 2020-2.0 - Registration release
