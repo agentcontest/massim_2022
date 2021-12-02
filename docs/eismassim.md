@@ -227,11 +227,13 @@ The following percepts might be included in a `SIM-START` message:
   * n : Numeral - number of agents in the agent's team in the current round
 * `steps(n)`
   * n : Numeral - number of steps
-* `role(name, vision, [action1, action2, ...], [speed1, speed2, ...])`
+* `role(name, vision, [action1, action2, ...], [speed1, speed2, ...], clearChance, clearMaxDistance)`
   * name : Identifier
   * vision : Numeral
   * action[N] : Identifier
   * speed[N] : Numeral
+  * clearChance : Numeral (0-1)
+  * clearMaxDistance : Numeral
 
 #### REQUEST-ACTION percepts
 

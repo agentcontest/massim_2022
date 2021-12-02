@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -779,9 +780,15 @@ public class GameState {
         return SUCCESS;
     }
 
-    public String handleSurveyTargetAction(Entity entity, Entity targetEntity) {
-        var distance = entity.getPosition().distanceTo(targetEntity.getPosition());
-        if (distance > entity.getVision()) return FAILED_LOCATION;
+    public String handleSurveyTargetAction(Entity entity, Position targetPos) {
+        var distance = entity.getPosition().distanceTo(targetPos);
+        if (distance > entity.getVision())
+            return FAILED_LOCATION;
+        var targetEntities = new ArrayList<>(this.grid.entities().lookup(targetPos));
+        if (targetEntities.isEmpty())
+            return FAILED_TARGET;
+        RNG.shuffle(targetEntities);
+        var targetEntity = targetEntities.get(0);
         this.addEventPercept(entity, new JSONObject()
                 .put("type", "surveyed")
                 .put("target", "agent")

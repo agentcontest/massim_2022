@@ -106,10 +106,7 @@ public class Simulation {
         var entities = new ArrayList<>(state.grid().entities().getAll());
         RNG.shuffle(entities);
 
-        var previousPositions = new HashMap<Position, List<Entity>>();
         for (Entity entity : entities) {
-            previousPositions.computeIfAbsent(entity.getPosition(), k -> new ArrayList<>()).add(entity);
-
             var actionMessage = actions.get(entity.getAgentName());
             entity.setNewAction(actionMessage);
             if (actionMessage == null)
@@ -252,11 +249,9 @@ public class Simulation {
                             entity.setLastActionResult(FAILED_PARAMETER);
                             continue;
                         }
-                        var targetEntities = previousPositions.get(Position.of(x, y));
-                        if (targetEntities == null || targetEntities.isEmpty())
-                            entity.setLastActionResult(FAILED_TARGET);
-                        else
-                            entity.setLastActionResult(state.handleSurveyTargetAction(entity, targetEntities.get(0)));
+                        var pos = Position.of(x, y).translate(entity.getPosition());
+                        entity.setLastActionResult(
+                                state.handleSurveyTargetAction(entity, pos));
                     } else
                         entity.setLastActionResult(FAILED_PARAMETER);
                 }

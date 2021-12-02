@@ -69,7 +69,7 @@ Agents perceive everything in a specific radius r around them. In other words, a
 
 There are number of __things__ that can inhabit a cell of the grid:
 
-* __Entities__: Each agent controls an entity on the grid. Entites can move around and (with one of the correct roles) attach themselves to other things.
+* __Entities__: Each agent controls an entity on the grid. Entities can move around and (with one of the correct roles) attach themselves to other things.
 * __Blocks__: The building blocks of the scenario. Each block has a specific type. Agents can pick up blocks and stick multiple blocks together. Blocks have to be arranged into specific patterns to get score points.
 * __Obstacles__: Obstacles block the passage of agents. They can be attached and moved away or removed by clear actions. In contrast to blocks, they cannot be connected to other obstacles (or even blocks).
 * __Dispenser__: Each dispenser can be used to retrieve a specific kind of block.
@@ -166,57 +166,57 @@ The agent won't do anything this turn. Always successful (except for random fail
 
 Moves the agent in the specified directions. If the agent is currently allowed to move more than one cell, multiple directions can be given.
 
-No | Parameter | Meaning
---- | --- | ---
-0-* | direction | One of {n,s,e,w}, representing the direction the agent wants to move in.
+| No  | Parameter | Meaning                                                                  |
+|-----|-----------|--------------------------------------------------------------------------|
+| 0-* | direction | One of {n,s,e,w}, representing the direction the agent wants to move in. |
 
-Failure Code | Reason
---- | ---
-failed_parameter | No parameters given or at least one parameter is not a valid direction.
-failed_path | The first move was blocked.
-partial_success | At least the first step worked but one of the later moves was blocked.
+| Failure Code     | Reason                                                                  |
+|------------------|-------------------------------------------------------------------------|
+| failed_parameter | No parameters given or at least one parameter is not a valid direction. |
+| failed_path      | The first move was blocked.                                             |
+| partial_success  | At least the first step worked but one of the later moves was blocked.  |
 
 ### attach
 
 Attaches a thing (friendly entity, block or obstacle) to the agent. The agent has to be directly beside the thing.
 
-No | Parameter | Meaning
---- | --- | ---
-0 | direction | One of {n,s,e,w}, representing the direction to the thing the agent wants to attach.
+| No  | Parameter | Meaning                                                                              |
+|-----|-----------|--------------------------------------------------------------------------------------|
+| 0   | direction | One of {n,s,e,w}, representing the direction to the thing the agent wants to attach. |
 
-Failure Code | Reason
---- | ---
-failed_parameter | Parameter is not a direction.
-failed_target | There is nothing to attach in the given direction.
-failed_blocked | The thing is already attached to an opponent agent.
-failed | The agent already has too many things attached.
+| Failure Code     | Reason                                              |
+|------------------|-----------------------------------------------------|
+| failed_parameter | Parameter is not a direction.                       |
+| failed_target    | There is nothing to attach in the given direction.  |
+| failed_blocked   | The thing is already attached to an opponent agent. |
+| failed           | The agent already has too many things attached.     |
 
 ### detach
 
 Detaches a thing from the agent. Only the connection between the agent and the thing is released.
 
-No | Parameter | Meaning
---- | --- | ---
-0 | direction | One of {n,s,e,w}, representing the direction to the thing the agent wants to detach from.
+| No  | Parameter | Meaning                                                                                   |
+|-----|-----------|-------------------------------------------------------------------------------------------|
+| 0   | direction | One of {n,s,e,w}, representing the direction to the thing the agent wants to detach from. |
 
-Failure Code | Reason
---- | ---
-failed_parameter | Parameter is not a direction.
-failed_target | There was no attachment to detach in the given direction.
-failed | There was a thing but not attached to the agent.
+| Failure Code     | Reason                                                    |
+|------------------|-----------------------------------------------------------|
+| failed_parameter | Parameter is not a direction.                             |
+| failed_target    | There was no attachment to detach in the given direction. |
+| failed           | There was a thing but not attached to the agent.          |
 
 ### rotate
 
 Rotates the agent (and all attached things) 90 degrees in the given direction. For each attached thing, all _intermediate positions_ for the rotation have to be free as well. For any thing, the intermediate rotation positions are those, which have the same distance to the agent as the thing and are between the thing's current and target positions.
 
-No | Parameter | Meaning
---- | --- | ---
-0 | direction | One of {cw, ccw}, representing the rotation direction (clockwise or counterclockwise).
+| No  | Parameter | Meaning                                                                                |
+|-----|-----------|----------------------------------------------------------------------------------------|
+| 0   | direction | One of {cw, ccw}, representing the rotation direction (clockwise or counterclockwise). |
 
-Failure Code | Reason
---- | ---
-failed_parameter | Parameter is not a (rotation) direction.
-failed | One of the things attached to the agent cannot rotate to its target position OR the agent is currently attached to another agent.
+| Failure Code     | Reason                                                                                                                            |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| failed_parameter | Parameter is not a (rotation) direction.                                                                                          |
+| failed           | One of the things attached to the agent cannot rotate to its target position OR the agent is currently attached to another agent. |
 
 ### connect
 
@@ -227,31 +227,31 @@ Two agents can use this action to connect blocks attached to them. They have to 
 _agent1_ is on (3,3) and _agent2_ is on (3,7). _agent1_ has a block attached on (3,4) and one attached to that block on (3,5). _agent2_ has a block attached on (3,6). Both agents want to connect their attached blocks, namely those on (3,5) (of _agent1_) and (3,6) (attached to _agent2_).
 Then, _agent1_ has to perform `connect(agent2,0,2)`, while _agent2_ has to perform `connect(agent1,0,-1)` in the same step. If both actions succeed, the blocks will be connected and still attached to both agents.
 
-No | Parameter | Meaning
---- | --- | ---
-0 | agent | The agent to cooperate with.
-1/2 | x/y | The local coordinates of the block to connect.
+| No  | Parameter | Meaning                                        |
+|-----|-----------|------------------------------------------------|
+| 0   | agent     | The agent to cooperate with.                   |
+| 1/2 | x/y       | The local coordinates of the block to connect. |
 
-Failure Code | Reason
---- | ---
-failed_parameter | First parameter is not an agent of the same team OR x and y cannot be parsed to valid integers.
-failed_partner | The partner's action is not `connect` OR failed randomly OR has wrong parameters.
-failed_target | At least one of the specified blocks is not at the given position or not attached to the agent or already attached to the other agent.
-failed | The given positions are too far apart OR one agent is already attached to the other (or through other blocks), or connecting both blocks would violate the size limit for connected structures.
+| Failure Code     | Reason                                                                                                                                                                                          |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| failed_parameter | First parameter is not an agent of the same team OR x and y cannot be parsed to valid integers.                                                                                                 |
+| failed_partner   | The partner's action is not `connect` OR failed randomly OR has wrong parameters.                                                                                                               |
+| failed_target    | At least one of the specified blocks is not at the given position or not attached to the agent or already attached to the other agent.                                                          |
+| failed           | The given positions are too far apart OR one agent is already attached to the other (or through other blocks), or connecting both blocks would violate the size limit for connected structures. |
 
 ### disconnect
 
 Disconnects two attachments (probably blocks) of the agent.
 
-No | Parameter | Meaning
---- | --- | ---
-0/1 | attachment1 | The x/y coordinates of the first attachment.
-2/3 | attachment2 | The x/y coordinates of the second attachment.
+| No  | Parameter   | Meaning                                       |
+|-----|-------------|-----------------------------------------------|
+| 0/1 | attachment1 | The x/y coordinates of the first attachment.  |
+| 2/3 | attachment2 | The x/y coordinates of the second attachment. |
 
-Failure Code | Reason
---- | ---
-failed_parameter | No valid integer coordinates given.
-failed_target | Target locations aren't attachments of the agent or not attached to each other directly.
+| Failure Code     | Reason                                                                                   |
+|------------------|------------------------------------------------------------------------------------------|
+| failed_parameter | No valid integer coordinates given.                                                      |
+| failed_target    | Target locations aren't attachments of the agent or not attached to each other directly. |
 
 ### request
 
@@ -259,67 +259,111 @@ Requests a new block from a dispenser. The agent has to be in a cell adjacent to
 
 E.g. if an agent is on (3,3) and a dispenser is on (3,4), the agent can use `request(s)` to make a block appear on (3,4).
 
-No | Parameter | Meaning
---- | --- | ---
-0 | direction | One of {n,s,e,w}, representing the direction to the position of the dispenser to use.
+| No  | Parameter | Meaning                                                                               |
+|-----|-----------|---------------------------------------------------------------------------------------|
+| 0   | direction | One of {n,s,e,w}, representing the direction to the position of the dispenser to use. |
 
-Failure Code | Reason
---- | ---
-failed_parameter | Parameter is not a direction.
-failed_target | No dispenser was found in the specific position.
-failed_blocked | The dispenser's position is currently blocked by another agent or thing.
+| Failure Code     | Reason                                                                   |
+|------------------|--------------------------------------------------------------------------|
+| failed_parameter | Parameter is not a direction.                                            |
+| failed_target    | No dispenser was found in the specific position.                         |
+| failed_blocked   | The dispenser's position is currently blocked by another agent or thing. |
 
 ### submit
 
 Submit the pattern of things that are attached to the agent to complete a task.
 
-No | Parameter | Meaning
---- | --- | ---
-0 | task | The name of an active task.
+| No  | Parameter | Meaning                     |
+|-----|-----------|-----------------------------|
+| 0   | task      | The name of an active task. |
 
-Failure Code | Reason
---- | ---
-failed_target | No _active_ task could be associated with first parameter, or task has not been accepted by the agent.
-failed | One or more of the requested blocks are missing OR the agent is not on a goal terrain.
+| Failure Code  | Reason                                                                                                 |
+|---------------|--------------------------------------------------------------------------------------------------------|
+| failed_target | No _active_ task could be associated with first parameter, or task has not been accepted by the agent. |
+| failed        | One or more of the requested blocks are missing OR the agent is not on a goal terrain.                 |
 
 ### clear
 
 Clears a target cell if the agent has sufficient energy.
-* The area is cleared after a number of consecutive successful clear actions for the same target position.
+* The area is cleared of blocks and obstacles.
 * The action consumes a fixed amount of energy.
+* Targeted entities may get damaged.
+  * If the role's maximum clear distance is 1 or less, other entities cannot be damaged.
+  * The damage depends on the distance between both entities.
+  * Damage results in loss of energy.
 
-The effect of clearing a cell depends on the cells content:
-* *obstacle* terrain becomes *normal* terrain
-* *blocks* are destroyed
-* *entities* become disabled
+The clear action's success rate depends on an agent's role. I.e. there may be an additional probability to receive
+the `failed_random` result.
 
-No | Parameter | Meaning
---- | --- | ---
-0/1 | target | The x/y coordinates of the target position.
+| No  | Parameter | Meaning                                     |
+|-----|-----------|---------------------------------------------|
+| 0/1 | target    | The x/y coordinates of the target position. |
 
-Failure Code | Reason
---- | ---
-failed_parameter | No valid integer coordinates given.
-failed_target | Target location is not within the agent's vision radius or outside the grid.
-failed_resources | The agent's energy is too low.
+| Failure Code     | Reason                                                                         |
+|------------------|--------------------------------------------------------------------------------|
+| failed_parameter | No valid integer coordinates given.                                            |
+| failed_target    | Target location is not within the agent's vision radius or outside the grid.   |
+| failed_resources | The agent's energy is too low.                                                 |
+| failed_location  | The agent is targeting a cell out of reach.                                    |
+| failed_random    | The action failed due to random failure or the additional probability to fail. |
 
 * `Config: match.clearSteps` - number of action required for a successful clear
 * `Config: match.clearEnergyCost` - energy cost for a clear action (subtracted when the clear actually resolves)
 
-### adopt //TODO
+### adopt
 
-### survey //TODO
+Adopts a role if the agent is in a role zone.
+
+| No  | Parameter | Meaning                        |
+|-----|-----------|--------------------------------|
+| 0   | role      | The name of the role to adopt. |
+
+| Failure Code     | Reason                                              |
+|------------------|-----------------------------------------------------|
+| failed_parameter | No parameter or parameter is not a valid role name. |
+| failed_location  | Agent is not in a role zone.                        |
+
+### survey
+
+Localises or gathers information about a target. Moving targets are harder to survey.
+
+| No  | Parameter | Meaning                                             |
+|-----|-----------|-----------------------------------------------------|
+| 0   | target    | The target type. One of "dispenser", "goal", "role" |
+
+In this case, the agent will receive a percept with the distance to the nearest dispenser,
+goal zone or role zone before the next step.
+
+| Failure Code     | Reason                                      |
+|------------------|---------------------------------------------|
+| failed_parameter | No target parameter or target is not valid. |
+| failed_target    | No instance of the target found.            |
+
+
+The action can also be used with position parameters:
+
+| No  | Parameter |                                    |
+|-----|-----------|------------------------------------|
+| 0/1 | target    | The x/y coordinates of the target. |
+
+In this case, the agent will receive information about the agent (name, role and energy) at the given location.
+
+| Failure Code     | Reason                                                                     |
+|------------------|----------------------------------------------------------------------------|
+| failed_parameter | Parameters are not coordinates or too many parameters given.               |
+| failed_location  | The location is outside the agent's vision.                                |
+| failed_target    | There is no entity at the given location. It might have moved away before. |
 
 ### all actions
 
 All actions can also have the following failure codes:
 
-Failure Code | Reason
---- | ---
-failed_random | The action failed randomly.
-failed_status | The agent is deactivated.
-failed_role | The agent's current role does not permit the action.
-unknown_action | The action is not part of the game.
+| Failure Code   | Reason                                               |
+|----------------|------------------------------------------------------|
+| failed_random  | The action failed randomly.                          |
+| failed_status  | The agent is deactivated.                            |
+| failed_role    | The agent's current role does not permit the action. |
+| unknown_action | The action is not part of the game.                  |
 
 ## Percepts
 
@@ -348,10 +392,13 @@ Complete Example (with bogus values):
           "name": "SampleRole",
           "vision": 5,
           "actions": ["move", "attach"],
-          "speed": [2,1,0]
+          "speed": [2,1,0],
+          "clear": {
+            "chance": 0.5,
+            "maxDistance": 1 
+          }
         },
-        {...},
-        ...
+        {"..." :  "..."}
       ]
     }
   }
@@ -368,6 +415,9 @@ Complete Example (with bogus values):
   * __actions__: actions available to the role
   * __speed__: the different speeds the agent can move at with things attached
     * e.g. for [2,1,0], the agent can move 2 cells with no things attached, 1 cell with one thing attached and 0 cells (i.e. not at all) with two or more things attached.
+  * __clear__: properties of the clear action
+    * __chance__: the probability of the action to succeed (between 0 and 1)
+    * __maxDistance__: the maximum range of the action (if 1, entities cannot be damaged)
 
 ### Step percept
 
@@ -455,7 +505,7 @@ Example (complete request-action message):
                      "type": "b1"
                   }
                ]
-            },
+            }
          ],
          "norms": [
             {
@@ -470,8 +520,8 @@ Example (complete request-action message):
                     "quantity": 1
                   }
                ],
-              "punishment" : 15, 
-            },
+              "punishment" : 15
+            }
          ],
          "violations": ["n1"],
          "attached": [[2,-1]]
@@ -558,7 +608,9 @@ Example:
       "actions": ["skip", "move", "rotate", "adopt", "request", "attach", "detach", "connect", "disconnect", "submit"],
       "speed": [1, 1, 0]
     },
-    ...
+    {
+      "..." : "..."
+    }
   ],
 
   "clearEnergyCost" : 2,
@@ -622,7 +674,9 @@ Example:
                 "quantity": [1,1]
             }
         },
-        ...
+        {
+          "...": "..."
+        }
     ]
   },
 
@@ -638,12 +692,15 @@ For each simulation, the following parameters may be specified:
 * __randomFail__: the probability for any action to fail (in %)
 * __entities__: the number of entities (i.e. agents) per type
 * __clusterBounds__: min./max. number of agents starting near each other
-* __roles__:
+* __roles__: (see below the list for more information)
   * __name__: .
   * __vision__: max. distance the agent can perceive at
   * __actions__: all actions the role is allowed to use
   * __speed__: the different speeds the agent can move at with things attached
     * e.g. for [2,1,0], the agent can move 2 cells with no things attached, 1 cell with one thing attached and 0 cells (i.e. not at all) with two or more things attached.
+  * __clear__: properties of the clear action
+    * __chance__: the probability of the action to succeed (between 0 and 1)
+    * __maxDistance__: the maximum range of the action (if 1, entities cannot be damaged)
 * __clearEnergyCost__: how much an effective clear action costs
 * __deactivatedDuration__: for how many steps an agent remains disabled
 * __maxEnergy__: an agent's initial and maximum energy level
@@ -690,6 +747,10 @@ For each simulation, the following parameters may be specified:
   * see examples for more information
 
 Currently, there is only one standard agent role.
+
+Roles: Only the first role has to be configured with all values. This role will be the default role. If some
+value for another role is not set, the value/s of the default role will be used. Each role also
+gets all actions of the default role.
 
 ## Commands
 

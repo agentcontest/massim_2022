@@ -217,8 +217,8 @@ public class GameStateTest {
         assert state.teleport("B1", pos.moved("e", a1.getVision() + 1));
         var a2 = state.grid().entities().getByName("A2");
         var b1 = state.grid().entities().getByName("B1");
-        assert state.handleSurveyTargetAction(a1, a2).equals(ActionResults.SUCCESS);
-        assert state.handleSurveyTargetAction(a1, b1).equals(ActionResults.FAILED_LOCATION);
+        assert state.handleSurveyTargetAction(a1, a2.getPosition()).equals(ActionResults.SUCCESS);
+        assert state.handleSurveyTargetAction(a1, b1.getPosition()).equals(ActionResults.FAILED_LOCATION);
         percept = this.getPercept("A1");
         assert percept.stepEvents.length() == 1;
         assert percept.stepEvents.getJSONObject(0).getString("name").equals("A2");
