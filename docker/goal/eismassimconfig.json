@@ -1,0 +1,23 @@
+{
+  "scenario": "assemble2021",
+  "host": "massimserver",
+  "port": 12300,
+  "scheduling": false,
+  "timeout": 100000,
+  "notifications": false,
+  "exceptions": false,
+
+  "entities" : {},
+  
+  "multi-entities": [
+    {
+      "name-prefix": "entityA",
+      "username-prefix": "agentA",
+      "password": "1",
+      "print-iilang": false,
+      "print-json": false,
+      "start-index": 1,
+      "count": -1
+    }
+  ]
+}

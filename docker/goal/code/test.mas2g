@@ -1,0 +1,12 @@
+use "../lib/eismassim.jar" as environment.
+
+
+define myMAPCAgent as agent {
+    use "main" as main.
+    use "event" as event.
+}
+
+
+launchpolicy{
+    when * launch myMAPCAgent with name = *.
+}
