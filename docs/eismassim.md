@@ -91,14 +91,13 @@ Configuration example:
 
 ```JSON
 {
-  "scenario": "assemble2020",
+  "scenario": "assemble2022",
   "host": "localhost",
   "port": 12300,
   "scheduling": true,
-  "timeout": 40000,
+  "timeout": 4000,
   "notifications": false,
-  "queued": false,
-  "only-once": true,
+  "exceptions": false,
   "entities": [
     {
       "name": "connectionA28",
@@ -132,14 +131,20 @@ In the above example, one entity and one *set of entities* are configured at the
 
 The main entries are:
 
-* __scenario:__ the name of the MAPC scenario to handle
+* __scenario:__ the name of the MAPC scenario to handle - it isn't used but may identify the origin of the config later :)
 * __host:__ address of a _MASSim_ server
 * __port:__ port the _MASSim_ server is listening on
-* __scheduling:__ if `true`, an action can only be sent if a valid action-id is available; calls to `performAction` will also block until such an ID becomes available; it is recommended to not disable this
-* __timeout:__ the timeout to use in combination with __scheduling__ while waiting for `performAction`
-* __queued:__ if enabled, `getAllPercepts` will only yield one collection of percepts for each call (i.e. one for all percepts from a `SIM-START` message, one for all percepts from a `REQUEST-ACTION` message, etc.) in the same order as they were received from the _MASSim_ server
-* __only-once:__ if enabled, `getAllPercepts` will only yield the same percepts once (if __scheduling__ and __queued__ are both disabled - each of these options has the same side effect)
+* __scheduling:__ if `true`:
+  * calls to `performAction` will block until an ID becomes available (or time out)
+  * calls to `getPercepts` will block until new percepts are available (or time out)
+* __timeout:__ the timeout to use in combination with __scheduling__ while waiting for `performAction` or `getPercepts`
 * __notifications:__ if enabled, percepts will be delivered as notifications; this is detailed in the description of _EIS_
+
+Previous options (not available anymore):
+
+* __only-once:__ Due to changes in EIS, this is more or less default now. The `PerceptUpdate` contains a list of added and removed percepts each.
+* __queued:__ There is only one set of current percepts ever.
+
 
 Further, there is an object for each entity in the `entities` array, containing
 
@@ -196,7 +201,7 @@ Actions and percepts in _EISMASSim_ use the _Interface Intermediate Language_ (I
 
 Thus, any IILang _DataContainer_ forms a tree structure that can also be represented with Prolog-like syntax. For example, `car(red, 2007, [ac, radio], wheels(4))` could be a _Percept_ with the name `car`, an _Identifier_ (parameter) `red`, a _Numeral_ 2007, a _ParameterList_ containing 2 _Identifiers_ and a _Function_ named `wheels` containing a final _Numeral_.
 
-## MAPC 2020 scenario
+## MAPC 2022 scenario
 
 ### Actions
 

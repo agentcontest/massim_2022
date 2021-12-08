@@ -5,7 +5,7 @@ import eis.exceptions.PerceiveException;
 
 public abstract class Entity implements Runnable {
 
-    private String name;
+    private final String name;
 
     public Entity(String name) {
         this.name = name;
