@@ -21,6 +21,9 @@ This time, some more things have changed. Please tell us soon if you think somet
     * `adopt` is for roles
     * `survey` gathers information
     * `clear` is more important than ever
+* eismassim
+  * some now more or less obsolete options have been removed
+  * some exceptions have been disabled by default (and can be enabled again) - this might improve interaction with Goal
 
 ## 2020
 
