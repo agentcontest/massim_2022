@@ -565,7 +565,6 @@ public class GameState {
 
         var targetPosition = xy.translate(entity.getPosition());
         var distance = entity.getPosition().distanceTo(targetPosition);
-        System.out.println(distance);
         if (distance > maxDistance) return FAILED_LOCATION;
         if (entity.getEnergy() < Entity.clearEnergyCost) return FAILED_RESOURCES;
 
