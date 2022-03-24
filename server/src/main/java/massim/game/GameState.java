@@ -1,7 +1,9 @@
 package massim.game;
 
 import massim.config.TeamConfig;
-import massim.game.environment.*;
+import massim.game.environment.ClearEvent;
+import massim.game.environment.Grid;
+import massim.game.environment.Task;
 import massim.game.environment.positionable.*;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneType;
@@ -26,7 +28,6 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
