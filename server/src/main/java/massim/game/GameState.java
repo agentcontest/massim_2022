@@ -371,8 +371,8 @@ public class GameState {
                         attachedThings.add(thing.getPosition().relativeTo(pos));
                     }
                 }
-                if (this.grid.isInZone(ZoneType.GOAL, pos)) goalZones.add(currentPos.relativeTo(pos));
-                if (this.grid.isInZone(ZoneType.ROLE, pos)) roleZones.add(currentPos.relativeTo(pos));
+                if (this.grid.isInZone(ZoneType.GOAL, currentPos)) goalZones.add(currentPos.relativeTo(pos));
+                if (this.grid.isInZone(ZoneType.ROLE, currentPos)) roleZones.add(currentPos.relativeTo(pos));
             }
             List<String> punishment = records.stream()
                                                 .filter(p -> p.entity().getAgentName().equals(entity.getAgentName()))
