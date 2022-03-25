@@ -15,4 +15,6 @@ docs/*.html
 .project
 .settings
 .vscode
+.gradle
 logs/*
+replays/*
