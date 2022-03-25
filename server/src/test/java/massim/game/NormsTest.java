@@ -182,6 +182,56 @@ public class NormsTest {
     }
 
     @org.junit.Test
+    public void testNormAdopt(){
+        JSONObject regulation = getJSONRegulation();
+        JSONObject norm = getJSONNorm();
+        norm.put("name", "Adopt");
+        norm.getJSONObject("optional").put("max", new JSONArray().put(1).put(1));
+        regulation.put("chance", 100);
+        regulation.getJSONArray("subjects").put(norm);
+        Officer officer = new Officer(regulation);
+        officer.createNorms(1, this.state);
+
+        NormInfo normInfo = officer.getNorms().iterator().next().toPercept();
+        String role = normInfo.requirements.get(0).name;
+        // int qty =  normInfo.requirements.get(0).quantity;
+        List<Role> roles = this.state.grid().entities().getRoles();
+        List<Role> available = roles.stream().filter(r -> !r.name().equals(role)).collect(Collectors.toList());
+
+        Entity a1 = this.state.grid().entities().getByName("A1");
+        a1.setRole(this.state.grid().entities().getRole(role));
+        Entity a2 = this.state.grid().entities().getByName("A2");
+        a2.setRole(available.get(0));
+        Entity a3 = this.state.grid().entities().getByName("A3");
+        a3.setRole(available.get(0));
+        Entity b1 = this.state.grid().entities().getByName("B1");
+        b1.setRole(this.state.grid().entities().getRole(role));
+        int a1Energy = a1.getEnergy();
+        int a2Energy = a2.getEnergy();
+        int a3Energy = a3.getEnergy();
+        int b1Energy = b1.getEnergy();
+
+        ArrayList<Entity> agents = new ArrayList<>();
+        agents.add(a1);
+        agents.add(a2);
+        agents.add(a3);
+        agents.add(b1);
+
+        officer.regulateNorms(25, agents);
+        assert a1.getEnergy() == a1Energy;
+        assert a2.getEnergy() == a2Energy;
+        assert a3.getEnergy() == a3Energy;
+        assert b1.getEnergy() == b1Energy;
+
+        a2.setRole(this.state.grid().entities().getRole(role));
+        officer.regulateNorms(25, agents);
+        assert a1.getEnergy() < a1Energy;
+        assert a2.getEnergy() < a2Energy;
+        assert a3.getEnergy() == a3Energy;
+        assert b1.getEnergy() == b1Energy;
+    }
+
+    @org.junit.Test
     public void testActiveNorms(){
         JSONObject regulation = getJSONRegulation();
         regulation.put("simultaneous", 2);

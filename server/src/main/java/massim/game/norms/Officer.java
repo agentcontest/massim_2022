@@ -76,23 +76,22 @@ public class Officer {
     private final double chance;
     private double accumulatedWeight = 0;
     private final Map<String, Norm> norms;
-    private final Map<String, NormTemplate> templates;
     private final Map<Integer, ArrayList<Record>> archive;
+    private final ArrayList<NormTemplate> templates;
 
     public Officer(JSONObject config) {
         this.norms = new HashMap<>();
-        this.templates = new HashMap<>();
         this.archive = new HashMap<>();
+        this.templates = new ArrayList<>();
         this.maxActiveNorms = config.getInt("simultaneous");
         this.chance = config.getDouble("chance")/100;
 
         JSONArray norms = config.getJSONArray("subjects");
         for (int i=0; i < norms.length(); i++) {
             JSONObject temp = norms.getJSONObject(i);
-            String name = temp.getString("name");
             this.accumulatedWeight += temp.getDouble("weight");
-            this.templates.put(name, new NormTemplate(temp, this.accumulatedWeight));
-            Log.log(Log.Level.NORMAL, "Template of norm " + name + " added");         
+            this.templates.add(new NormTemplate(temp, this.accumulatedWeight));
+            Log.log(Log.Level.NORMAL, "Template of norm " + temp.getString("name") + " added");         
         }    
     }
 
@@ -136,7 +135,7 @@ public class Officer {
             return;        
 
         double p = RNG.nextDouble() * this.accumulatedWeight;
-        for (NormTemplate temp : this.templates.values()) {
+        for (NormTemplate temp : this.templates) {
             if (temp.getChance() >= p) {
                 Norm norm = createNorm(step, temp);
                 norm.bill(state, temp.getAdditionalInfo());

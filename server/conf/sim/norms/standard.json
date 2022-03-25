@@ -13,18 +13,24 @@
             }          
         },
         {
-            "name" : "RoleIndividual",
+            "name" : "Adopt",
             "announcement" : [10, 20],
-            "duration" : [100, 200],
-            "punishment": [10, 20],
-            "weight": 15
+            "duration" : [20, 50],
+            "punishment": [5, 10],
+            "weight": 15,
+            "optional": {
+                "max": [0,0]
+            }          
         },
         {
-            "name" : "RoleTeam",
+            "name" : "Adopt",
             "announcement" : [10, 20],
             "duration" : [100, 200],
             "punishment": [10, 20],
-            "weight": 15
+            "weight": 15,
+            "optional": {
+                "max": [1,3]
+            }
         }
     ]
 }

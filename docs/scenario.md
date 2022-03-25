@@ -123,9 +123,8 @@ Regarding the general regulation:
 
 Regarding each specific subject:
 * `name` - It must be one of the following options: 
-  * Carry: the agents will be prohibited to carry some quantity of things
-  * RoleIndividual: the agents are prohibited to be of a particular role
-  * RoleTeam: the team is prohibited to have many agents of a particular role.
+  * Carry: the agents are prohibited to carry a certain quantity of things
+  * Adopt: the teams are prohibited to have more than a specified number of agents adopting a particular role.
 * `announcement` - the number of steps of the announcement period
 * `duration` - the number of steps the norm stays active after the announcement period is over
 * `punishment` - the number of energy points an agent loses in case it violates a norm
@@ -133,6 +132,8 @@ Regarding each specific subject:
 * `optional` - subject dependent information to help specifing what a norm should regulate. 
   * Carry: 
     * `quantity` - the number of things an agent may carry
+  * Adopt: 
+    * `max` - the maximum number of agents that can adopt a given role
 
 ## Tasks
 

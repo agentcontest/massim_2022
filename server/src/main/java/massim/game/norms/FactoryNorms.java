@@ -6,7 +6,8 @@ import java.util.function.Supplier;
 public enum FactoryNorms {
     RoleIndividual(NormRoleIndividual::new),
     RoleTeam(NormRoleTeam::new),
-    Carry(NormCarry::new);
+    Carry(NormCarry::new),
+    Adopt(NormAdopt::new);
 
     public final Supplier<Norm> factory;
     private FactoryNorms(Supplier<Norm> factory) {
