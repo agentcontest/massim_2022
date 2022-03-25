@@ -1,7 +1,9 @@
 package massim.game;
 
 import massim.config.TeamConfig;
-import massim.game.environment.*;
+import massim.game.environment.ClearEvent;
+import massim.game.environment.Grid;
+import massim.game.environment.Task;
 import massim.game.environment.positionable.*;
 import massim.game.environment.zones.Zone;
 import massim.game.environment.zones.ZoneType;
@@ -26,7 +28,6 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -359,20 +360,20 @@ public class GameState {
         List<Record> records = officer.getArchive(this.step);
 
         for (var entity : this.grid.entities().getAll()) {
-            var pos = entity.getPosition();
+            var agentPos = entity.getPosition();
             var visibleThings = new HashSet<Thing>();
             var attachedThings = new ArrayList<Position>();
             var goalZones = new ArrayList<Position>();
             var roleZones = new ArrayList<Position>();
-            for (var currentPos: pos.spanArea(entity.getVision())){
+            for (var currentPos: agentPos.spanArea(entity.getVision())){
                 for (var thing : this.grid.getEverythingAt(currentPos)) {
-                    visibleThings.add(thing.toPercept(pos));
+                    visibleThings.add(thing.toPercept(agentPos));
                     if (thing != entity && thing instanceof Attachable a && a.isAttachedToAnotherEntity()){
-                        attachedThings.add(thing.getPosition().relativeTo(pos));
+                        attachedThings.add(thing.getPosition().relativeTo(agentPos));
                     }
                 }
-                if (this.grid.isInZone(ZoneType.GOAL, currentPos)) goalZones.add(currentPos.relativeTo(pos));
-                if (this.grid.isInZone(ZoneType.ROLE, currentPos)) roleZones.add(currentPos.relativeTo(pos));
+                if (this.grid.isInZone(ZoneType.GOAL, currentPos)) goalZones.add(currentPos.relativeTo(agentPos));
+                if (this.grid.isInZone(ZoneType.ROLE, currentPos)) roleZones.add(currentPos.relativeTo(agentPos));
             }
             List<String> punishment = records.stream()
                                                 .filter(p -> p.entity().getAgentName().equals(entity.getAgentName()))
