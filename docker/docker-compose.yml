@@ -35,7 +35,6 @@ services:
   #     dockerfile: goal/Dockerfile
   #     args:
   #       JAVA_VERSION: ${JAVA_VERSION}
-  #       GOAL_URL: ${GOAL_URL}
   #   networks:
   #     - main
   #   volumes:
