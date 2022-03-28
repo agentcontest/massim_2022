@@ -1,4 +1,4 @@
-// Agent bob in project MAPC2018.mas2j
+// Agent A in project SampleMAS.mas2j
 
 /* Initial beliefs and rules */
 
@@ -8,12 +8,15 @@
 
 /* Plans */
 
-+!start : true <- 
++!start : true <-
 	.print("hello massim world.").
 
 +step(X) : true <-
 	.print("Received step percept:", X).
 	
-+actionID(X) : true <- 
++actionID(X) : true <-
 	.print("Determining my action.", X);
+	!doSomething.
+
++!doSomething <-
 	skip.

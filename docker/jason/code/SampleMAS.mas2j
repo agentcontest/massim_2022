@@ -8,11 +8,10 @@
 
 MAS mapc2021 {
 
-    infrastructure: Centralised
+    infrastructure: Local
 
     environment: jason.eis.EISAdapter
 
     agents:
-        agentA #15;
+        agentA #20;
 }
-
