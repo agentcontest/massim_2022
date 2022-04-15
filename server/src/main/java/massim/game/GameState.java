@@ -629,11 +629,11 @@ public class GameState {
         while (requirements.size() < size) {
             double direction = RNG.nextDouble();
             if (direction <= .3)
-                lastPosition = lastPosition.west();
+                lastPosition = Position.of(lastPosition.x - 1, lastPosition.y);
             else if (direction <= .6)
-                lastPosition = lastPosition.east();
+                lastPosition = Position.of(lastPosition.x + 1, lastPosition.y);
             else
-                lastPosition = lastPosition.south();
+                lastPosition = Position.of(lastPosition.x, lastPosition.y + 1);
             requirements.put(lastPosition, typeList.get(RNG.nextInt(typeList.size())));
         }
         this.createTask(name, duration, iterations, requirements);
