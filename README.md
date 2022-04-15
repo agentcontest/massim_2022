@@ -1,7 +1,7 @@
 MASSim 2022: Agents Assemble III
 ================================
 
-[![Continuous Integration](https://github.com/agentcontest/massim_2020/workflows/Continuous%20Integration/badge.svg)](https://github.com/agentcontest/massim_2020/actions?query=workflow%3A%22Continuous+Integration%22)
+[![Build](https://github.com/agentcontest/massim_2022/workflows/Build/badge.svg)](https://github.com/agentcontest/massim_2022/actions?query=workflow%3A%22Build%22)
 
 _MASSim_ (Multi-Agent Systems Simulation Platform), the simulation (server)
 software used in the
