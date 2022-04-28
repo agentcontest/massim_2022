@@ -208,7 +208,7 @@ Detaches a thing from the agent. Only the connection between the agent and the t
 
 ### rotate
 
-Rotates the agent (and all attached things) 90 degrees in the given direction. For each attached thing, all _intermediate positions_ for the rotation have to be free as well. For any thing, the intermediate rotation positions are those, which have the same distance to the agent as the thing and are between the thing's current and target positions.
+Rotates the agent (and all attached things) 90 degrees in the given direction. For each attached thing, its _final position_ after the rotation has to be free.
 
 | No  | Parameter | Meaning                                                                                |
 |-----|-----------|----------------------------------------------------------------------------------------|
