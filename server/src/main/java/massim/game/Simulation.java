@@ -256,7 +256,7 @@ public class Simulation {
                         entity.setLastActionResult(FAILED_PARAMETER);
                 }
 
-                case ADOPT -> {
+                case ADOPT, ADAPT -> {
                     var roleName = getStringParam(params, 0);
                     entity.setLastActionResult(state.handleAdoptAction(entity, roleName));
                 }
