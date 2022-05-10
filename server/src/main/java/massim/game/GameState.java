@@ -254,6 +254,7 @@ public class GameState {
                 if (x == null || y == null || type.isEmpty()) break;
                 if (type.equalsIgnoreCase("obstacle")) grid.obstacles().create(Position.of(x, y));
                 else if (type.equalsIgnoreCase("goal")) grid.addZone(ZoneType.GOAL, Position.of(x, y), 1);
+                else if (type.equalsIgnoreCase("role")) grid.addZone(ZoneType.ROLE, Position.of(x, y), 1);
                 break;
 
             default:
