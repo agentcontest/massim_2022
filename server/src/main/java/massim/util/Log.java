@@ -17,8 +17,8 @@ public class Log {
     private static File outputFile = null;
     private static FileWriter writer = null;
 
-    private static Map<Level, OutputStream> outputs = new HashMap<>();
-    private static Map<Level, String> typeStrings = new HashMap<>();
+    private static final Map<Level, OutputStream> outputs = new HashMap<>();
+    private static final Map<Level, String> typeStrings = new HashMap<>();
 
     static{ // initialization
         outputs.put(Level.CRITICAL, System.err);
@@ -27,7 +27,7 @@ public class Log {
         outputs.put(Level.DEBUG, System.out);
 
         typeStrings.put(Level.CRITICAL, "[ CRITICAL  ] ");
-        typeStrings.put(Level.ERROR, "[ ERROR  ] ");
+        typeStrings.put(Level.ERROR, "[ ERROR   ] ");
         typeStrings.put(Level.NORMAL, "[ NORMAL  ] ");
         typeStrings.put(Level.DEBUG, "[ DEBUG  ] ");
 
