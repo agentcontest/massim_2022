@@ -1,6 +1,7 @@
 package massim.game.norms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,22 +17,45 @@ import massim.game.environment.positionable.Entity;
 import massim.game.GameState;
 import massim.protocol.data.NormInfo;
 import massim.protocol.data.Subject;
-import massim.util.ConfigUtil;
+import massim.util.Bounds;
 import massim.util.RNG;
-import massim.util.Util;
 
 public class NormAdopt extends Norm{
     private final Map<String, Integer> prohibitedRoles = new HashMap<>();
 
-    public NormAdopt(){
-        
+    public NormAdopt(){       
     }
 
     @Override
     public void bill(GameState state, JSONObject info) {
-        var role = state.grid().entities().getRandomRole().name();
-        int max = RNG.betweenClosed(ConfigUtil.getBounds(info, "max"));
-        this.prohibitedRoles.put(role, max);
+        double percentage = (double) info.getInt("playing") / 100;
+
+        HashMap<String, Integer> teamIndex = new HashMap<>();
+        for (String team : state.getTeams().keySet())
+            teamIndex.put(team, teamIndex.size());
+        
+        HashMap<String, int[]> counters = new HashMap<>();
+        for (Entity entity : state.grid().entities().getAll()) {
+            String role = entity.getRole().name();
+            if (!counters.containsKey(role))
+                counters.put(role, new int[teamIndex.size()]); // default value of an element is 0
+
+            int index = teamIndex.get(entity.getTeamName());
+            counters.get(role)[index] += 1;
+        }
+
+        float prob = RNG.betweenClosed(new Bounds(0, 1));
+        float total = 0;
+        String chosen = counters.keySet().iterator().next();
+        for (Map.Entry<String, int[]> counter : counters.entrySet()) {
+            total += Arrays.stream(counter.getValue()).sum();
+            if (total <= prob)
+                chosen = counter.getKey();
+                break;
+        }
+
+        int max = (int) Math.ceil(Arrays.stream(counters.get(chosen)).max().getAsInt() * percentage);
+        this.prohibitedRoles.put(chosen, max);
         this.level = NormInfo.Level.TEAM;
     }
 
