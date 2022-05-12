@@ -103,21 +103,23 @@ When a clear event happens, a certain area is marked. The timing and size of an 
 * `create` - the bounds for how many obstacles are created (additional to the number of objects destroyed by the event)
 * `perimeter` - an additional radius where new obstacles may be created (added to the event's radius)
 
-### Norms
+## Norms
 
-Norms introduce dynamic small changes in the rules of the game. When a norm is in place, an agent must decide whether to follow or violate it. 
+Norms introduce dynamically small changes in the rules of the game. When a norm is in place, an agent must decide whether to follow or violate it. 
 In the latter case, the violator is punished with a decrease in its energy level. 
 Before policing a norm, the game's officer announces it to all agents.
 After a small number of steps, the norm becomes active.
 We call an *approved norm* a norm that is either announced or active.
-Each norm regulates a specific *subject*, that is, a characteristic of the scenario.
-Moreover, a norm regulates either an agent (individual level) or a team (team level).
-For instance, at the team level, a norm may state that at most 2 agents may adopt the role constructor. 
+Each norm regulates on a specific *subject*, that is, a characteristic of the scenario.
+Moreover, a norm regulates on what either an agent (individual level) or a team (team level) can do.
+For instance, at the team level, a norm might state that at most 2 agents may adopt a given role. 
 
-`Config: match.regulation.*`:
+### Configuration
+
+`Config: match.regulation.*`
 
 Regarding the general regulation:
-* `simultaneous` - how many norms are allowed to be in the state approved at the same step.
+* `simultaneous` - how many norms are allowed to be in the state approved at the same step
 * `chance` - the chance for a norm to be created (in %)
 * `subjects` - the subjects a norm may regulate
 
@@ -129,11 +131,38 @@ Regarding each specific subject:
 * `duration` - the number of steps the norm stays active after the announcement period is over
 * `punishment` - the number of energy points an agent loses in case it violates a norm
 * `weight` - a weight of a subject to be chosen. For instance, if subject Carry has weight of 15 and subject RoleIndividual has weight of 15, then each subject has probability of 50% of being selected
-* `optional` - subject dependent information to help specifing what a norm should regulate. 
-  * Carry: 
-    * `quantity` - the number of things an agent may carry
-  * Adopt: 
-    * `max` - the maximum number of agents that can adopt a given role
+* `optional` - subject dependent information to help specifing on what a norm should regulate. 
+
+### Selected Subjects
+
+#### Carrying Blocks
+ 
+Establishes an upper bound on the number of blocks (regardless of the types of the blocks) that an agent can carry.
+
+*Additional Configuration*
+  * `quantity` - the lower and upper bound on the number of things an agent may carry
+
+*Algorithmic View*:
+  * Select a random upper bound given the bounds specified in the config file;
+  * Apply that bound to **all** blocks;
+    * E.g., the bound is set to 2, and an agent is carrying one block of each of the following types `b0`, `b1`, and `b2`. Therefore, punishment is applicable to that agent. 
+  * Punish every agent that does not follow the norm.
+
+#### Adopting Roles
+Establishes an upper bound per team on the number of agents that can play a chosen role.
+
+*Additional Configuration*
+  * `playing` - the percentage of agents that can play a given role
+
+*Algorithmic View*:
+  * If the percentage is set to `0%`, then no agent can play that role
+  * Count the number of agents adopting each role and set the probability of choosing a role to be prohibited accordingly.
+  * Count the number of agents in each team that is adopting the selected role; select the greatest number.
+  * Set the number of agents allowed to play the selected role (per team) according to a percentage defined in the configuration file.
+    * E.g., the role `explorer` has been selected, and `20` agents are playing this role currently (`5` agents in Team A and `15` agents in Team B). The percentage has been set to `50%`, then the norm will allow `8` agents per team to play the role of `explorer`.
+  * Punish all agents in a team that are not following the Norm. 
+    * E.g., Team B has `9` agents playing the role of `explorer`; thus the `9` agents will be punished
+
 
 ## Tasks
 

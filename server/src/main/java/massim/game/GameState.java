@@ -171,7 +171,7 @@ public class GameState {
         return defaultRole;
     }
 
-    Map<String, Team> getTeams() {
+    public Map<String, Team> getTeams() {
         return this.teams;
     }
 
