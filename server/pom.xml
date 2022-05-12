@@ -39,6 +39,8 @@
                     <archive>
                         <manifest>
                             <mainClass>massim.Server</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
                     </archive>
                     <descriptorRefs>

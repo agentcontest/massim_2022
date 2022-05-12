@@ -4,6 +4,7 @@ import massim.config.ServerConfig;
 import massim.config.TeamConfig;
 import massim.monitor.Monitor;
 import massim.game.Simulation;
+import massim.protocol.messages.Message;
 import massim.util.IOUtil;
 import massim.util.InputManager;
 import massim.util.Log;
@@ -14,6 +15,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -130,6 +132,14 @@ public class Server {
 
         server.go();
         server.close();
+    }
+
+    public Server() {
+        printVersions();
+    }
+
+    private void printVersions() {
+        Log.log(Log.Level.NORMAL, "MASSim Server version   " + getClass().getPackage().getImplementationVersion());
     }
 
     /**
