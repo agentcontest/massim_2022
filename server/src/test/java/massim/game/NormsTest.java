@@ -2,6 +2,7 @@ package massim.game;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -240,6 +241,45 @@ public class NormsTest {
         assert a2.getEnergy() < a2Energy;
         assert a3.getEnergy() < a3Energy;
         assert b1.getEnergy() == b1Energy;
+    }
+
+    @org.junit.Test
+    public void testRoleSelectionNormAdopt(){
+        JSONObject regulation = getJSONRegulation();
+        JSONObject norm = getJSONNorm();
+        norm.put("name", "Adopt");
+        norm.getJSONObject("optional").put("playing", 50);
+        regulation.put("chance", 100);
+        regulation.getJSONArray("subjects").put(norm);
+        Officer officer = new Officer(regulation);
+
+        
+        String role = "default";
+        // int qty =  normInfo.requirements.get(0).quantity;
+        List<Role> roles = this.state.grid().entities().getRoles();
+        List<Role> available = roles.stream().filter(r -> !r.name().equals(role)).collect(Collectors.toList());
+
+        Entity a1 = this.state.grid().entities().getByName("A1");
+        Entity a2 = this.state.grid().entities().getByName("A2");
+        Entity a3 = this.state.grid().entities().getByName("A3");
+        Entity b1 = this.state.grid().entities().getByName("B1");
+        Entity b2 = this.state.grid().entities().getByName("B2");
+        Entity b3 = this.state.grid().entities().getByName("B3");
+        
+        a1.setRole(available.get(0));
+        a2.setRole(available.get(0));
+        a3.setRole(available.get(1));
+        b1.setRole(available.get(1));
+        b2.setRole(available.get(1));
+        b3.setRole(available.get(0));
+
+        officer.createNorms(1, this.state);
+
+        NormInfo normInfo = officer.getNorms().iterator().next().toPercept();
+        Subject subject = normInfo.requirements.get(0);
+        String[] allowed_roles = {available.get(0).name(), available.get(1).name()};
+        assert Arrays.stream(allowed_roles).anyMatch(r -> r.equals(subject.name));
+        assert subject.quantity == 1;
     }
 
     @org.junit.Test
