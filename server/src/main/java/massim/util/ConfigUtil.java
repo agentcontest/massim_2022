@@ -25,4 +25,10 @@ public abstract class ConfigUtil {
         Log.log(Log.Level.NORMAL, key + ": [" + bounds.lower() + ", " + bounds.upper() + "]");
         return bounds;
     }
+
+    public static boolean getBool(JSONObject config, String key, boolean defaultValue) {
+        var result = config.optBoolean(key, defaultValue);
+        Log.log(Log.Level.NORMAL, key + ": " + result);
+        return result;
+    }
 }

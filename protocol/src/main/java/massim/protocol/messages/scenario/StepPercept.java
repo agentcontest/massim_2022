@@ -28,6 +28,7 @@ public class StepPercept extends RequestActionMessage {
     public List<String> violations;
     public List<Position> goalZones = new ArrayList<>();
     public List<Position> roleZones = new ArrayList<>();
+    public Position optAbsolutePosition;
 
     public StepPercept(JSONObject content) {
         super(content);
@@ -37,7 +38,8 @@ public class StepPercept extends RequestActionMessage {
     public StepPercept(int step, long score, Set<Thing> things,
                        Set<TaskInfo> taskInfo, Set<NormInfo> normInfo, String action, List<String> lastActionParams, String result,
                        List<Position> attachedThings, JSONArray stepEvents, String role, int energy,
-                       boolean deactivated, List<String> violations, List<Position> goalZones, List<Position> roleZones) {
+                       boolean deactivated, List<String> violations, List<Position> goalZones, List<Position> roleZones,
+                       Position optAbsolutePosition) {
         super(System.currentTimeMillis(), -1, -1, step); // id and deadline are updated later
         this.score = score;
         this.things.addAll(things);
@@ -54,11 +56,12 @@ public class StepPercept extends RequestActionMessage {
         this.violations = violations;
         this.goalZones = goalZones;
         this.roleZones = roleZones;
+        this.optAbsolutePosition = optAbsolutePosition;
     }
 
     @Override
     public JSONObject makePercept() {
-        return new JSONObject()
+        var percept = new JSONObject()
                 .put("score", score)
                 .put("things", new JSONArray(things.stream().map(Thing::toJSON).collect(Collectors.toList())))
                 .put("tasks", new JSONArray(taskInfo.stream().map(TaskInfo::toJSON).collect(Collectors.toList())))
@@ -74,6 +77,9 @@ public class StepPercept extends RequestActionMessage {
                 .put("violations", new JSONArray(violations))
                 .put("goalZones", new JSONArray(this.goalZones.stream().map(Position::toJSON).collect(Collectors.toList())))
                 .put("roleZones", new JSONArray(this.roleZones.stream().map(Position::toJSON).collect(Collectors.toList())));
+        if (optAbsolutePosition != null)
+            percept.put("absolutePosition", optAbsolutePosition.toJSON());
+        return percept;
     }
 
     private void parsePercept(JSONObject percept) {
@@ -116,6 +122,10 @@ public class StepPercept extends RequestActionMessage {
         this.attachedThings = positionArrayToList(percept.optJSONArray("attached"));
         this.goalZones = positionArrayToList(percept.optJSONArray("goalZones"));
         this.roleZones = positionArrayToList(percept.optJSONArray("roleZones"));
+
+        var optAbsPositionArr = percept.optJSONArray("absolutePosition");
+        if (optAbsPositionArr != null)
+            this.optAbsolutePosition = Position.fromJSON(optAbsPositionArr);
     }
 
     private static List<Position> positionArrayToList(JSONArray positions) {

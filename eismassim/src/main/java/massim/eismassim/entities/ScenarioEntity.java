@@ -138,6 +138,9 @@ public class ScenarioEntity extends ConnectedEntity {
                 }
         }
 
+        if (percept.optAbsolutePosition != null)
+            ret.add(new Percept("position", num(percept.optAbsolutePosition.x), num(percept.optAbsolutePosition.y)));
+
         return ret;
     }
 

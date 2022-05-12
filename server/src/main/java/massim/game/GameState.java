@@ -65,6 +65,8 @@ public class GameState {
     private final int eventCreatePerimeter;
     private final int[] clearDamage;
 
+    private final boolean perceiveAbsolutePosition;
+
     private final Map<String, JSONArray> stepEvents = new HashMap<>();
 
     private final JSONArray logEvents = new JSONArray();
@@ -90,6 +92,8 @@ public class GameState {
         var dispenserBounds = ConfigUtil.getBounds(config, "dispensers");
 
         clearDamage = JSONUtil.getIntArray(config, "clearDamage");
+
+        this.perceiveAbsolutePosition = ConfigUtil.getBool(config, "absolutePosition", false);
 
         var taskConfig = config.getJSONObject("tasks");
         this.taskMaxDuration = ConfigUtil.getBounds(taskConfig, "maxDuration");
@@ -396,7 +400,8 @@ public class GameState {
                     entity.isDeactivated(),
                     punishment,
                     goalZones,
-                    roleZones
+                    roleZones,
+                    this.perceiveAbsolutePosition? entity.getPosition() : null
             ));
         }
         return result;

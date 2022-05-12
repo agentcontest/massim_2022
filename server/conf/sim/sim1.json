@@ -53,5 +53,7 @@
       "perimeter" : 2
     },
 
-    "regulation" : "$(norms/standard.json)"
+    "regulation" : "$(norms/standard.json)",
+
+    "absolutePosition" : false
 }
