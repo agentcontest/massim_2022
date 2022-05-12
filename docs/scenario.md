@@ -105,21 +105,21 @@ When a clear event happens, a certain area is marked. The timing and size of an 
 
 ## Norms
 
-Norms introduce dynamic small changes in the rules of the game. When a norm is in place, an agent must decide whether to follow or violate it. 
+Norms introduce dynamically small changes in the rules of the game. When a norm is in place, an agent must decide whether to follow or violate it. 
 In the latter case, the violator is punished with a decrease in its energy level. 
 Before policing a norm, the game's officer announces it to all agents.
 After a small number of steps, the norm becomes active.
 We call an *approved norm* a norm that is either announced or active.
-Each norm regulates a specific *subject*, that is, a characteristic of the scenario.
-Moreover, a norm regulates either an agent (individual level) or a team (team level).
-For instance, at the team level, a norm may state that at most 2 agents may adopt the role constructor. 
+Each norm regulates on a specific *subject*, that is, a characteristic of the scenario.
+Moreover, a norm regulates on what either an agent (individual level) or a team (team level) can do.
+For instance, at the team level, a norm might state that at most 2 agents may adopt a given role. 
 
 ### Configuration
 
-`Config: match.regulation.*`:
+`Config: match.regulation.*`
 
 Regarding the general regulation:
-* `simultaneous` - how many norms are allowed to be in the state approved at the same step.
+* `simultaneous` - how many norms are allowed to be in the state approved at the same step
 * `chance` - the chance for a norm to be created (in %)
 * `subjects` - the subjects a norm may regulate
 
@@ -133,7 +133,7 @@ Regarding each specific subject:
 * `weight` - a weight of a subject to be chosen. For instance, if subject Carry has weight of 15 and subject RoleIndividual has weight of 15, then each subject has probability of 50% of being selected
 * `optional` - subject dependent information to help specifing on what a norm should regulate. 
 
-### Selected Subjects of Norms
+### Selected Subjects
 
 #### Carrying Blocks
  

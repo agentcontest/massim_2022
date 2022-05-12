@@ -2,11 +2,11 @@
 
 ## 2022
 
-### MASSim 2022-1.1.0 - Agents Assemble III
+### MASSim 2022-To.Be.Released - Agents Assemble III
 
 * scenario
   * Norms
-    * Fixing the kinds of norms. An algorithmic description of each can be found [here](https://github.com/agentcontest/massim_2022/blob/main/docs/scenario.md#norms)
+    * Fixing the kinds of norms. An algorithmic description of each can be found [here](/docs/scenario.md#norms)
   * Actions
     * Introduces an alias for the `adopt` action: `adapt`
   * General bug fixes
