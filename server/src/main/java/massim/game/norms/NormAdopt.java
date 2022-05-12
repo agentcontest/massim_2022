@@ -18,7 +18,9 @@ import massim.game.GameState;
 import massim.protocol.data.NormInfo;
 import massim.protocol.data.Subject;
 import massim.util.Bounds;
+import massim.util.Log;
 import massim.util.RNG;
+import massim.util.Log.Level;
 
 public class NormAdopt extends Norm{
     private final Map<String, Integer> prohibitedRoles = new HashMap<>();
@@ -28,7 +30,11 @@ public class NormAdopt extends Norm{
 
     @Override
     public void bill(GameState state, JSONObject info) {
-        double percentage = (double) info.getInt("playing") / 100;
+        double percentage = 1.0;
+        if (info.has("playing"))
+            percentage = (double) info.getInt("playing") / 100;
+        else
+            Log.log(Level.ERROR, "Adopt Norm Template: 'playing' parameter not defined. Using the default value of 100%.");
 
         HashMap<String, Integer> teamIndex = new HashMap<>();
         for (String team : state.getTeams().keySet())
