@@ -28,7 +28,7 @@
       "entities" : {"standard" : 20},
       "clusterBounds" : [1,3],
 
-      "roles" : "$(roles/standard.json)",
+      "roles" : "$(sim/roles/standard.json)",
 
       "clearEnergyCost" : 2,
       "deactivatedDuration" : 10,
@@ -74,7 +74,7 @@
         "perimeter" : 2
       },
 
-      "regulation" : "$(norms/standard.json)",
+      "regulation" : "$(sim/norms/standard.json)",
 
       "absolutePosition" : true
     }
