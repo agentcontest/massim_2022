@@ -10,12 +10,14 @@ import org.json.JSONObject;
 
 import massim.game.environment.positionable.Entity;
 import massim.game.GameState;
+import massim.protocol.data.NormInfo;
 import massim.protocol.data.Subject;
 import massim.util.Log;
 import massim.util.RNG;
 import massim.util.Log.Level;
 
 public class NormCarry extends Norm{
+    private record Template(int min, int max) {    }
     private int maxBlocks = 0;
 
     public NormCarry() {
@@ -23,18 +25,26 @@ public class NormCarry extends Norm{
     }
 
     @Override
-    public void bill(GameState state, JSONObject info) {    
+    public Record checkTemplate(JSONObject optionalParams){
+        final String key = "quantity"; 
         int min = 0;
         int max = 4;
-        if (info.has("quantity")){
-            min = (int) info.getJSONArray("quantity").get(0);
-            max = (int) info.getJSONArray("quantity").get(1);
+        
+        if (optionalParams.has(key)){
+            min = (int) optionalParams.getJSONArray(key).get(0);
+            max = (int) optionalParams.getJSONArray(key).get(1);
         }
         else
-            Log.log(Level.ERROR, "Carry Norm Template: 'quantity' parameter not defined. Using the default value of [0, 4].");
+            Log.log(Level.ERROR, "Carry Norm Template: '"+key+"' parameter not defined. Using the default value of [0, 4].");
         
-        
-        this.maxBlocks = RNG.betweenClosed(min, max);
+        return new Template(min, max);
+    }
+
+    @Override
+    public void bill(GameState state, Record info) { 
+        Template template = (Template) info;        
+        this.maxBlocks = RNG.betweenClosed(template.min, template.max);
+        this.level = NormInfo.Level.INDIVIDUAL;
     }
 
     @Override

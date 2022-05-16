@@ -23,18 +23,28 @@ import massim.util.RNG;
 import massim.util.Log.Level;
 
 public class NormAdopt extends Norm{
+    private record Template(double percentage) {    }
     private final Map<String, Integer> prohibitedRoles = new HashMap<>();
 
     public NormAdopt(){       
     }
 
     @Override
-    public void bill(GameState state, JSONObject info) {
+    public Record checkTemplate(JSONObject optionalParams){
+        final String key = "playing"; 
         double percentage = 1.0;
-        if (info.has("playing"))
-            percentage = (double) info.getInt("playing") / 100;
+
+        if (optionalParams.has(key))
+            percentage = (double) optionalParams.getInt(key) / 100;
         else
-            Log.log(Level.ERROR, "Adopt Norm Template: 'playing' parameter not defined. Using the default value of 100%.");
+            Log.log(Level.ERROR, "Adopt Norm Template: '"+key+"' parameter not defined. Using the default value of 100%.");
+            
+        return new Template(percentage);
+    }
+
+    @Override
+    public void bill(GameState state, Record info) {
+        Template template = (Template) info;
 
         HashMap<String, Integer> teamIndex = new HashMap<>();
         for (String team : state.getTeams().keySet())
@@ -60,7 +70,7 @@ public class NormAdopt extends Norm{
                 break;
         }
 
-        int max = (int) Math.ceil(Arrays.stream(counters.get(chosen)).max().getAsInt() * percentage);
+        int max = (int) Math.ceil(Arrays.stream(counters.get(chosen)).max().getAsInt() * template.percentage);
         this.prohibitedRoles.put(chosen, max);
         this.level = NormInfo.Level.TEAM;
     }

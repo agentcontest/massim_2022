@@ -27,7 +27,7 @@ public class Officer {
         private final int maxAnnouncement;
         private final int minPunishment;
         private final int maxPunishment;
-        private JSONObject additionalInfo;
+        private java.lang.Record additionalInfo;
         public NormTemplate(JSONObject template, double weight) {   
             this.name = template.getString("name");      
             this.chance = weight;
@@ -37,9 +37,9 @@ public class Officer {
             this.maxAnnouncement = template.getJSONArray("announcement").getInt(1);
             this.minPunishment = template.getJSONArray("punishment").getInt(0);
             this.maxPunishment = template.getJSONArray("punishment").getInt(1);
-            this.additionalInfo = template.optJSONObject("optional");
-            if (this.additionalInfo==null)
-                this.additionalInfo = new JSONObject();
+
+            Norm norm = FactoryNorms.valueOf(this.name).factory.get();
+            this.additionalInfo = norm.checkTemplate(template.optJSONObject("optional", new JSONObject()));
         }
         public String getName() {
             return name;
@@ -65,7 +65,7 @@ public class Officer {
         public double getChance() {
             return chance;
         }
-        public JSONObject getAdditionalInfo() {
+        public java.lang.Record getAdditionalInfo() {
             return additionalInfo;
         }
     }

@@ -20,8 +20,9 @@ public abstract class Norm {
     int until = 0;
     int punishment = 0;
     NormInfo.Level level = NormInfo.Level.INDIVIDUAL;
-
-    public abstract void bill(GameState state, JSONObject info);
+    
+    public abstract Record checkTemplate(JSONObject optionalParams);
+    public abstract void bill(GameState state, Record info);
     public abstract ArrayList<Entity> enforce(Collection<Entity> entities);
     abstract JSONArray requirementsAsJSON();
     abstract Set<Subject> getRequirements();

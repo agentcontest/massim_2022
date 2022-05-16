@@ -24,7 +24,12 @@ public class NormRoleIndividual extends Norm{
     }
 
     @Override
-    public void bill(GameState state, JSONObject info) {
+    public Record checkTemplate(JSONObject optionalParams){
+        return null;
+    }
+
+    @Override
+    public void bill(GameState state, Record info) {
         var role = state.grid().entities().getRandomRole().name();
         this.prohibitedRoles.put(role, 1);
         this.level = NormInfo.Level.INDIVIDUAL;
