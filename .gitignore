@@ -7,6 +7,10 @@ target
 monitor/node
 monitor/node_modules
 monitor/src/main/resources/www/main.js
+docker/jason/code/bin
+docker/jason/code/build
+docker/jason/code/logs
+docker/jason/code/replays
 *.iml
 .idea
 *.DS_Store
