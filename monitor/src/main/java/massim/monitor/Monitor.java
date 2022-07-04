@@ -92,7 +92,7 @@ public class Monitor {
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-                case "--port":
+                case "--port", "-p":
                     port = Integer.parseInt(args[++i]);
                     break;
                 default:
