@@ -130,7 +130,7 @@ Regarding each specific subject:
 * `announcement` - the number of steps of the announcement period
 * `duration` - the number of steps the norm stays active after the announcement period is over
 * `punishment` - the number of energy points an agent loses in case it violates a norm
-* `weight` - a weight of a subject to be chosen. For instance, if subject Carry has weight of 15 and subject RoleIndividual has weight of 15, then each subject has probability of 50% of being selected
+* `weight` - an integer value that dictates the probability of selecting the subject. For instance, if subject SubjectA has weight of 15 and subject SubjectB has weight of 15, then each subject has probability of 50% of being selected.
 * `optional` - subject dependent information to help specifing on what a norm should regulate. 
 
 ### Selected Subjects
