@@ -1,0 +1,192 @@
+{
+  "server" : {
+    "tournamentMode" : "round-robin",
+    "teamsPerMatch" : 2,
+    "launch" : "key",
+    "port" : 12300,
+    "backlog" : 10000,
+    "agentTimeout" : 4000,
+    "resultPath" : "results",
+    "logLevel" : "normal",
+    "logPath" : "logs",
+    "replayPath" : "replays",
+    "maxPacketLength" : 65536,
+    "waitBetweenSimulations" : 5000
+  },
+
+  "match" : [
+    {
+      "steps" : 400,
+      "randomFail" : 1,
+      "entities" : {"standard" : 20},
+      "clusterBounds" : [1,3],
+  
+      "roles" : "$(sim/roles/standard.json)",
+  
+      "clearEnergyCost" : 2,
+      "deactivatedDuration" : 10,
+      "maxEnergy" : 100,
+      "refreshEnergy" : 50,
+      "stepRecharge" : 1,
+      "clearDamage" : [32, 16, 8, 4, 2, 1],
+  
+      "attachLimit" : 10,
+  
+      "grid" : {
+        "height" : 70,
+        "width" : 70,
+        "instructions": [
+          ["cave", 0.5, 2, 5, 4]
+        ],
+        "goals": {
+          "number" : 4,
+          "size" : [1,3],
+          "moveProbability": 0.05
+        },
+        "roleZones" : {
+          "number" : 5,
+          "size" : [3, 5]
+        }
+      },
+  
+      "blockTypes" : [2, 2],
+      "dispensers" : [5, 10],
+  
+      "tasks" : {
+        "size" : [1, 3],
+        "concurrent" : 2,
+        "iterations" : [10, 12],
+        "maxDuration" : [50, 100]
+      },
+  
+      "events" : {
+        "chance" : 15,
+        "radius" : [3, 5],
+        "warning" : 5,
+        "create" : [1, 3],
+        "perimeter" : 2
+      },
+  
+      "regulation" : "$(sim/norms/standard.json)",
+  
+      "absolutePosition" : false
+  },
+  {
+    "steps" : 600,
+    "randomFail" : 1,
+    "entities" : {"standard" : 20},
+    "clusterBounds" : [1,3],
+
+    "roles" : "$(sim/roles/standard.json)",
+
+    "clearEnergyCost" : 2,
+    "deactivatedDuration" : 10,
+    "maxEnergy" : 100,
+    "refreshEnergy" : 50,
+    "stepRecharge" : 1,
+    "clearDamage" : [32, 16, 8, 4, 2, 1],
+
+    "attachLimit" : 10,
+
+    "grid" : {
+      "height" : 70,
+      "width" : 70,
+      "instructions": [
+        ["cave", 0.6, 2, 5, 4]
+      ],
+      "goals": {
+        "number" : 4,
+        "size" : [1,3],
+        "moveProbability": 0.1
+      },
+      "roleZones" : {
+        "number" : 5,
+        "size" : [3, 5]
+      }
+    },
+
+    "blockTypes" : [3, 3],
+    "dispensers" : [5, 10],
+
+    "tasks" : {
+      "size" : [1, 4],
+      "concurrent" : 2,
+      "iterations" : [5, 10],
+      "maxDuration" : [100, 100]
+    },
+
+    "events" : {
+      "chance" : 15,
+      "radius" : [3, 5],
+      "warning" : 5,
+      "create" : [-3, 1],
+      "perimeter" : 2
+    },
+
+    "regulation" : "$(sim/norms/standard.json)",
+
+    "absolutePosition" : false
+  },
+  {
+    "steps" : 800,
+    "randomFail" : 1,
+    "entities" : {"standard" : 40},
+    "clusterBounds" : [1,3],
+
+    "roles" : "$(sim/roles/standard.json)",
+
+    "clearEnergyCost" : 2,
+    "deactivatedDuration" : 10,
+    "maxEnergy" : 100,
+    "refreshEnergy" : 50,
+    "stepRecharge" : 1,
+    "clearDamage" : [32, 16, 8, 4, 2, 1],
+
+    "attachLimit" : 10,
+
+    "grid" : {
+      "height" : 100,
+      "width" : 100,
+      "instructions": [
+        ["cave", 0.6, 2, 5, 4]
+      ],
+      "goals": {
+        "number" : 4,
+        "size" : [1,3],
+        "moveProbability": 0.1
+      },
+      "roleZones" : {
+        "number" : 5,
+        "size" : [3, 5]
+      }
+    },
+
+    "blockTypes" : [3, 3],
+    "dispensers" : [5, 10],
+
+    "tasks" : {
+      "size" : [1, 4],
+      "concurrent" : 2,
+      "iterations" : [5, 10],
+      "maxDuration" : [100, 100]
+    },
+
+    "events" : {
+      "chance" : 15,
+      "radius" : [3, 5],
+      "warning" : 5,
+      "create" : [-3, 1],
+      "perimeter" : 2
+    },
+
+    "regulation" : "$(sim/norms/standard.json)",
+
+    "absolutePosition" : false
+  }
+  ],
+
+  "teams" : {
+    "A" : {"prefix" : "agent", "password" : "1"},
+    "B" : {"prefix" : "agent", "password" : "1"}
+  }
+}

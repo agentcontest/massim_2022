@@ -5,8 +5,8 @@
         {
             "name" : "Carry",
             "announcement" : [5, 10],
-            "duration" : [3, 10],
-            "punishment": [10, 15],
+            "duration" : [5, 10],
+            "punishment": [10, 10],
             "weight": 10,
             "optional": {
                 "quantity": [0,1]
@@ -39,7 +39,7 @@
             "punishment": [2, 3],
             "weight": 15,
             "optional": {
-                "playing": 50
+                "playing": 25
             }
         }
     ]

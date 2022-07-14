@@ -5,7 +5,7 @@
     "actions": ["skip", "move", "rotate", "adopt", "detach", "clear"],
     "speed": [1],
     "clear": {
-      "chance": 0.3,
+      "chance": 0.7,
       "maxDistance": 1
     }
   },
