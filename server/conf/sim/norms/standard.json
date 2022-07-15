@@ -39,7 +39,7 @@
             "punishment": [2, 3],
             "weight": 15,
             "optional": {
-                "playing": 25
+                "playing": 50
             }
         }
     ]
