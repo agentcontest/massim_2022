@@ -154,9 +154,9 @@ An attachable thing is either an *entity*, a *block*, or an *obstacle*.
 For the 16th MAPC, the *carry* subject (see the [step percept description](#step-percept)) has a **single** requirement and its correspondind percept is in the form of
 
 ```
-"requirements": [{ "type": "carry", "name": "any", "quantity": 1 }]
+"requirements": [{ "type": "block", "name": "any", "quantity": 1 }]
 ```
-- Property `type` is set to `carry`.
+- Property `type` is set to `block`.
 - Property `name` is always set to `any`. That means, **anything** attached to an agent counts towards the maximum number of attachable things it may carry.
 - Property `quantity` is an integer value between the configured range. 
 
@@ -180,9 +180,9 @@ Establishes an upper bound per team on the number of agents that can play a chos
 For the 16th MAPC, the *adopt* subject (see the [step percept description](#step-percept)) has a **single** requirement and its correspondind percept is in the form of
 
 ```
-"requirements": [{ "type": "adopt", "name": "default", "quantity": 5 }]
+"requirements": [{ "type": "role", "name": "default", "quantity": 5 }]
 ```
-- Property `type` is set to `adopt`.
+- Property `type` is set to `role`.
 - Property `name` is one of the available roles.
 - Property `quantity` is an integer representing the maximum number of agents that can adopt that role in a team.
 
@@ -630,7 +630,7 @@ Example (complete request-action message):
   * __until__: the step in which a norm becomes inactive
   * __level__: one of ["individual", "team"]
   * __requirements__: what the norm regulates (see [each norm subject](#selected-subjects))
-    * __type__: one of ["carry", "adopt"]
+    * __type__: one of ["block", "role"]
     * __name__: one of ["any", ASingleRole], where `ASingleRole` is one of the available roles, e.g., the role *constructor*
     * __quantity__: an integer representing the maximum number that can be carried/adopted
 * __violations__: a list of norms an agent is violating at the current step
