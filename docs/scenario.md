@@ -567,7 +567,7 @@ Example (complete request-action message):
               "level" : "individual",
               "requirements": [
                   {
-                    "type": "carry",
+                    "type": "block",
                     "name": "any",
                     "quantity": 1
                   }
