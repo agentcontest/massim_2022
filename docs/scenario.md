@@ -125,7 +125,7 @@ Regarding the general regulation:
 
 Regarding each specific subject:
 * `name` - It must be one of the following options: 
-  * Carry: the agents are prohibited to carry a certain quantity of things
+  * Carry: the agents are prohibited to carry a certain number of attachable things;
   * Adopt: the teams are prohibited to have more than a specified number of agents adopting a particular role.
 * `announcement` - the number of steps of the announcement period
 * `duration` - the number of steps the norm stays active after the announcement period is over
@@ -135,18 +135,30 @@ Regarding each specific subject:
 
 ### Selected Subjects
 
-#### Carrying Blocks
+#### Carrying Attachable Things
  
-Establishes an upper bound on the number of blocks (regardless of the types of the blocks) that an agent can carry.
+Establishes an upper bound on the number of attachable things that an agent can carry.
+An attachable thing is either an *entity*, a *block*, or an *obstacle*.
 
 *Additional Configuration*
   * `quantity` - the lower and upper bound on the number of things an agent may carry
 
 *Algorithmic View*:
   * Select a random upper bound given the bounds specified in the config file;
-  * Apply that bound to **all** blocks;
+  * Apply that bound to **all** attachable things;
     * E.g., the bound is set to 2, and an agent is carrying one block of each of the following types `b0`, `b1`, and `b2`. Therefore, punishment is applicable to that agent. 
   * Punish every agent that does not follow the norm.
+
+*Requeriment Percept*: 
+
+For the 16th MAPC, the *carry* subject (see the [step percept description](#step-percept)) has a **single** requirement and its correspondind percept is in the form of
+
+```
+"requirements": [{ "type": "carry", "name": "any", "quantity": 1 }]
+```
+- Property `type` is set to `carry`.
+- Property `name` is always set to `any`. That means, **anything** attached to an agent counts towards the maximum number of attachable things it may carry.
+- Property `quantity` is an integer value between the configured range. 
 
 #### Adopting Roles
 Establishes an upper bound per team on the number of agents that can play a chosen role.
@@ -163,6 +175,16 @@ Establishes an upper bound per team on the number of agents that can play a chos
   * Punish all agents in a team that are not following the Norm. 
     * E.g., Team B has `9` agents playing the role of `explorer`; thus the `9` agents will be punished
 
+*Requeriment Percept*: 
+
+For the 16th MAPC, the *adopt* subject (see the [step percept description](#step-percept)) has a **single** requirement and its correspondind percept is in the form of
+
+```
+"requirements": [{ "type": "adopt", "name": "default", "quantity": 5 }]
+```
+- Property `type` is set to `adopt`.
+- Property `name` is one of the available roles.
+- Property `quantity` is an integer representing the maximum number of agents that can adopt that role in a team.
 
 ## Tasks
 
@@ -606,12 +628,12 @@ Example (complete request-action message):
   * __name__: the norm's identifier
   * __start__: the step in which a norm becomes active
   * __until__: the step in which a norm becomes inactive
-  * __level__: whether the norm applies to individual agents or a team of agents
-  * __requirements__: what the norm regulates
-    * __type__: the subject of the norm
-    * __name__: the precise name the subject refers to, e.g., the role *constructor*
-    * __quantity__: the maximum quantity that can be carried/adopted
-* __violations__: the list of norms an agent is violating at the current step
+  * __level__: one of ["individual", "team"]
+  * __requirements__: what the norm regulates (see [each norm subject](#selected-subjects))
+    * __type__: one of ["carry", "adopt"]
+    * __name__: one of ["any", ASingleRole], where `ASingleRole` is one of the available roles, e.g., the role *constructor*
+    * __quantity__: an integer representing the maximum number that can be carried/adopted
+* __violations__: a list of norms an agent is violating at the current step
 * __attached__: an array of positions - each position represents a thing that is (directly or indirectly) attached to an entity
 
 ## Configuration
