@@ -80,23 +80,39 @@ public class NormsTest {
 
         Entity a1 = this.state.grid().entities().getByName("A1");
         state.teleport(a1.getAgentName(), Position.of(20, 20));
+        Entity a2 = this.state.grid().entities().getByName("A2");
+        state.teleport(a2.getAgentName(), Position.of(23, 20));
         int a1Energy = a1.getEnergy();
+        int a2Energy = a2.getEnergy();
         Position pos = a1.getPosition();
+        Position pos2 = a2.getPosition();
 
         ArrayList<Entity> agents = new ArrayList<>();
         agents.add(a1);
+        agents.add(a2);
 
         assert officer.getActiveNorms(25).size() == 1;
 
         assert this.state.grid().blocks().create(pos.east(), "b1") != null;
         assert this.state.handleAttachAction(a1, "e").equals(ActionResults.SUCCESS);
+        assert this.state.grid().blocks().create(pos2.west(), "b2") != null;
+        assert this.state.handleAttachAction(a2, "w").equals(ActionResults.SUCCESS);
+
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() == a1Energy;
 
-        assert this.state.grid().blocks().create(pos.south(), "b1") != null;
-        assert this.state.handleAttachAction(a1, "s").equals(ActionResults.SUCCESS);
+        assert this.state.handleConnectAction(a1, Position.of(1, 0), a2, Position.of(-1, 0)).equals(ActionResults.SUCCESS);
+
         officer.regulateNorms(25, agents);
         assert a1.getEnergy() < a1Energy;
+        assert a2.getEnergy() < a2Energy;
+        a1Energy = a1.getEnergy();
+        a2Energy = a2.getEnergy();
+
+        assert this.state.handleDisconnectAction(a1, Position.of(2, 0), Position.of(3, 0)).equals(ActionResults.SUCCESS);
+        officer.regulateNorms(25, agents);
+        assert a1.getEnergy() < a1Energy;
+        assert a2.getEnergy() == a2Energy;
 
         assert !a1.isDeactivated();
         for (int i=0; i<=30; i++){

@@ -18,7 +18,7 @@ import massim.util.Log.Level;
 
 public class NormCarry extends Norm{
     private record Template(int min, int max) {    }
-    private int maxBlocks = 0;
+    private int maxAttached = 0;
 
     public NormCarry() {
         
@@ -31,8 +31,14 @@ public class NormCarry extends Norm{
         int max = 4;
         
         if (optionalParams.has(key)){
-            min = (int) optionalParams.getJSONArray(key).get(0);
-            max = (int) optionalParams.getJSONArray(key).get(1);
+            int temp_min = Math.max(0, (int) optionalParams.getJSONArray(key).get(0));
+            int temp_max = (int) optionalParams.getJSONArray(key).get(1);
+            if (temp_min <= temp_max){
+                min = temp_min;
+                max = temp_max;
+            } 
+            else 
+                Log.log(Level.ERROR, "Carry Norm Template: invalid min ("+temp_min+") and max ("+temp_max+") interval. Using the default value of [0, 4].");
         }
         else
             Log.log(Level.ERROR, "Carry Norm Template: '"+key+"' parameter not defined. Using the default value of [0, 4].");
@@ -43,7 +49,7 @@ public class NormCarry extends Norm{
     @Override
     public void bill(GameState state, Record info) { 
         Template template = (Template) info;        
-        this.maxBlocks = RNG.betweenClosed(template.min, template.max);
+        this.maxAttached = RNG.betweenClosed(template.min, template.max);
         this.level = NormInfo.Level.INDIVIDUAL;
     }
 
@@ -52,7 +58,7 @@ public class NormCarry extends Norm{
         ArrayList<Entity> violators = new ArrayList<>();
         
         for (Entity entity : entities) {
-            if (entity.getAttachments().size() > this.maxBlocks)
+            if (entity.collectAllAttachments(false).size() > this.maxAttached)
                 violators.add(entity);
         }
         
@@ -64,7 +70,7 @@ public class NormCarry extends Norm{
         JSONObject req = new JSONObject();
         JSONObject carry = new JSONObject();
         carry.put("type",  "any");
-        carry.put("number", this.maxBlocks);
+        carry.put("number", this.maxAttached);
         req.put("carry", carry);
         return new JSONArray().put(req);
     }
@@ -72,7 +78,7 @@ public class NormCarry extends Norm{
     @Override
     Set<Subject> getRequirements() {
         Set<Subject> reqs = new HashSet<>();
-        reqs.add(new Subject(Subject.Type.BLOCK, "any", maxBlocks, ""));
+        reqs.add(new Subject(Subject.Type.BLOCK, "any", maxAttached, ""));
         return reqs;   
     }       
 }
