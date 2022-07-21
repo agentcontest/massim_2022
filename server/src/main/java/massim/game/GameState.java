@@ -356,6 +356,7 @@ public class GameState {
         Map<String, RequestActionMessage> result = new HashMap<>();
         var activeTasks = tasks.values().stream()
                 .filter(t -> !t.isCompleted())
+                .filter(t -> step <= t.getDeadline())
                 .map(Task::toPercept)
                 .collect(Collectors.toSet());
         var allNorms = officer.getApprovedNorms(this.step).stream()
