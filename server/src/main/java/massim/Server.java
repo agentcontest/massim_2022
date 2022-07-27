@@ -493,7 +493,7 @@ public class Server {
                 if(teamList != null){
                     Set<TeamConfig> parsedTeamNames = new HashSet<>();
                     for (int j = 0; j < config.teamsPerMatch; j++){
-                        String team = teamList.optString(i, "");
+                        String team = teamList.optString(j, "");
                         if (team.equals("")) break;
                         TeamConfig teamConfig = teamMap.get(team);
 
