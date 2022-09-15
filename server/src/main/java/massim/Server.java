@@ -314,7 +314,7 @@ public class Server {
 
             // handle steps
             for (int i = 0; i < steps; i++){
-                Log.log(Log.Level.NORMAL, "Simulation at step " + i);
+                Log.logWithTimestamp(Log.Level.NORMAL, "Simulation at step " + i);
                 handleInputs(sim);
                 var percepts = sim.preStep(i);
                 var actions = agentManager.requestActions(percepts);

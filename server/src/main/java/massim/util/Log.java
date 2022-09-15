@@ -4,6 +4,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -19,6 +24,9 @@ public class Log {
 
     private static final Map<Level, OutputStream> outputs = new HashMap<>();
     private static final Map<Level, String> typeStrings = new HashMap<>();
+
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu.MM.dd HH:mm:ss")
+                                                                                .withZone(ZoneOffset.UTC);
 
     static{ // initialization
         outputs.put(Level.CRITICAL, System.err);
@@ -76,6 +84,10 @@ public class Log {
         }
 
         logString(type, metaInfo +" ##   " + msg + "\n");
+    }
+
+    public static void logWithTimestamp(Level type, String msg) {
+        Log.log(type, msg + " @ " + dateTimeFormatter.format(LocalDateTime.now()));
     }
 
     /**
