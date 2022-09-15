@@ -83,17 +83,23 @@ function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
 function norms(ctrl: Ctrl, world: DynamicWorld): VNode {
   return h(
     'ul',
-    world.norms.map(norm =>
-      h('li', [
+    world.norms.map(norm => {
+      const who = (norm.level==='individual') ? 'each agent' : 'a team';
+      const what = norm.requirements.map(requirement => {
+        if (requirement.type==='BLOCK')
+          return h('li', `carry at most ${requirement.quantity} of ${requirement.name}`);
+        else if (requirement.type==='ROLE')
+          return h('li', `have at most ${requirement.quantity} ${requirement.name} agents`);
+        else 
+          return h('li', `undefined`);
+      });    
+      return h('li', [
         h('strong', norm.name),
-        ` from ${norm.start} to ${norm.until}: ${norm.level} must`,
-        h(
-          'ul',
-          norm.requirements.map(requirement => h('li', JSON.stringify(requirement)))
-        ),
+        ` from ${norm.start} to ${norm.until}: ${who} must`,
+        h('ul', what),
         `or lose ${norm.punishment} energy`,
-      ])
-    )
+      ]);
+    })
   );
 }
 
