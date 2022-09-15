@@ -63,6 +63,7 @@ public abstract class Norm {
         norm.put("requirements", new JSONArray());
         for (Subject req : getRequirements()) {
             JSONObject requirement = new JSONObject();
+            requirement.put("type", req.type);
             requirement.put("name", req.name);
             requirement.put("quantity", req.quantity);
             norm.getJSONArray("requirements").put(requirement);
