@@ -158,18 +158,20 @@ function entityDescription(ctrl: Ctrl, entity: Entity): Array<VNode | string> {
 function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: Task): VNode {
   const xs = task.requirements.map(b => Math.abs(b.pos[0]));
   const ys = task.requirements.map(b => Math.abs(b.pos[1]));
-  const width = 2 * Math.max(...xs) + 1;
-  const height = 2 * Math.max(...ys) + 1;
+  const yMin = Math.min(0, ...ys);
+  const width = 2 * Math.max(0, ...xs) + 1;
+  const height = Math.max(0, ...ys) + 1 - yMin;
   const elementWidth = 218;
-  const gridSize = Math.min(Math.floor(elementWidth / width), 50);
+  const gridSize = Math.min(Math.floor(elementWidth / width), 35);
   const elementHeight = gridSize * height;
   const render = function (vnode: VNode) {
     const canvas = vnode.elm as HTMLCanvasElement;
     const ctx = canvas.getContext('2d')!;
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.translate((elementWidth - gridSize) / 2, (elementHeight - gridSize) / 2);
+    ctx.translate((elementWidth - gridSize) / 2, 0);
     ctx.scale(gridSize, gridSize);
+    ctx.translate(0, -yMin);
     drawEntity(ctx, 0, 0, { pos: [0, 0] }, 0);
     drawBlocks(ctx, 0, 0, st, task.requirements);
     ctx.restore();
