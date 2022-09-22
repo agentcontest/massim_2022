@@ -6,7 +6,6 @@ export interface ViewModel {
   state: ConnectionState;
   static?: StaticWorld;
   dynamic?: DynamicWorld;
-  taskName?: string;
   hover?: Pos;
   teamNames: string[];
 }

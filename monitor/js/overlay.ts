@@ -37,47 +37,7 @@ function teams(teamNames: string[], world: DynamicWorld): VNode[] {
 }
 
 function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
-  const selectedTask = world.tasks.find(t => t.name === ctrl.vm.taskName);
-  return [
-    h(
-      'select',
-      {
-        attrs: {
-          name: 'tasks',
-        },
-        on: {
-          change: function (e) {
-            ctrl.vm.taskName = (e.target as HTMLOptionElement).value;
-            ctrl.redraw();
-          },
-        },
-      },
-      [
-        h(
-          'option',
-          {
-            attrs: {
-              value: '',
-            },
-          },
-          simplePlural(world.tasks.length, 'task')
-        ),
-        ...world.tasks.map(t => {
-          return h(
-            'option',
-            {
-              attrs: {
-                value: t.name,
-                selected: t.name === ctrl.vm.taskName,
-              },
-            },
-            `$${t.reward} for ${t.name} until step ${t.deadline}`
-          );
-        }),
-      ]
-    ),
-    ...(selectedTask ? taskDetails(ctrl, st, world, selectedTask) : []),
-  ];
+  return world.tasks.flatMap(task => taskDetails(ctrl, st, world, task));
 }
 
 function norms(ctrl: Ctrl, world: DynamicWorld): VNode {
