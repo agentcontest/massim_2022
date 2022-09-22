@@ -63,7 +63,9 @@ class LiveBroadcast:
         while True:
             async with self.step_changed:
                 await self.step_changed.wait()
-                await ws.send_json(self.dynamic[self.step])
+                to_send = self.dynamic[self.step]
+
+            await ws.send_json(to_send)
 
         return ws
 
