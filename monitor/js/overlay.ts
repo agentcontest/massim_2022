@@ -177,7 +177,13 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
     ctx.restore();
   };
   return h('div.box', [
-    h('p', `$${task.reward} for ${task.name} until step ${task.deadline}`),
+    h(
+      'p',
+      `$${task.reward} for ${task.name} until step ${task.deadline} (${simplePlural(
+        task.requirements.length,
+        'block'
+      )})`
+    ),
     h('canvas', {
       attrs: {
         width: elementWidth,
@@ -188,7 +194,6 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
         update: (_, vnode) => render(vnode),
       },
     }),
-    h('p', simplePlural(task.requirements.length, 'block')),
   ]);
 }
 
