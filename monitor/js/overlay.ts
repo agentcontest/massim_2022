@@ -37,7 +37,7 @@ function teams(teamNames: string[], world: DynamicWorld): VNode[] {
 }
 
 function tasks(ctrl: Ctrl, st: StaticWorld, world: DynamicWorld): VNode[] {
-  return world.tasks.flatMap(task => taskDetails(ctrl, st, world, task));
+  return world.tasks.map(task => taskDetails(ctrl, st, world, task));
 }
 
 function norms(ctrl: Ctrl, world: DynamicWorld): VNode {
@@ -155,7 +155,7 @@ function entityDescription(ctrl: Ctrl, entity: Entity): Array<VNode | string> {
   return r;
 }
 
-function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: Task): VNode[] {
+function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: Task): VNode {
   const xs = task.requirements.map(b => Math.abs(b.pos[0]));
   const ys = task.requirements.map(b => Math.abs(b.pos[1]));
   const width = 2 * Math.max(...xs) + 1;
@@ -174,7 +174,8 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
     drawBlocks(ctx, 0, 0, st, task.requirements);
     ctx.restore();
   };
-  return [
+  return h('div.box', [
+    h('p', `$${task.reward} for ${task.name} until step ${task.deadline}`),
     h('canvas', {
       attrs: {
         width: elementWidth,
@@ -186,7 +187,7 @@ function taskDetails(ctrl: Ctrl, st: StaticWorld, dynamic: DynamicWorld, task: T
       },
     }),
     h('p', simplePlural(task.requirements.length, 'block')),
-  ];
+  ]);
 }
 
 function disconnected(): VNode {
@@ -251,7 +252,7 @@ export function overlay(ctrl: Ctrl): VNode {
                 ),
           ]),
           selectedEntity ? box(h('div', ['Selected entity: ', ...entityDescription(ctrl, selectedEntity)])) : undefined,
-          h('div.box', tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic)),
+          ...tasks(ctrl, ctrl.vm.static, ctrl.vm.dynamic),
           h('div.box', norms(ctrl, ctrl.vm.dynamic)),
           ctrl.vm.hover ? box(hover(ctrl, ctrl.vm.static, ctrl.vm.dynamic, ctrl.vm.hover)) : undefined,
         ]
