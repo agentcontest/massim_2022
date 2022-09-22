@@ -84,15 +84,14 @@ function norms(ctrl: Ctrl, world: DynamicWorld): VNode {
   return h(
     'ul',
     world.norms.map(norm => {
-      const who = (norm.level==='individual') ? 'each agent' : 'a team';
+      const who = norm.level === 'individual' ? 'each agent' : 'a team';
       const what = norm.requirements.map(requirement => {
-        if (requirement.type==='BLOCK')
+        if (requirement.type === 'BLOCK')
           return h('li', `carry at most ${requirement.quantity} of ${requirement.name}`);
-        else if (requirement.type==='ROLE')
+        else if (requirement.type === 'ROLE')
           return h('li', `have at most ${requirement.quantity} ${requirement.name} agents`);
-        else 
-          return h('li', `undefined`);
-      });    
+        else return h('li', `undefined`);
+      });
       return h('li', [
         h('strong', norm.name),
         ` from ${norm.start} to ${norm.until}: ${who} must`,
