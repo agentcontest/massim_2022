@@ -40,13 +40,15 @@
         <executions>
           <execution>
             <goals>
-              <goal>attached</goal>
+              <goal>single</goal>
             </goals>
             <phase>package</phase>
           </execution>
         </executions>
         <configuration>
-          <descriptor>dep.xml</descriptor>
+          <descriptors>
+            <descriptor>dep.xml</descriptor>
+          </descriptors>
         </configuration>
       </plugin>
     </plugins>
