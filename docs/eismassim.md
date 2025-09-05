@@ -291,11 +291,11 @@ The following percepts might be included in a `REQUEST-ACTION` message. See also
   * id : Identifier - ID of the norm
   * start : Numeral - first step the norm holds
   * end : Numeral - last step the norm holds
-    * requirement:
-      * type : the subject of the norm
-      * name : the precise name the subject refers to, e.g., the role *constructor*
-      * quantity : the maximum quantity that can be carried/adopted
-      * details : possibly additional details
+  * requirement:
+    * type : the subject of the norm
+    * name : the precise name the subject refers to, e.g., the role *constructor*
+    * quantity : the maximum quantity that can be carried/adopted
+    * details : possibly additional details
   * fine : Numeral - the energy cost of violating the norm (per step)
 * `surveyed("agent", name, role, energy)`
   * name : Identifier
